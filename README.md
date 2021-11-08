@@ -1,5 +1,6 @@
 
-<img align="right" width="160" src="sources/img/QtreesDefault.jpg">
+<img align="right" width="100" position="inline" src="sources/img/QtreesDefault.jpg">
+
 
 # QTrees
 
