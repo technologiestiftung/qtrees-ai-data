@@ -1,0 +1,19 @@
+name: qtrees
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - geopandas
+  - requests
+  - owslib
+  - plotly
+  - sqlalchemy
+  - geoalchemy2
+  - psycopg2
+  - docopt
+  - wradlib>=1.16.1
+  - ipykernel
+  - astral
+  - fuzzywuzzy
+  - thefuzz
+prefix:
