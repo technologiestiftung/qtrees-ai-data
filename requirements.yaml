@@ -1,19 +1,20 @@
-name: qtrees
+name: qtrees-ai-data
 channels:
   - conda-forge
   - defaults
 dependencies:
-  - geopandas
-  - requests
-  - owslib
-  - plotly
-  - sqlalchemy
-  - geoalchemy2
-  - psycopg2
-  - docopt
-  - wradlib>=1.16.1
-  - ipykernel
-  - astral
-  - fuzzywuzzy
-  - thefuzz
+  - python=3.10.6
+  - geopandas=0.11.1
+  - requests=2.28.1
+  - owslib=0.27.2
+  - plotly=5.10.0
+  - sqlalchemy=1.4.41
+  - geoalchemy2=0.12.5
+  - psycopg2=2.9.3
+  - docopt=0.6.2
+  - wradlib=1.16.1
+  - ipykernel=6.16.0
+  - astral=3.0
+  - fuzzywuzzy=0.18.0
+  - thefuzz=0.19.0
 prefix:
