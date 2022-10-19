@@ -29,7 +29,8 @@ CREATE TABLE api.trees (
     lat FLOAT(53),
     lng FLOAT(53),
     created_at DATE,
-    updated_at DATE
+    updated_at DATE,
+    street_tree BOOLEAN
 );
 
 CREATE TABLE api.soil (
