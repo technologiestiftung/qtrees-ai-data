@@ -8,6 +8,7 @@ services:
     environment:
       PGRST_DB_URI: postgresql://postgres:${POSTGRES_PASSWD}@db:5432/qtrees
       PGRST_DB_SCHEMA: api
+      PGRST_DB_MAX_ROWS: 10
       PGRST_DB_ANON_ROLE: web_anon #In production this role should not be the same as the one used for the connection
       PGRST_OPENAPI_SERVER_PROXY_URI: http://0.0.0.0:3000
       PGRST_JWT_SECRET: ${JWT_SECRET}
