@@ -138,3 +138,15 @@ database/*.sql
 data/sga_mitte_trees.json
 
 *.png
+
+# iac stuff
+.terraform
+tmp
+*.lock.hcl
+*.tfstate.backup
+*.tfstate
+*.tfstate.lock.info
+infrastructure/terraform/tf_output/*
+infrastructure/database/pgdata
+hosts
+infrastructure/database/*.sql
