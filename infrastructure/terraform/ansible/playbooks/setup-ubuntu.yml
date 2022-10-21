@@ -16,13 +16,14 @@
     shell: |
       apt install postgresql -y
   - name: check if qtrees-ai-data already cloned
+    # besser löschen und neu clonen?
     stat:
       path: /home/ubuntu/qtrees-ai-data
     register: qtrees_exists
   - name: clone qtrees-ai-data repo
     become_user: ubuntu
     shell: |
-      git clone -b main https://{{ lookup('ansible.builtin.env', 'GIT_PERSONAL_TOKEN') }}@github.com/technologiestiftung/qtrees-ai-data.git
+      git clone -b {{ lookup('ansible.builtin.env', 'GIT_BRANCH') }} https://{{ lookup('ansible.builtin.env', 'GIT_PERSONAL_TOKEN') }}@github.com/technologiestiftung/qtrees-ai-data.git
     when: not qtrees_exists.stat.exists
   - name: check if miniconda already available
     stat:

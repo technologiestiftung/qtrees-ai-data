@@ -14,3 +14,4 @@ export TF_VAR_private_key=
 export ANSIBLE_HOST_KEY_CHECKING=False
 
 export GIT_PERSONAL_TOKEN=
+export GIT_BRANCH="main"
