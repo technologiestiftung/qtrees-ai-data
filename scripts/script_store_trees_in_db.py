@@ -24,24 +24,27 @@ def main():
     logger.info("Args: %s", sys.argv[1:])
     # Parse arguments
     args = docopt(__doc__)
+    logger.debug("Init db args")
     db_qtrees, postgres_passwd = init_db_args(args, logger)
 
     data_directory = args["--data_directory"]
-
+    logger.debug("Create db engine")
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
     do_update = True
+    logger.debug("Check if table exists")
     if sqlalchemy.inspect(engine).has_table("trees", schema="api"):
         with engine.connect() as con:
-            rs = con.execute('select COUNT(baumid) from qtrees.api.trees')
+            rs = con.execute('select COUNT(baumid) from api.trees')
             count = [idx[0] for idx in rs][0]
         if count > 0:
             logger.warning("Already %s trees in database. Skipping...", count)
             do_update = False
 
     if do_update:
+        logger.debug("Do update")
         data_file = os.path.join(data_directory, "trees_gdf_all.geojson")
         joined_trees = get_trees(data_file)
 
@@ -49,7 +52,7 @@ def main():
         try:
             joined_trees.to_postgis("trees", engine, if_exists="append", schema="api")
             with engine.connect() as con:
-                rs = con.execute('select COUNT(baumid) from qtrees.api.trees')
+                rs = con.execute('select COUNT(baumid) from api.trees')
                 count = [idx[0] for idx in rs][0]
             logger.info(f"Now, %s trees in database.", count)
         except Exception as e:
