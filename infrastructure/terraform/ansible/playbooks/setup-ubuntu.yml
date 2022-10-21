@@ -76,10 +76,9 @@
       cd qtrees-ai-data
       export PYTHONPATH=/home/ubuntu/qtrees-ai-data
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_wheather_observations.py
-    # this takes very long
-  #     /home/ubuntu/miniconda3/envs/qtrees/bin/python script_store_trees_in_db.py
-  #     /home/ubuntu/miniconda3/envs/qtrees/bin/python script_store_soil_in_db.py
-  #     /home/ubuntu/miniconda3/envs/qtrees/bin/python script_store_radolan_in_db.py
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_trees_in_db.py
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_soil_in_db.py
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_radolan_in_db.py
     # python logs can be found on host at 'tail -fn +1 qtrees/qtrees_log'
   - name: launch postgrest docker
     shell: |

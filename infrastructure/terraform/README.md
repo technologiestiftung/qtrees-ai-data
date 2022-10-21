@@ -34,13 +34,23 @@ and follow the instructions to apply the `main.tf` script.
 ansible-playbook -i ansible/hosts ansible/playbooks/setup-ubuntu.yml
 ```
 
-to receive the public IPv4 DNS run:
+To receive the public IPv4 DNS run:
 ```
-terraform output -raw eip_public_dns
+terraform output -raw dns_name
 ```
 
 on port 3000 you should get output of database
 
+and run
+
+```
+terraform output -raw eip_public_dns
+```
+for ec2-adress.
+
+Use `-v` option to receive debug information.
+
+Set `ANSIBLE_STDOUT_CALLBACK=yaml` to get human readable output.
 
 ### SSH into provisioned EC2 machine:
 You need to generate a private key pem file in order to be able to ssh into your instance. 
