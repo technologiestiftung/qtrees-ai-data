@@ -11,13 +11,13 @@ ssh-keygen -t rsa
 
 ### Credentials handling
 
-insert your credentials into the `iac/terraform/set_variables.sh` and run `source iac/terraform/set_variables.sh`
+insert your credentials into the `infrastructure/terraform/set_variables.sh` and run `source infrastructure/terraform/set_variables.sh`
 
 ### 1. Provision Services via Terraform
 
 Run
 ```
-cd iac/terraform
+cd infrastructure/terraform
 terraform init
 terraform plan
 ```
@@ -38,8 +38,6 @@ To receive the public IPv4 DNS run:
 ```
 terraform output -raw dns_name
 ```
-
-on port 3000 you should get output of database
 
 and run
 

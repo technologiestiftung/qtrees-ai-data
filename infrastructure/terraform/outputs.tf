@@ -13,3 +13,7 @@ output "db_private_address" {
 output "dns_name" {
   value = aws_lb.qtrees.dns_name
 }
+
+output "bucket_domain_name" {
+  value = aws_s3_bucket.qtrees.bucket_domain_name
+}

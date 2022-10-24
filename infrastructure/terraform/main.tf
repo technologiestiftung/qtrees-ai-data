@@ -257,3 +257,12 @@ resource "aws_lb_listener" "qtrees" {
     Name = "${var.project_name}-iac-${var.qtrees_version}"
   }
 }
+
+# TODO handle access policy ACLs
+resource "aws_s3_bucket" "qtrees" {
+  bucket = "${var.project_name}-bucket"
+
+  tags = {
+    Name = "${var.project_name}-iac-${var.qtrees_version}"
+  }
+}
