@@ -1,0 +1,24 @@
+---
+- hosts: localhost
+  gather_facts: false
+  
+  tasks: 
+    - name: copy .ansible.cfg file at user's home dir
+      copy: 
+        src: files/.ansible.cfg
+        dest: ~/
+
+    - name: copy ssh.cfg file 
+      copy:
+        src: files/news-app-ssh.cfg
+        dest: /tmp/
+
+    - name: init terraform
+      shell: terraform init
+      args:
+        chdir: terraform/
+
+    - name: apply terraform script
+      terraform:
+        project_path: terraform/
+        state: present

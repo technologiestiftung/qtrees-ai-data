@@ -1,0 +1,87 @@
+# builtin modules https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html
+---
+- hosts: qtrees_server
+  vars_files:
+    - "{{ inventory_dir }}/variables.yml"
+  become: true
+  tasks:
+  - name: Run update
+    apt:
+      update_cache: true
+  - name: Upgrade all packages
+    apt: 
+      name: "*"
+      state: latest
+  - name: install necessary libs
+    shell: |
+      apt install postgresql -y
+  - name: check if qtrees-ai-data already cloned
+    # besser löschen und neu clonen?
+    stat:
+      path: /home/ubuntu/qtrees-ai-data
+    register: qtrees_exists
+  - name: clone qtrees-ai-data repo
+    become_user: ubuntu
+    shell: |
+      git clone -b {{ lookup('ansible.builtin.env', 'GIT_BRANCH') }} https://{{ lookup('ansible.builtin.env', 'GIT_PERSONAL_TOKEN') }}@github.com/technologiestiftung/qtrees-ai-data.git
+    when: not qtrees_exists.stat.exists
+  - name: check if miniconda already available
+    stat:
+      path: "/home/ubuntu/{{ miniconda_file }}"
+    register: miniconda_exists
+  - name: install miniconda
+    become_user: ubuntu
+    shell: |
+      wget "https://repo.anaconda.com/miniconda/{{ miniconda_file }}"
+      sh {{ miniconda_file }} -b
+    when: not miniconda_exists.stat.exists
+  # TODO this gets stuck when multiple channels in requirements file
+  - name: handle dependencies of qtrees
+    shell: |
+      miniconda3/bin/conda update conda -y
+      miniconda3/bin/conda env create -f qtrees-ai-data/requirements.yaml
+    ignore_errors: true
+  - name: check if docker already installed
+    shell: |
+      which docker
+    register: docker_exists
+    ignore_errors: true
+  # as described here https://docs.docker.com/engine/install/ubuntu/
+  - name: setup docker repository
+    shell: |
+      apt-get install ca-certificates curl gnupg lsb-release -y
+      mkdir -p /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    when: docker_exists.rc != 0
+  - name: install docker
+    shell: |
+      apt-get update
+      apt-get install docker-ce docker-ce-cli containerd.io docker-compose docker-compose-plugin -y
+    when: docker_exists.rc != 0
+  # TODO setting variables can be made easier, and split this in multiple tasks
+  - name: copy env file to remote
+    copy:
+      src: "../../tf_output/setup_environment.sh"
+      dest: /home/ubuntu/setup_environment.sh
+  - name: setup database
+    shell: |
+      . /home/ubuntu/setup_environment.sh
+      cd qtrees-ai-data/infrastructure/database
+      . /home/ubuntu/qtrees-ai-data/infrastructure/database/create_sql_files.sh
+      . /home/ubuntu/qtrees-ai-data/infrastructure/database/setup_database.sh
+  - name: fill database
+    shell: |
+      . /home/ubuntu/setup_environment.sh
+      cd qtrees-ai-data
+      export PYTHONPATH=/home/ubuntu/qtrees-ai-data
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_wheather_observations.py
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_trees_in_db.py
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_soil_in_db.py
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_radolan_in_db.py
+    # python logs can be found on host at 'tail -fn +1 qtrees/qtrees_log'
+  - name: launch postgrest docker
+    shell: |
+      . /home/ubuntu/setup_environment.sh
+      docker-compose -f qtrees-ai-data/infrastructure/database/docker-compose.yml up -d
