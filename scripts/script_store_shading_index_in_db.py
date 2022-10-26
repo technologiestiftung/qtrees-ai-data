@@ -34,7 +34,7 @@ def main():
     sunindex_df_long = pd.melt(sunindex_df, ignore_index=False, value_vars=["spring", "summer", "autumn", "winter"],
                                value_name="index", var_name="month") \
         .replace({"month": {"spring": 3, "summer": 6, "autumn": 9, "winter": 12, }}) \
-        .reset_index().rename(columns={"level_0": "baum_id"})
+        .reset_index().rename(columns={"level_0": "tree_id"})
 
     logger.info("Writing into db")
     try:
