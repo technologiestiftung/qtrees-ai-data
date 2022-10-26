@@ -14,7 +14,7 @@
       state: latest
   - name: install necessary libs
     shell: |
-      apt install postgresql -y
+      apt install postgresql awscli -y
   - name: check if qtrees-ai-data already cloned
     # besser löschen und neu clonen?
     stat:
@@ -37,6 +37,7 @@
     when: not miniconda_exists.stat.exists
   # TODO this gets stuck when multiple channels in requirements file
   - name: handle dependencies of qtrees
+    become_user: ubuntu
     shell: |
       miniconda3/bin/conda update conda -y
       miniconda3/bin/conda env create -f qtrees-ai-data/requirements.yaml
@@ -62,16 +63,29 @@
     when: docker_exists.rc != 0
   # TODO setting variables can be made easier, and split this in multiple tasks
   - name: copy env file to remote
+    become_user: ubuntu
     copy:
       src: "../../tf_output/setup_environment.sh"
       dest: /home/ubuntu/setup_environment.sh
   - name: setup database
+    become_user: ubuntu
     shell: |
       . /home/ubuntu/setup_environment.sh
       cd qtrees-ai-data/infrastructure/database
       . /home/ubuntu/qtrees-ai-data/infrastructure/database/create_sql_files.sh
       . /home/ubuntu/qtrees-ai-data/infrastructure/database/setup_database.sh
+  - name: s3 setup
+    become_user: ubuntu
+    shell: |
+      aws configure set region eu-central-1
+      aws configure set aws_access_key_id {{ lookup('ansible.builtin.env', 'S3_USER_ACCESS_KEY') }}
+      aws configure set aws_secret_access_key {{ lookup('ansible.builtin.env', 'S3_USER_SECRET_ACCESS_KEY') }}
+  - name: s3 sync
+    become_user: ubuntu
+    shell: |
+      aws s3 sync s3://qtrees-data ~/qtrees-ai-data/data --no-progress --exclude 'img/*' --exclude '.*'
   - name: fill database
+    become_user: ubuntu
     shell: |
       . /home/ubuntu/setup_environment.sh
       cd qtrees-ai-data
@@ -85,3 +99,13 @@
     shell: |
       . /home/ubuntu/setup_environment.sh
       docker-compose -f qtrees-ai-data/infrastructure/database/docker-compose.yml up -d
+  - name: copy download-crontab
+    copy:
+      src: "../../../scheduling/download-crontab"
+      dest: "/etc/cron.d/download-crontab"
+  - name: setup cron
+    # as user or as root?
+    shell: |
+      touch /var/log/download-cron.log
+      chmod 0644 /etc/cron.d/download-crontab
+      crontab /etc/cron.d/download-crontab
