@@ -110,7 +110,7 @@ resource "aws_security_group" "qtrees_db_sg" {
     to_port     = 5432
     protocol    = "tcp"
     # source IP: can be restricted to special IP
-    security_groups = [aws_security_group.qtrees_ec2_sg.id]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
@@ -258,11 +258,19 @@ resource "aws_lb_listener" "qtrees" {
   }
 }
 
-# TODO handle access policy ACLs
 resource "aws_s3_bucket" "qtrees" {
   bucket = "${var.project_name}-bucket"
-
+  
   tags = {
     Name = "${var.project_name}-iac-${var.qtrees_version}"
   }
+}
+
+resource "aws_s3_bucket_public_access_block" "qtrees" {
+  bucket = aws_s3_bucket.qtrees.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
