@@ -103,9 +103,11 @@
     copy:
       src: "../../../scheduling/download-crontab"
       dest: "/etc/cron.d/download-crontab"
-  - name: setup cron
-    # as user or as root?
+  - name: prepare cron logs
+    become_user: ubuntu
     shell: |
-      touch /var/log/download-cron.log
+      touch /home/ubuntu/download-cron.log
+  - name: setup cron
+    shell: |
       chmod 0644 /etc/cron.d/download-crontab
-      crontab /etc/cron.d/download-crontab
+      crontab -u ubuntu /etc/cron.d/download-crontab
