@@ -33,7 +33,7 @@ CREATE TABLE api.trees (
 );
 
 CREATE TABLE api.soil (
-     id          TEXT, 
+     id          TEXT PRIMARY KEY, 
      schl5           BIGINT,
      nutz            FLOAT(53),
      nutz_bez        TEXT,
