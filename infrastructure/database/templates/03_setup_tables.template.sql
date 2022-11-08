@@ -6,8 +6,7 @@ CREATE EXTENSION postgis_topology;
 CREATE SCHEMA api;
 --
 CREATE TABLE api.trees (
-    gml_id TEXT PRIMARY KEY,
-    baumid TEXT,
+    id TEXT PRIMARY KEY,
     standortnr TEXT,
     kennzeich TEXT,
     namenr TEXT,
@@ -34,7 +33,7 @@ CREATE TABLE api.trees (
 );
 
 CREATE TABLE api.soil (
-     gml_id          TEXT, -- this not the tree id
+     id          TEXT PRIMARY KEY, 
      schl5           BIGINT,
      nutz            FLOAT(53),
      nutz_bez        TEXT,
@@ -98,26 +97,26 @@ CREATE TABLE api.soil (
 
 CREATE TABLE api.user_info (
     id SERIAL PRIMARY KEY,
-    gml_id TEXT REFERENCES api.trees (gml_id),
+    tree_id TEXT REFERENCES api.trees (id),
     nutzer_id TEXT,
     merkmal TEXT,
     wert TEXT
 );
 
 CREATE TABLE api.weather_stations (
-    Stations_id   BIGINT PRIMARY KEY,
+    id   BIGINT PRIMARY KEY,
     von_datum     DATE,
     bis_datum     DATE,
     Stationshoehe bigint,
-    geoBreite     FLOAT(53),
-    geoLaenge     FLOAT(53),
+    lat     FLOAT(53),
+    lon     FLOAT(53),
     Stationsname  text,
     Bundesland    text,
     geometry geometry(POINT,4326)
 );
 
 CREATE TABLE api.weather (
-    STATIONS_ID  BIGINT NOT NULL,
+    weather_stations_id  BIGINT REFERENCES api.weather_stations (id),
     MESS_DATUM   timestamp NOT NULL,
     QN_3         BIGINT,
     FX           FLOAT(53),
@@ -146,10 +145,10 @@ CREATE TABLE api.radolan (
 );
 
 CREATE TABLE api.shading (
-    gml_id TEXT REFERENCES api.trees(gml_id),
+    tree_id TEXT REFERENCES api.trees(id),
     month SMALLINT,
     index FLOAT(53),
-    PRIMARY KEY(gml_id, month)
+    PRIMARY KEY(tree_id, month)
 );
 
 CREATE TABLE api.forecast_types (
@@ -159,8 +158,8 @@ CREATE TABLE api.forecast_types (
 
 CREATE TABLE api.forecast (
 	id SERIAL PRIMARY KEY,
-	baum_id TEXT REFERENCES api.trees(gml_id),
-	type_id SMALLINT REFERENCES api.forecast_types(id),
+	tree_id TEXT REFERENCES api.trees(id),
+	forecast_type_id SMALLINT REFERENCES api.forecast_types(id),
 	timestamp timestamp,
 	value FLOAT(53),
 	created_at timestamp,
@@ -169,8 +168,8 @@ CREATE TABLE api.forecast (
 
 CREATE TABLE api.nowcast (
 	id SERIAL PRIMARY KEY,
-	baum_id TEXT REFERENCES api.trees(gml_id),
-	type_id SMALLINT REFERENCES api.forecast_types(id),
+	tree_id TEXT REFERENCES api.trees(id),
+	forecast_type_id SMALLINT REFERENCES api.forecast_types(id),
 	timestamp timestamp,
 	value FLOAT(53),
 	created_at timestamp,

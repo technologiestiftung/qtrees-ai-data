@@ -49,9 +49,10 @@ def main():
     try:
         if sqlalchemy.inspect(engine).has_table("weather_stations", schema="api"):
             with engine.connect() as con:
-                rs = con.execute('select "stations_id" from api.weather_stations')
+                rs = con.execute('select "id" from api.weather_stations')
                 indices = [idx[0] for idx in rs]
         gdf = gdf[~gdf.stations_id.isin(indices)]
+        gdf = gdf.rename(columns={"stations_id": "id", "geobreite": "lat", "geolaenge": "lon"})
         gdf.to_postgis("weather_stations", engine, if_exists="append", schema="api")
         logger.info(f"Now, new %s weather stations in database.", len(gdf))
     except Exception as e:

@@ -207,6 +207,8 @@ From the project root directory, execute the following steps in the **same shell
   - propably, you have to run `brew link --force libpq` as well
 - install `docker`
   - follow instructions [here](https://docs.docker.com/desktop/mac/install/)
+- install `docker-compose`
+  - `brew install docker-compose`
 
 #### Start `docker` containers for database
 - `cd infrastructure/database`

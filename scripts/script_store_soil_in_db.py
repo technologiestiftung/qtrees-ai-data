@@ -57,6 +57,7 @@ def main():
         soil_gdf = get_gdf(s_boden_wfs1_2015_url, crs, soil_gdf_file)
 
         date = datetime.now().date()
+        soil_gdf = soil_gdf.rename(columns={"gml_id": "id"})
         soil_gdf['created_at'] = date
         soil_gdf['updated_at'] = date
 
