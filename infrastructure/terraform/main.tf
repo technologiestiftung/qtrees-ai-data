@@ -129,7 +129,7 @@ resource "aws_key_pair" "qtrees" {
 resource "aws_instance" "qtrees" {
   # AMD Ubuntu
   ami           = "ami-065deacbcaac64cf2"
-  instance_type = "t2.medium"
+  instance_type = "t2.large"
 
   # public ip needed to ssh into this instance
   associate_public_ip_address = true

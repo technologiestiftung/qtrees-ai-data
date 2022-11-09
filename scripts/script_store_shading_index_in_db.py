@@ -2,10 +2,10 @@
 """
 Download tree data and store into db.
 Usage:
-  script_store_trees_in_db.py [--shadow_index_file=DATA_DIRECTORY] [--db_qtrees=DB_QTREES]
+  script_store_trees_in_db.py [--shadow_index_file=SHADOW_INDEX_FILE] [--db_qtrees=DB_QTREES]
   script_store_trees_in_db.py (-h | --help)
 Options:
-  --shadow_index_file=DATA_DIRECTORY              Directory for data [default: .data/berlin_shadow_index.csv]
+  --shadow_index_file=SHADOW_INDEX_FILE           Directory for data [default: data/shading/berlin_shadow_index.csv]
   --db_qtrees=DB_QTREES                           Database name [default:]
 """
 from sqlalchemy import create_engine
