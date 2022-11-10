@@ -5,7 +5,7 @@ create schema if not exists basic_auth;
 
 create table if not exists
 basic_auth.users (
-  username text primary key check (length(pass) < 32),
+  username text primary key check (length(username) < 32),
   pass     text not null check (length(pass) < 512),
   role     name not null check (length(role) < 512)
 );
