@@ -55,29 +55,29 @@ create trigger encrypt_pass
 
 -- With the table in place we can make a helper to check a password
 -- against the encrypted column. It returns the database role for
--- a user if the email and password are correct.
+-- a user if the username and password are correct.
 
 create or replace function
-basic_auth.user_role(email text, pass text) returns name
+basic_auth.user_role(username text, pass text) returns name
   language plpgsql
   as $$
 begin
   return (
   select role from basic_auth.users
-   where users.email = user_role.email
+   where users.username = user_role.username
      and users.pass = crypt(user_role.pass, users.pass)
   );
 end;
 $$;
 
 create or replace function
-basic_auth.user_role(email text, pass text) returns name
+basic_auth.user_role(username text, pass text) returns name
   language plpgsql
   as $$
 begin
   return (
   select role from basic_auth.users
-   where users.email = user_role.email
+   where users.username = user_role.username
      and users.pass = crypt(user_role.pass, users.pass)
   );
 end;
@@ -86,7 +86,7 @@ $$;
 -- Public User Interface
 -- In the previous section we created an internal table to store
 -- user information. Here we create a login function which takes
--- an email address and password and returns JWT if the credentials
+-- an username and password and returns JWT if the credentials
 -- match a user in the internal table.
 
 -- add type
@@ -116,13 +116,13 @@ CREATE TYPE jwt_token AS (
 
 -- login should be on your exposed schema
 create or replace function
-api.login(email text, pass text) returns basic_auth.jwt_token as $$
+api.login(username text, pass text) returns basic_auth.jwt_token as $$
 declare
   _role name;
   result basic_auth.jwt_token;
 begin
-  -- check email and password
-  select basic_auth.user_role(email, pass) into _role;
+  -- check username and password
+  select basic_auth.user_role(username, pass) into _role;
   if _role is null then
     raise invalid_password using message = 'invalid user or password';
   end if;
@@ -131,7 +131,7 @@ begin
       row_to_json(r), '${JWT_SECRET}'
     ) as token
     from (
-      select _role as role, login.email as email,
+      select _role as role, login.username as username,
          extract(epoch from now())::integer + 60*60 as exp
     ) r
     into result;
@@ -150,12 +150,20 @@ grant execute on function api.login(text,text) to authenticator;
 
 
 -- create postgREST frontend user
-insert into basic_auth.users (email, pass, role) values ('qtrees_frontend', '$UI_USER_PASSWD', 'ui_user');
+insert into basic_auth.users (username, pass, role) values ('qtrees_frontend', '$UI_USER_PASSWD', 'ui_user');
 
-CREATE USER admin WITH PASSWORD '$DB_ADMIN_PASSWD';
+CREATE USER qtrees_admin WITH PASSWORD '$DB_ADMIN_PASSWD';
 GRANT CONNECT ON DATABASE qtrees TO admin;
 GRANT USAGE ON SCHEMA api TO admin;
 GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA api TO admin;
 -- to grant access to the new table in the future automatically:
 ALTER DEFAULT PRIVILEGES IN SCHEMA api
 GRANT SELECT, INSERT, UPDATE ON TABLES TO admin;
+
+CREATE USER qtrees_user WITH PASSWORD '$DB_USER_PASSWD';
+GRANT CONNECT ON DATABASE qtrees TO qtrees_user;
+GRANT USAGE ON SCHEMA api TO qtrees_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA api TO qtrees_user;
+-- to grant access to the new table in the future automatically:
+ALTER DEFAULT PRIVILEGES IN SCHEMA api
+GRANT SELECT ON TABLES TO qtrees_user;
