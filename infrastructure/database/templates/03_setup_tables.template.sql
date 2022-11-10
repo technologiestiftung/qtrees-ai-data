@@ -90,12 +90,21 @@ CREATE TABLE api.soil (
 );
 
 
-CREATE TABLE api.user_info (
-    id SERIAL PRIMARY KEY,
-    tree_id TEXT REFERENCES api.trees (id),
-    nutzer_id TEXT,
-    merkmal TEXT,
-    wert TEXT
+CREATE TABLE "api"."issue_types" (
+	"id" int4 NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"image_url" text,
+	PRIMARY KEY ("id")
+);
+
+
+CREATE TABLE "api"."issues" (
+	"id" int4 NOT NULL,
+	"issue_type_id" int4 NOT NULL,
+	"created_at" timestamptz NOT NULL DEFAULT now(),
+	"gml_id" text NOT NULL,
+	PRIMARY KEY ("id")
 );
 
 CREATE TABLE api.weather_stations (

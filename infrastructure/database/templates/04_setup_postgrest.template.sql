@@ -28,7 +28,8 @@ grant all on api.shading to ai_user;
 grant all on api.forecast_types to ai_user;
 grant all on api.weather to ai_user;
 grant all on api.weather_stations to ai_user;
-grant select on api.user_info to ai_user;
+grant select on api.issue_types to ai_user;
+grant select on api.issues to ai_user;
 
 
 create role ui_user nologin;
@@ -44,4 +45,5 @@ grant select on api.shading to ui_user;
 grant select on api.forecast_types to ui_user;
 grant select on api.weather to ui_user;
 grant select on api.weather_stations to ui_user;
-grant all on api.user_info to ui_user;
+grant all on api.issue_types to ui_user;
+grant all on api.issues to ui_user;
