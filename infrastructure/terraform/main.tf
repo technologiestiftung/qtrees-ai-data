@@ -111,6 +111,7 @@ resource "aws_security_group" "qtrees_db_sg" {
     protocol    = "tcp"
     # source IP: can be restricted to special IP
     security_groups = [aws_security_group.qtrees_ec2_sg.id]
+    #cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
@@ -168,6 +169,8 @@ resource "local_file" "setup_env_file" {
     export AUTH_PASSWD=${var.AUTH_PASSWD}
     export JWT_SECRET=${var.JWT_SECRET}
     export POSTGRES_PASSWD=${var.POSTGRES_PASSWD}
+    export DB_ADMIN_PASSWD=${var.DB_ADMIN_PASSWD}
+    export UI_USER_PASSWD=${var.UI_USER_PASSWD}
     export DB_QTREES=${aws_db_instance.qtrees.address}
     export DB_DOCKER=${aws_db_instance.qtrees.address} #only for docker
     export CMD_GIS_ADMIN="GRANT rds_superuser TO gis_admin;" # with rds !
