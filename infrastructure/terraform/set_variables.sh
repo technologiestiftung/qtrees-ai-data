@@ -6,8 +6,9 @@ export TF_VAR_AUTH_PASSWD=
 export TF_VAR_JWT_SECRET=
 export TF_VAR_POSTGRES_PASSWD=
 
-# db admin user
+# db admin / user
 export TF_VAR_DB_ADMIN_PASSWD=
+export TF_VAR_DB_USER_PASSWD=
 # postgREST ui user
 export TF_VAR_UI_USER_PASSWD=
 

@@ -31,6 +31,15 @@ variable "AUTH_PASSWD" {
 variable "JWT_SECRET" {
   sensitive   = true
 }
+variable "DB_ADMIN_PASSWD" {
+  sensitive   = true
+}
+variable "DB_USER_PASSWD" {
+  sensitive   = true
+}
+variable "UI_USER_PASSWD" {
+  sensitive   = true
+}
 
 variable "POSTGRES_PASSWD" {
   description = "RDS root user password"

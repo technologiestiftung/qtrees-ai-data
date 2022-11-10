@@ -170,6 +170,7 @@ resource "local_file" "setup_env_file" {
     export JWT_SECRET=${var.JWT_SECRET}
     export POSTGRES_PASSWD=${var.POSTGRES_PASSWD}
     export DB_ADMIN_PASSWD=${var.DB_ADMIN_PASSWD}
+    export DB_USER_PASSWD=${var.DB_USER_PASSWD}
     export UI_USER_PASSWD=${var.UI_USER_PASSWD}
     export DB_QTREES=${aws_db_instance.qtrees.address}
     export DB_DOCKER=${aws_db_instance.qtrees.address} #only for docker
