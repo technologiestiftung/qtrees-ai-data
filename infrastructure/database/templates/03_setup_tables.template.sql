@@ -90,11 +90,6 @@ CREATE TABLE api.soil (
 );
 
 
---CREATE VIEW api.train_data AS
---    SELECT *
---    FROM films
---    WHERE kind = 'Comedy';
-
 CREATE TABLE api.user_info (
     id SERIAL PRIMARY KEY,
     tree_id TEXT REFERENCES api.trees (id),

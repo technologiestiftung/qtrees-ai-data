@@ -1,4 +1,4 @@
-WHITELIST="\${GIS_PASSWD} \${AUTH_PASSWD} \${JWT_SECRET} \${POSTGRES_PASSWD} \${DB_QTREES} \${CMD_GIS_ADMIN}"
+WHITELIST="\${GIS_PASSWD} \${AUTH_PASSWD} \${JWT_SECRET} \${POSTGRES_PASSWD} \${DB_QTREES} \${CMD_GIS_ADMIN} \${DB_ADMIN_PASSWD} \${UI_USER_PASSWD}"
 
 if [ -z "${JWT_SECRET}" ]; then
   echo -e "\033[0;31mERROR: at least one required environment variable is empty. Please adjust script set_environment.sh! \033[0m"

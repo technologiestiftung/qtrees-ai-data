@@ -5,7 +5,7 @@ create schema if not exists basic_auth;
 
 create table if not exists
 basic_auth.users (
-  email    text primary key check ( email ~* '^.+@.+\..+$' ),
+  username text primary key check (length(pass) < 32),
   pass     text not null check (length(pass) < 512),
   role     name not null check (length(role) < 512)
 );
@@ -68,7 +68,9 @@ begin
      and users.pass = crypt(user_role.pass, users.pass)
   );
 end;
-$$;create or replace function
+$$;
+
+create or replace function
 basic_auth.user_role(email text, pass text) returns name
   language plpgsql
   as $$
@@ -147,5 +149,13 @@ grant execute on function api.login(text,text) to web_anon;
 grant execute on function api.login(text,text) to authenticator;
 
 
--- create user - should be done manually?
--- insert into basic_auth.users (email, pass, role) values ('nico@blablub.com', 'qweasd', 'ai_user');
+-- create postgREST frontend user
+insert into basic_auth.users (email, pass, role) values ('qtrees_frontend', '$UI_USER_PASSWD', 'ui_user');
+
+CREATE USER admin WITH PASSWORD '$DB_ADMIN_PASSWD';
+GRANT CONNECT ON DATABASE qtrees TO admin;
+GRANT USAGE ON SCHEMA api TO admin;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA api TO admin;
+-- to grant access to the new table in the future automatically:
+ALTER DEFAULT PRIVILEGES IN SCHEMA api
+GRANT SELECT, INSERT, UPDATE ON TABLES TO admin;
