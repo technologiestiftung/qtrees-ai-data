@@ -23,7 +23,7 @@ module "vpc" {
   cidr = "10.0.0.0/16"
   azs  = data.aws_availability_zones.available.names
 
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
+  #private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
   public_subnets  = ["10.0.8.0/24", "10.0.5.0/24"]
 
   enable_dns_hostnames = true
@@ -38,7 +38,8 @@ resource "aws_db_subnet_group" "qtrees" {
   # identifier
   name = "${var.project_name}-subnet"
   # just use this subnet for now
-  subnet_ids = module.vpc.private_subnets
+  #subnet_ids = module.vpc.private_subnets
+  subnet_ids = module.vpc.public_subnets
 
   tags = {
     Name = "${var.project_name}-iac-${var.qtrees_version}"
@@ -84,7 +85,8 @@ resource "aws_security_group" "qtrees_ec2_sg" {
     to_port     = 3000
     protocol    = "tcp"
     # source IP: can be restricted to special IP
-    security_groups = [aws_security_group.qtrees_lb_sg.id]
+    cidr_blocks = ["0.0.0.0/0"]
+    #security_groups = [aws_security_group.qtrees_lb_sg.id]
   }
 
   egress {
@@ -111,7 +113,22 @@ resource "aws_security_group" "qtrees_db_sg" {
     protocol    = "tcp"
     # source IP: can be restricted to special IP
     security_groups = [aws_security_group.qtrees_ec2_sg.id]
-    #cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    # source IP: can be restricted to special IP
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 
   tags = {
@@ -194,70 +211,70 @@ resource "local_file" "connect_to_db" {
   filename = "./tf_output/connect_to_db.sh"
 }
 
-# ============================= LOAD BALANCING
-resource "aws_lb" "qtrees" {
-  name               = "${var.project_name}-lb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.qtrees_lb_sg.id]
-  subnets = module.vpc.public_subnets
+## ============================= LOAD BALANCING
+#resource "aws_lb" "qtrees" {
+#  name               = "${var.project_name}-lb"
+#  internal           = false
+#  load_balancer_type = "application"
+#  security_groups    = [aws_security_group.qtrees_lb_sg.id]
+#  subnets = module.vpc.public_subnets
+#
+#  tags = {
+#    Name = "${var.project_name}-iac-${var.qtrees_version}"
+#  }
+#}
 
-  tags = {
-    Name = "${var.project_name}-iac-${var.qtrees_version}"
-  }
-}
+#resource "aws_security_group" "qtrees_lb_sg" {
+#  name   = "${var.project_name}_lb_sg"
+#  vpc_id = module.vpc.vpc_id
+#  ingress {
+#    description = "HTTP"
+#    from_port   = 80
+#    to_port     = 80
+#    protocol    = "tcp"
+#    cidr_blocks = ["0.0.0.0/0"]
+#  }
+#
+#  egress {
+#    from_port        = 0
+#    to_port          = 0
+#    protocol         = "-1"
+#    cidr_blocks      = ["0.0.0.0/0"]
+#    ipv6_cidr_blocks = ["::/0"]
+#  }
+#  tags = {
+#    Name = "${var.project_name}-iac-${var.qtrees_version}"
+#  }
+#}
 
-resource "aws_security_group" "qtrees_lb_sg" {
-  name   = "${var.project_name}_lb_sg"
-  vpc_id = module.vpc.vpc_id
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#resource "aws_lb_target_group" "qtrees_lb_tg" {
+#  name     = "${var.project_name}-lb-tg"
+#  port     = 80
+#  protocol = "HTTP"
+#  vpc_id   = module.vpc.vpc_id
+#
+#  tags = {
+#    Name = "${var.project_name}-iac-${var.qtrees_version}"
+#  }
+#}
 
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
-  tags = {
-    Name = "${var.project_name}-iac-${var.qtrees_version}"
-  }
-}
+#resource "aws_lb_target_group_attachment" "target_instance" {
+#  target_group_arn = aws_lb_target_group.qtrees_lb_tg.arn
+#  target_id        = aws_instance.qtrees.id
+#  port             = 3000
+#}
 
-resource "aws_lb_target_group" "qtrees_lb_tg" {
-  name     = "${var.project_name}-lb-tg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = module.vpc.vpc_id
+#resource "aws_lb_listener" "qtrees" {
+#  load_balancer_arn = aws_lb.qtrees.arn
+#  port              = "80"
+#  protocol          = "HTTP"
 
-  tags = {
-    Name = "${var.project_name}-iac-${var.qtrees_version}"
-  }
-}
-
-resource "aws_lb_target_group_attachment" "target_instance" {
-  target_group_arn = aws_lb_target_group.qtrees_lb_tg.arn
-  target_id        = aws_instance.qtrees.id
-  port             = 3000
-}
-
-resource "aws_lb_listener" "qtrees" {
-  load_balancer_arn = aws_lb.qtrees.arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.qtrees_lb_tg.arn
-  }
-
-  tags = {
-    Name = "${var.project_name}-iac-${var.qtrees_version}"
-  }
-}
+#  default_action {
+#    type             = "forward"
+#    target_group_arn = aws_lb_target_group.qtrees_lb_tg.arn
+#  }
+#
+#  tags = {
+#    Name = "${var.project_name}-iac-${var.qtrees_version}"
+#  }
+#}

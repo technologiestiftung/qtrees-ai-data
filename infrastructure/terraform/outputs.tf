@@ -10,6 +10,6 @@ output "db_private_address" {
   value = aws_db_instance.qtrees.address
 }
 
-output "dns_name" {
-  value = aws_lb.qtrees.dns_name
-}
+#output "dns_name" {
+#  value = aws_lb.qtrees.dns_name
+# }
