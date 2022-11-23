@@ -45,11 +45,12 @@ def main():
     gdf["von_datum"] = pd.to_datetime(gdf["von_datum"], format='%Y%m%d')
     gdf["bis_datum"] = pd.to_datetime(gdf["bis_datum"], format='%Y%m%d')
     gdf.columns = [x.lower() for x in gdf.columns]
+    gdf = gdf.rename(columns={"station_id": "id"})
 
     try:
         if sqlalchemy.inspect(engine).has_table("weather_stations", schema="api"):
             with engine.connect() as con:
-                rs = con.execute('select "stations_id" from api.weather_stations')
+                rs = con.execute('select "id" from api.weather_stations')
                 indices = [idx[0] for idx in rs]
         gdf = gdf[~gdf.stations_id.isin(indices)]
         gdf.to_postgis("weather_stations", engine, if_exists="append", schema="api")
@@ -63,6 +64,7 @@ def main():
 
         try:
             weather = get_observations(station, measurement)
+            weather = weather.rename(columns={"mess_datum": "timestamp", "rsk": "rainfall_mm", "tmk": "temp_avg", "txk": "temp_max"})
         except requests.exceptions.RequestException as e:
             logger.warning(e)
             continue
@@ -70,13 +72,13 @@ def main():
         try:
             if sqlalchemy.inspect(engine).has_table("weather", schema="api"):
                 with engine.connect() as con:
-                    rs = con.execute('select "mess_datum" from api.weather')
+                    rs = con.execute('select "timestamp" from api.weather')
                     indices = [idx[0] for idx in rs]
-                    weather = weather[~weather.mess_datum.isin(indices)]
+                    weather = weather[~weather.timestamp.isin(indices)]
                     if len(weather) > 10 or len(weather) == 0:
                         logger.info(f"Got {len(weather)} new entries")
                     else:
-                        logger.info(f"Got {len(weather)} new entries: {weather.mess_datum}")
+                        logger.info(f"Got {len(weather)} new entries: {weather.timestamp}")
                 weather = weather.drop(columns=["eor"])
             weather.to_sql("weather", engine, if_exists="append", schema="api", index=False)
         except Exception as e:

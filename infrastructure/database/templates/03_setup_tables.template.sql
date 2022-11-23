@@ -91,10 +91,7 @@ CREATE TABLE api.soil (
 );
 
 
---CREATE VIEW api.train_data AS
---    SELECT *
---    FROM films
---    WHERE kind = 'Comedy';
+
 
 CREATE TABLE api.user_info (
     id SERIAL PRIMARY KEY,
@@ -118,24 +115,24 @@ CREATE TABLE api.weather_stations (
 
 CREATE TABLE api.weather (
     STATIONS_ID  BIGINT NOT NULL,
-    MESS_DATUM   timestamp NOT NULL,
+    timestamp   timestamp NOT NULL,
     QN_3         BIGINT,
     FX           FLOAT(53),
     FM           FLOAT(53),
     QN_4         BIGINT,
-    RSK          FLOAT(53),
+    rainfall_mm  FLOAT(53),
     RSKF         BIGINT,
     SDK          FLOAT(53),
     SHK_TAG      BIGINT,
     NM           BIGINT,
     VPM          FLOAT(53),
     PM           FLOAT(53),
-    TMK          FLOAT(53),
+    temp_avg     FLOAT(53),
     UPM          FLOAT(53),
-    TXK          FLOAT(53),
+    temp_max     FLOAT(53),
     TNK          FLOAT(53),
     TGK          FLOAT(53),
-    PRIMARY KEY(STATIONS_ID, MESS_DATUM)
+    PRIMARY KEY(STATIONS_ID, timestamp)
 );
 
 CREATE TABLE api.radolan (
@@ -152,7 +149,7 @@ CREATE TABLE api.shading (
     PRIMARY KEY(gml_id, month)
 );
 
-CREATE TABLE api.forecast_types (
+CREATE TABLE api.sensor_types (
 	id SMALLINT PRIMARY KEY,
 	name text NOT NULL
 );
@@ -160,7 +157,7 @@ CREATE TABLE api.forecast_types (
 CREATE TABLE api.forecast (
 	id SERIAL PRIMARY KEY,
 	baum_id TEXT REFERENCES api.trees(gml_id),
-	type_id SMALLINT REFERENCES api.forecast_types(id),
+	type_id SMALLINT REFERENCES api.sensor_types(id),
 	timestamp timestamp,
 	value FLOAT(53),
 	created_at timestamp,
@@ -170,15 +167,45 @@ CREATE TABLE api.forecast (
 CREATE TABLE api.nowcast (
 	id SERIAL PRIMARY KEY,
 	baum_id TEXT REFERENCES api.trees(gml_id),
-	type_id SMALLINT REFERENCES api.forecast_types(id),
+	type_id SMALLINT REFERENCES api.sensor_types(id),
 	timestamp timestamp,
 	value FLOAT(53),
 	created_at timestamp,
 	model_id text
 );
 
+-- views
+CREATE VIEW api.shading_wide AS
+SELECT tree_id, 
+       MAX(index) FILTER (WHERE month = 3) AS spring,
+       MAX(index) FILTER (WHERE month = 6) AS summer,
+       MAX(index) FILTER (WHERE month = 9) AS fall,
+       MAX(index) FILTER (WHERE month = 12) AS winter
+FROM api.shading
+GROUP BY tree_id;
 
-insert into api.forecast_types(id, name) values (1, 'saugspannung_30cm');
-insert into api.forecast_types(id, name) values (2, 'saugspannung_60cm');
-insert into api.forecast_types(id, name) values (3, 'saugspannung_90cm');
-insert into api.forecast_types(id, name) values (4, 'saugspannung_stamm');
+CREATE VIEW api.training_data AS
+SELECT sensor_measurements.tree_id, sensor_measurements.sensor_type, sensor_measurements.timestamp, sensor_measurements.value,
+		shading_wide.winter, shading_wide.spring, shading_wide.summer, shading_wide.fall,
+		trees.gattung_deutsch, trees.standalter,
+		weather.rainfall_mm, weather.temp_max, weather.temp_avg 
+FROM api.sensor_measurements
+LEFT JOIN api.shading_wide ON api.shading_wide.tree_id = sensor_measurements.tree_id
+LEFT JOIN api.trees ON trees.id = sensor_measurements.tree_id
+LEFT JOIN api.weather ON sensor_measurements.timestamp = weather.timestamp
+ORDER BY timestamp DESC
+
+CREATE VIEW api.test_data AS
+SELECT trees.id, trees.gattung_deutsch, trees.standalter,
+		shading_wide.winter, shading_wide.spring, shading_wide.summer, shading_wide.fall,
+		(SELECT weather.rainfall_mm  FROM api.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as rainfall_mm,
+		(SELECT weather.temp_avg  FROM api.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_mean,
+		(SELECT weather.temp_max FROM api.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_max
+FROM api.trees
+LEFT JOIN api.shading_wide ON api.shading_wide.tree_id = api.trees.id;
+
+
+insert into api.sensor_types(id, name) values (1, 'saugspannung_30cm');
+insert into api.sensor_types(id, name) values (2, 'saugspannung_60cm');
+insert into api.sensor_types(id, name) values (3, 'saugspannung_90cm');
+insert into api.sensor_types(id, name) values (4, 'saugspannung_stamm');
