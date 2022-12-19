@@ -5,3 +5,7 @@ export JWT_SECRET="secret_with_at_least_thirtytwo_chars"
 export POSTGRES_PASSWD="postgrespostgres"
 export DB_QTREES="localhost"
 export CMD_GIS_ADMIN="ALTER ROLE gis_admin SUPERUSER;" # local use
+
+export DB_ADMIN_PASSWD="adminadminadmin"
+export DB_USER_PASSWD="useruseruser"
+export UI_USER_PASSWD="uiuiuiuiui"
