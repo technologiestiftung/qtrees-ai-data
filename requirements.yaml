@@ -13,8 +13,8 @@ dependencies:
   - psycopg2=2.9.3
   - docopt=0.6.2
   - wradlib=1.16.1
-  - ipykernel=6.16.0
   - astral=3.0
   - fuzzywuzzy=0.18.0
   - thefuzz=0.19.0
+  - alembic=1.8.1
 prefix:
