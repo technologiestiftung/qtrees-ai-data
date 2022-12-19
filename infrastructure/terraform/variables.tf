@@ -22,6 +22,10 @@ variable "private_key" {
   sensitive   = true
 }
 
+variable "ELASTIC_IP_EC2" {
+  sensitive   = true
+}
+
 variable "GIS_PASSWD" {
   sensitive   = true
 }
