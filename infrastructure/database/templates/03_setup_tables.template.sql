@@ -117,8 +117,8 @@ CREATE TABLE api.weather (
     STATIONS_ID  BIGINT NOT NULL,
     timestamp   timestamp NOT NULL,
     QN_3         BIGINT,
-    FX           FLOAT(53),
-    FM           FLOAT(53),
+    wind_max_ms  FLOAT(53),
+    wind_mean_ms FLOAT(53),
     QN_4         BIGINT,
     rainfall_mm  FLOAT(53),
     RSKF         BIGINT,
@@ -127,9 +127,9 @@ CREATE TABLE api.weather (
     NM           BIGINT,
     VPM          FLOAT(53),
     PM           FLOAT(53),
-    temp_avg     FLOAT(53),
+    temp_avg_c   FLOAT(53),
     UPM          FLOAT(53),
-    temp_max     FLOAT(53),
+    temp_max_c   FLOAT(53),
     TNK          FLOAT(53),
     TGK          FLOAT(53),
     PRIMARY KEY(STATIONS_ID, timestamp)
@@ -188,7 +188,7 @@ CREATE VIEW api.training_data AS
 SELECT sensor_measurements.tree_id, sensor_measurements.sensor_type, sensor_measurements.timestamp, sensor_measurements.value,
 		shading_wide.winter, shading_wide.spring, shading_wide.summer, shading_wide.fall,
 		trees.gattung_deutsch, trees.standalter,
-		weather.rainfall_mm, weather.temp_max, weather.temp_avg 
+		weather.rainfall_mm, weather.temp_max_c, weather.temp_avg_c, weather.wind_max_ms, weather.wind 
 FROM api.sensor_measurements
 LEFT JOIN api.shading_wide ON api.shading_wide.tree_id = sensor_measurements.tree_id
 LEFT JOIN api.trees ON trees.id = sensor_measurements.tree_id
