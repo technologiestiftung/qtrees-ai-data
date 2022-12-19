@@ -22,6 +22,10 @@ variable "private_key" {
   sensitive   = true
 }
 
+variable "ELASTIC_IP_EC2" {
+  sensitive   = true
+}
+
 variable "GIS_PASSWD" {
   sensitive   = true
 }
@@ -29,6 +33,15 @@ variable "AUTH_PASSWD" {
   sensitive   = true
 }
 variable "JWT_SECRET" {
+  sensitive   = true
+}
+variable "DB_ADMIN_PASSWD" {
+  sensitive   = true
+}
+variable "DB_USER_PASSWD" {
+  sensitive   = true
+}
+variable "UI_USER_PASSWD" {
   sensitive   = true
 }
 

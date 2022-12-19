@@ -30,6 +30,7 @@ def main():
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
+    logger.debug("Prepare shading index")
     sunindex_df = get_sunindex_df(shadow_index_file)
     sunindex_df_long = pd.melt(sunindex_df, ignore_index=False, value_vars=["spring", "summer", "autumn", "winter"],
                                value_name="index", var_name="month") \
@@ -38,10 +39,10 @@ def main():
 
     logger.info("Writing into db")
     try:
-        sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="api", index=False)
+       sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="api", index=False)
     except Exception as e:
-        logger.error("Cannot write to db: %s", e)
-        exit(121)
+       logger.error("Cannot write to db: %s", e)
+       exit(121)
 
 
 if __name__ == "__main__":

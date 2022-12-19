@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Download tree data and store into db.
+Download wheather data and store into db.
 Usage:
   script_store_trees_in_db.py [--db_qtrees=DB_QTREES]
   script_store_trees_in_db.py (-h | --help)

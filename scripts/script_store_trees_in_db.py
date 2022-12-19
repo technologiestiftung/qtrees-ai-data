@@ -34,7 +34,7 @@ def main():
     )
 
     do_update = True
-    logger.debug("Check if table exists")
+    logger.debug("Check if data already exists")
     if sqlalchemy.inspect(engine).has_table("trees", schema="api"):
         with engine.connect() as con:
             rs = con.execute('select COUNT(id) from api.trees')
@@ -47,8 +47,6 @@ def main():
         logger.debug("Do update")
         data_file = os.path.join(data_directory, "trees_gdf_all.geojson")
         joined_trees = get_trees(data_file)
-
-        
         logger.info("The following trees are duplicates: %s", joined_trees[joined_trees.duplicated(['id'], keep=False)].id.values)
         joined_trees = joined_trees.drop_duplicates(subset="id")
 

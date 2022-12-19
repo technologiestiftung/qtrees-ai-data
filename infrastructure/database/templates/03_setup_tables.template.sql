@@ -33,7 +33,7 @@ CREATE TABLE api.trees (
 );
 
 CREATE TABLE api.soil (
-     id          TEXT PRIMARY KEY, 
+     id              TEXT PRIMARY KEY,
      schl5           BIGINT,
      nutz            FLOAT(53),
      nutz_bez        TEXT,
@@ -90,17 +90,21 @@ CREATE TABLE api.soil (
 );
 
 
---CREATE VIEW api.train_data AS
---    SELECT *
---    FROM films
---    WHERE kind = 'Comedy';
+CREATE TABLE "api"."issue_types" (
+	"id" int4 NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"image_url" text,
+	PRIMARY KEY ("id")
+);
 
-CREATE TABLE api.user_info (
-    id SERIAL PRIMARY KEY,
-    tree_id TEXT REFERENCES api.trees (id),
-    nutzer_id TEXT,
-    merkmal TEXT,
-    wert TEXT
+
+CREATE TABLE "api"."issues" (
+	"id" int4 NOT NULL,
+	"issue_type_id" int4 NOT NULL,
+	"created_at" timestamptz NOT NULL DEFAULT now(),
+	"tree_id" text NOT NULL,
+	PRIMARY KEY ("id")
 );
 
 CREATE TABLE api.weather_stations (
@@ -116,7 +120,7 @@ CREATE TABLE api.weather_stations (
 );
 
 CREATE TABLE api.weather (
-    weather_stations_id  BIGINT REFERENCES api.weather_stations (id),
+    STATIONS_ID  BIGINT REFERENCES api.weather_stations (id),
     MESS_DATUM   timestamp NOT NULL,
     QN_3         BIGINT,
     FX           FLOAT(53),
@@ -181,3 +185,9 @@ insert into api.forecast_types(id, name) values (1, 'saugspannung_30cm');
 insert into api.forecast_types(id, name) values (2, 'saugspannung_60cm');
 insert into api.forecast_types(id, name) values (3, 'saugspannung_90cm');
 insert into api.forecast_types(id, name) values (4, 'saugspannung_stamm');
+
+
+INSERT INTO "api"."issue_types" ("id", "title", "description", "image_url")
+	VALUES (1, 'Hängende Blätter', 'Hängende Blätter könnten ein Mangel am Wasser andeuten. Melde es bitte wenn diesen Baum hängende Blätter hat.', 'https://gxnammfgdsvewxxiuppl.supabase.co/storage/v1/object/sign/issue_images/Screenshot 2022-08-16 at 13.28.03.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJpc3N1ZV9pbWFnZXMvU2NyZWVuc2hvdCAyMDIyLTA4LTE2IGF0IDEzLjI4LjAzLnBuZyIsImlhdCI6MTY2MDc0MjQyOCwiZXhwIjoxOTc2MTAyNDI4fQ.3nppuaaij-MiI6QtAt6mExjme3awUGpKuiUSPt6POhs'),
+	(2, 'Insekten Invasion', 'Insekten Invasionen könnten ein Mangel am Wasser andeuten. Melde es bitte wenn diesen Baum eine Insekten Invasion hat.', 'https://gxnammfgdsvewxxiuppl.supabase.co/storage/v1/object/sign/issue_images/invasive-species-stink-bug-2381890735.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJpc3N1ZV9pbWFnZXMvaW52YXNpdmUtc3BlY2llcy1zdGluay1idWctMjM4MTg5MDczNS5qcGciLCJpYXQiOjE2NjExNzQzODUsImV4cCI6MTk3NjUzNDM4NX0.iSSxgFlmnZJqlkSwTkNb_1pTHPQepaX2JVzuIXMihuw'),
+	(3, 'Baumschaden', 'Baumschäden könnten die Fähigkeit eines Baumes verhindern, Wasser ordentlich aufzunehmen. Melde es bitte wenn diesen Baum einen Schaden hat.', 'https://gxnammfgdsvewxxiuppl.supabase.co/storage/v1/object/sign/issue_images/leitschadbaum012020_1-2445280091.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJpc3N1ZV9pbWFnZXMvbGVpdHNjaGFkYmF1bTAxMjAyMF8xLTI0NDUyODAwOTEuanBnIiwiaWF0IjoxNjYxMTc0NzE2LCJleHAiOjE5NzY1MzQ3MTZ9.nIqml2B2RVMVib7BPkRea0CYRc307Jmppx0yM30HEPU');
