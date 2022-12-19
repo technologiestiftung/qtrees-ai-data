@@ -6,8 +6,7 @@ CREATE EXTENSION postgis_topology;
 CREATE SCHEMA api;
 --
 CREATE TABLE api.trees (
-    gml_id TEXT PRIMARY KEY,
-    baumid TEXT,
+    id TEXT PRIMARY KEY,
     standortnr TEXT,
     kennzeich TEXT,
     namenr TEXT,
@@ -34,7 +33,7 @@ CREATE TABLE api.trees (
 );
 
 CREATE TABLE api.soil (
-     gml_id          TEXT, -- this not the tree id
+     id              TEXT PRIMARY KEY,
      schl5           BIGINT,
      nutz            FLOAT(53),
      nutz_bez        TEXT,
@@ -90,9 +89,6 @@ CREATE TABLE api.soil (
      updated_at      DATE
 );
 
-
-
-
 CREATE TABLE api.user_info (
     id SERIAL PRIMARY KEY,
     gml_id TEXT REFERENCES api.trees (gml_id),
@@ -102,19 +98,19 @@ CREATE TABLE api.user_info (
 );
 
 CREATE TABLE api.weather_stations (
-    Stations_id   BIGINT PRIMARY KEY,
+    id   BIGINT PRIMARY KEY,
     von_datum     DATE,
     bis_datum     DATE,
     Stationshoehe bigint,
-    geoBreite     FLOAT(53),
-    geoLaenge     FLOAT(53),
+    lat     FLOAT(53),
+    lon     FLOAT(53),
     Stationsname  text,
     Bundesland    text,
     geometry geometry(POINT,4326)
 );
 
 CREATE TABLE api.weather (
-    STATIONS_ID  BIGINT NOT NULL,
+    STATIONS_ID  BIGINT REFERENCES api.weather_stations (id),
     timestamp   timestamp NOT NULL,
     QN_3         BIGINT,
     wind_max_ms  FLOAT(53),
@@ -136,17 +132,37 @@ CREATE TABLE api.weather (
 );
 
 CREATE TABLE api.radolan (
-    id SERIAL PRIMARY KEY,
+    grid_id  BIGINT NOT NULL,
+    timestamp   timestamp NOT NULL,
     rainfall_mm FLOAT(53),
-    geometry    geometry(Polygon,4326),
-    timestamp   timestamp
+    PRIMARY KEY(grid_id, timestamp)
 );
 
+CREATE TABLE api.radolan_grid (
+    id BIGINT PRIMARY KEY,
+    geometry  geometry(Polygon,4326)
+);
+
+CREATE TABLE api.tree_radolan (
+    tree_id TEXT REFERENCES api.trees(id),
+    grid_id  BIGINT REFERENCES api.radolan_grid(id),
+    PRIMARY KEY(tree_id, grid_id)
+);
+
+CREATE TABLE api.tree_devices (
+    tree_id TEXT REFERENCES api.trees(id),
+    customer_id BIGINT REFERENCES api.customers(id),
+    device_id  BIGINT,
+    site_id BIGINT
+    PRIMARY KEY(tree_id)
+);
+
+
 CREATE TABLE api.shading (
-    gml_id TEXT REFERENCES api.trees(gml_id),
+    tree_id TEXT REFERENCES api.trees(id),
     month SMALLINT,
     index FLOAT(53),
-    PRIMARY KEY(gml_id, month)
+    PRIMARY KEY(tree_id, month)
 );
 
 CREATE TABLE api.sensor_types (
@@ -154,9 +170,14 @@ CREATE TABLE api.sensor_types (
 	name text NOT NULL
 );
 
+CREATE TABLE api.customers (
+	id SMALLINT PRIMARY KEY,
+	name text NOT NULL
+);
+
 CREATE TABLE api.forecast (
 	id SERIAL PRIMARY KEY,
-	baum_id TEXT REFERENCES api.trees(gml_id),
+	tree_id TEXT REFERENCES api.trees(id),
 	type_id SMALLINT REFERENCES api.sensor_types(id),
 	timestamp timestamp,
 	value FLOAT(53),
@@ -166,7 +187,7 @@ CREATE TABLE api.forecast (
 
 CREATE TABLE api.nowcast (
 	id SERIAL PRIMARY KEY,
-	baum_id TEXT REFERENCES api.trees(gml_id),
+	tree_id TEXT REFERENCES api.trees(id),
 	type_id SMALLINT REFERENCES api.sensor_types(id),
 	timestamp timestamp,
 	value FLOAT(53),
@@ -184,16 +205,26 @@ SELECT tree_id,
 FROM api.shading
 GROUP BY tree_id;
 
+CREATE VIEW api.weather_14d_agg AS
+select timestamp, 
+		sum(rainfall_mm) OVER(ORDER BY timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as rainfall_mm_14d_sum, 
+		avg(temp_avg_c) OVER(ORDER BY timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as temp_avg_c_14d_avg,
+		avg(wind_mean_ms) OVER(ORDER BY timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as wind_avg_ms_14d_avg,
+		avg(temp_max_c) OVER(ORDER BY timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as temp_max_c_14d_avg,
+		avg(wind_max_ms) OVER(ORDER BY timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as wind_max_ms_14d_avg
+from api.weather
+where stations_id = 433;
+
 CREATE VIEW api.training_data AS
 SELECT sensor_measurements.tree_id, sensor_measurements.sensor_type, sensor_measurements.timestamp, sensor_measurements.value,
 		shading_wide.winter, shading_wide.spring, shading_wide.summer, shading_wide.fall,
 		trees.gattung_deutsch, trees.standalter,
-		weather.rainfall_mm, weather.temp_max_c, weather.temp_avg_c, weather.wind_max_ms, weather.wind 
+		weather_14d_agg.temp_avg_c_14d_avg, weather_14d_agg.wind_avg_ms_14d_avg, weather_14d_agg.temp_max_c_14d_avg, weather_14d_agg.wind_max_ms_14d_avg 
 FROM api.sensor_measurements
 LEFT JOIN api.shading_wide ON api.shading_wide.tree_id = sensor_measurements.tree_id
 LEFT JOIN api.trees ON trees.id = sensor_measurements.tree_id
-LEFT JOIN api.weather ON sensor_measurements.timestamp = weather.timestamp
-ORDER BY timestamp DESC
+LEFT JOIN api.weather_14d_agg ON sensor_measurements.timestamp = weather_14d_agg.timestamp
+ORDER BY timestamp DESC;
 
 CREATE VIEW api.test_data AS
 SELECT trees.id, trees.gattung_deutsch, trees.standalter,
@@ -209,3 +240,6 @@ insert into api.sensor_types(id, name) values (1, 'saugspannung_30cm');
 insert into api.sensor_types(id, name) values (2, 'saugspannung_60cm');
 insert into api.sensor_types(id, name) values (3, 'saugspannung_90cm');
 insert into api.sensor_types(id, name) values (4, 'saugspannung_stamm');
+
+insert into api.customers(id, name) values (2, "Mitte")
+insert into api.customers(id, name) values (3, "Neukölln")
