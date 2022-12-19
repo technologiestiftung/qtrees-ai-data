@@ -30,7 +30,7 @@ def main():
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
-    logger.debux("Prepare shading index")
+    logger.debug("Prepare shading index")
     sunindex_df = get_sunindex_df(shadow_index_file)
     sunindex_df_long = pd.melt(sunindex_df, ignore_index=False, value_vars=["spring", "summer", "autumn", "winter"],
                                value_name="index", var_name="month") \
