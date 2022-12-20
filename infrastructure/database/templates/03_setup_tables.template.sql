@@ -91,7 +91,7 @@ CREATE TABLE api.soil (
 
 CREATE TABLE api.user_info (
     id SERIAL PRIMARY KEY,
-    gml_id TEXT REFERENCES api.trees (gml_id),
+    tree_id TEXT REFERENCES api.trees(id),
     nutzer_id TEXT,
     merkmal TEXT,
     wert TEXT
@@ -149,14 +149,18 @@ CREATE TABLE api.tree_radolan (
     PRIMARY KEY(tree_id, grid_id)
 );
 
+CREATE TABLE api.customers (
+	id SMALLINT PRIMARY KEY,
+	name text NOT NULL
+);
+
 CREATE TABLE api.tree_devices (
     tree_id TEXT REFERENCES api.trees(id),
     customer_id BIGINT REFERENCES api.customers(id),
     device_id  BIGINT,
-    site_id BIGINT
+    site_id BIGINT,
     PRIMARY KEY(tree_id)
 );
-
 
 CREATE TABLE api.shading (
     tree_id TEXT REFERENCES api.trees(id),
@@ -170,9 +174,12 @@ CREATE TABLE api.sensor_types (
 	name text NOT NULL
 );
 
-CREATE TABLE api.customers (
-	id SMALLINT PRIMARY KEY,
-	name text NOT NULL
+CREATE TABLE api.sensor_measurements (
+	tree_id TEXT REFERENCES api.trees(id),
+	sensor_id SMALLINT REFERENCES api.sensor_types(id),
+	timestamp timestamp,
+	value FLOAT(53),
+    PRIMARY KEY(tree_id, sensor_id, timestamp)
 );
 
 CREATE TABLE api.forecast (
@@ -216,7 +223,7 @@ from api.weather
 where stations_id = 433;
 
 CREATE VIEW api.training_data AS
-SELECT sensor_measurements.tree_id, sensor_measurements.sensor_type, sensor_measurements.timestamp, sensor_measurements.value,
+SELECT sensor_measurements.tree_id, sensor_measurements.sensor_id, sensor_measurements.timestamp, sensor_measurements.value,
 		shading_wide.winter, shading_wide.spring, shading_wide.summer, shading_wide.fall,
 		trees.gattung_deutsch, trees.standalter,
 		weather_14d_agg.temp_avg_c_14d_avg, weather_14d_agg.wind_avg_ms_14d_avg, weather_14d_agg.temp_max_c_14d_avg, weather_14d_agg.wind_max_ms_14d_avg 
@@ -230,8 +237,8 @@ CREATE VIEW api.test_data AS
 SELECT trees.id, trees.gattung_deutsch, trees.standalter,
 		shading_wide.winter, shading_wide.spring, shading_wide.summer, shading_wide.fall,
 		(SELECT weather.rainfall_mm  FROM api.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as rainfall_mm,
-		(SELECT weather.temp_avg  FROM api.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_mean,
-		(SELECT weather.temp_max FROM api.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_max
+		(SELECT weather.temp_avg_c  FROM api.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_mean,
+		(SELECT weather.temp_max_c FROM api.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_max
 FROM api.trees
 LEFT JOIN api.shading_wide ON api.shading_wide.tree_id = api.trees.id;
 
@@ -241,5 +248,5 @@ insert into api.sensor_types(id, name) values (2, 'saugspannung_60cm');
 insert into api.sensor_types(id, name) values (3, 'saugspannung_90cm');
 insert into api.sensor_types(id, name) values (4, 'saugspannung_stamm');
 
-insert into api.customers(id, name) values (2, "Mitte")
-insert into api.customers(id, name) values (3, "Neukölln")
+insert into api.customers(id, name) values (2, 'Mitte');
+insert into api.customers(id, name) values (3, 'Neukölln');
