@@ -153,7 +153,7 @@ CREATE TABLE api.tree_devices (
     customer_id BIGINT REFERENCES api.customers(id),
     device_id  BIGINT,
     site_id BIGINT,
-    PRIMARY KEY(tree_id)
+    PRIMARY KEY(tree_id, customer_id, device_id, site_id)
 );
 
 CREATE TABLE api.shading (
