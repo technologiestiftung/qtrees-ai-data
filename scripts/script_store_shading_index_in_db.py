@@ -5,10 +5,10 @@ Usage:
   script_store_trees_in_db.py [--shadow_index_file=DATA_DIRECTORY] [--db_qtrees=DB_QTREES]
   script_store_trees_in_db.py (-h | --help)
 Options:
-  --shadow_index_file=DATA_DIRECTORY              Directory for data [default: .data/berlin_shadow_index.csv]
+  --shadow_index_file=DATA_DIRECTORY              Directory for data [default: data/berlin_shadow_index.csv]
   --db_qtrees=DB_QTREES                           Database name [default:]
 """
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from docopt import docopt, DocoptExit
 from qtrees.helper import get_logger, init_db_args
 from qtrees.shading_index import get_sunindex_df
@@ -31,14 +31,25 @@ def main():
     )
 
     sunindex_df = get_sunindex_df(shadow_index_file)
+
+    with engine.connect() as con:
+        result = con.execute('select id from api.trees')
+        trees = [t[0] for t in list(result.fetchall())]
+
     sunindex_df_long = pd.melt(sunindex_df, ignore_index=False, value_vars=["spring", "summer", "autumn", "winter"],
                                value_name="index", var_name="month") \
         .replace({"month": {"spring": 3, "summer": 6, "autumn": 9, "winter": 12, }}) \
-        .reset_index().rename(columns={"level_0": "baum_id"})
+        .reset_index().rename(columns={"level_0": "tree_id"})
 
+    sunindex_df_long = sunindex_df_long[sunindex_df_long.tree_id.isin(trees)]
+    
     logger.info("Writing into db")
     try:
-        sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="api", index=False)
+        if inspect(engine).has_table("shading", schema="api"):
+            with engine.connect() as con:
+                result = con.execute('TRUNCATE TABLE api.shading CASCADE')
+
+        sunindex_df_long.to_sql("shading", engine, schema="api", index=False)
     except Exception as e:
         logger.error("Cannot write to db: %s", e)
         exit(121)

@@ -66,7 +66,7 @@ def calculate_sun_index(seasons_theoretical_daylight, sun_hours_map_directory, t
 def get_sunindex_df(shadow_index_file):
     if not os.path.isfile(shadow_index_file):
         # create json with baumid as key and coordinates as value
-        trees_df = get_trees(trees_file, "both")
+        trees_df = get_trees(trees_file)
         simplified_df = trees_df[["gml_id", "geometry"]]
         trees_dict = {}
         for baumid, coordinate in simplified_df.itertuples(index=False):
