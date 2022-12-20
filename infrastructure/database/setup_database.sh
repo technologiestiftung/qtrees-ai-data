@@ -5,7 +5,8 @@ schema_exists=$(PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432
 
 if [ "$schema_exists" -eq "1" ]
 then
-  echo DB already exists. Skipping.
+  echo DB already exists. Skipping create statements. Only updating views.
+  PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 --username=postgres --dbname=qtrees -a -f 07_create_or_update_views.sql
 else
   echo -e "${RED}############ Setting up GIS ${NC}"
   sleep 3

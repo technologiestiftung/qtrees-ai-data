@@ -99,10 +99,13 @@ def main():
                     radolan_gdf_grid = radolan_gdf_grid[~radolan_gdf_grid.id.isin(tiles)]
                     logger.debug(f"Storing {len(radolan_gdf_grid)} new tiles to the database.")
                     radolan_gdf_grid[["id", "geometry"]].to_postgis("radolan_grid", engine, if_exists="append", schema="api")
+
                     first_iteration=False
 
                 radolan_gdf = radolan_gdf.rename(columns={"index": "grid_id"})
                 radolan_gdf[["grid_id", "timestamp", "rainfall_mm"]].to_sql("radolan", engine, if_exists="append", schema="api", index=False)
+
+                break
             last_date += delta
     except Exception as e:
         logger.error("Cannot write to db: %s", e)
