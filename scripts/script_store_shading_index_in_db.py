@@ -49,7 +49,7 @@ def main():
             with engine.connect() as con:
                 result = con.execute('TRUNCATE TABLE api.shading CASCADE')
 
-        sunindex_df_long.to_sql("shading", engine, schema="api", index=False)
+        sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="api", index=False)
     except Exception as e:
         logger.error("Cannot write to db: %s", e)
         exit(121)

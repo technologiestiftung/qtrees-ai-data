@@ -126,6 +126,7 @@ In the same shell run:
 - run `python scripts/script_store_soil_in_db.py` to get soil data into db (once)
 - run `python scripts/script_store_wheather_observations.py` to store latest data from weather stations
 - run `python scripts/script_store_radolan_in_db.py` to store latest radolan data
+- run `python scripts/script_store_shading_index_in_db.py` to store the shading index
 
 **Note: Die RDS-Instanz ist gerade sehr klein was Ressourcen angeht (aber dafür günstig).
 Deswegen kann das Schreiben in die DB recht lange dauern.
@@ -257,6 +258,7 @@ From the project root directory, execute the following steps in the **same shell
 - run `python scripts/script_store_soil_in_db.py` to get soil data into db (once)
 - run `python scripts/script_store_wheather_observations.py` to store latest data from weather stations
 - run `python scripts/script_store_radolan_in_db.py` to store latest radolan data
+- run `python scripts/script_store_shading_index_in_db.py` to store the shading index
 - restart docker to make changes available to other services via `docker-compose -f docker-compose.local.yml restart`
 
 

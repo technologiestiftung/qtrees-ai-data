@@ -132,13 +132,13 @@ CREATE TABLE api.weather (
 );
 
 CREATE TABLE api.radolan (
-    tile_id  BIGINT NOT NULL,
+    tile_id  BIGINT REFERENCES api.radolan_tiles(id),
     timestamp   timestamp NOT NULL,
     rainfall_mm FLOAT(53),
     PRIMARY KEY(tile_id, timestamp)
 );
 
-CREATE TABLE api.radolan_tile (
+CREATE TABLE api.radolan_tiles (
     id BIGINT PRIMARY KEY,
     geometry  geometry(Polygon,4326)
 );

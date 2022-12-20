@@ -93,17 +93,17 @@ def main():
 
                 if first_iteration:
                     with engine.connect() as con:
-                        result = con.execute('select id from api.radolan_grid')
+                        result = con.execute('select id from api.radolan_tiles')
                         tiles = [t[0] for t in list(result.fetchall())]
                     radolan_gdf_grid = radolan_gdf.rename(columns={"index": "id"})
                     radolan_gdf_grid = radolan_gdf_grid[~radolan_gdf_grid.id.isin(tiles)]
                     logger.debug(f"Storing {len(radolan_gdf_grid)} new tiles to the database.")
-                    radolan_gdf_grid[["id", "geometry"]].to_postgis("radolan_grid", engine, if_exists="append", schema="api")
+                    radolan_gdf_grid[["id", "geometry"]].to_postgis("radolan_tiles", engine, if_exists="append", schema="api")
 
                     first_iteration=False
 
-                radolan_gdf = radolan_gdf.rename(columns={"index": "grid_id"})
-                radolan_gdf[["grid_id", "timestamp", "rainfall_mm"]].to_sql("radolan", engine, if_exists="append", schema="api", index=False)
+                radolan_gdf = radolan_gdf.rename(columns={"index": "tile_id"})
+                radolan_gdf[["tile_id", "timestamp", "rainfall_mm"]].to_sql("radolan", engine, if_exists="append", schema="api", index=False)
 
                 break
             last_date += delta
