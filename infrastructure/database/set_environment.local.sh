@@ -6,3 +6,7 @@ export POSTGRES_PASSWD="postgrespostgres"
 export DB_QTREES="localhost"
 export DB_DOCKER=$DB_QTREES #only for docker
 export CMD_GIS_ADMIN="ALTER ROLE gis_admin SUPERUSER;" # local use
+
+export DB_ADMIN_PASSWD="adminadminadmin"
+export DB_USER_PASSWD="useruseruser"
+export UI_USER_PASSWD="uiuiuiuiui"

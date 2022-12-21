@@ -2,10 +2,10 @@
 """
 Download tree data and store into db.
 Usage:
-  script_store_trees_in_db.py [--shadow_index_file=DATA_DIRECTORY] [--db_qtrees=DB_QTREES]
+  script_store_trees_in_db.py [--shadow_index_file=SHADOW_INDEX_FILE] [--db_qtrees=DB_QTREES]
   script_store_trees_in_db.py (-h | --help)
 Options:
-  --shadow_index_file=DATA_DIRECTORY              Directory for data [default: data/berlin_shadow_index.csv]
+  --shadow_index_file=SHADOW_INDEX_FILE           Directory for data [default: data/shading/berlin_shadow_index.csv]
   --db_qtrees=DB_QTREES                           Database name [default:]
 """
 from sqlalchemy import create_engine, inspect
@@ -30,6 +30,7 @@ def main():
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
+    logger.debug("Prepare shading index")
     sunindex_df = get_sunindex_df(shadow_index_file)
 
     with engine.connect() as con:
@@ -51,8 +52,8 @@ def main():
 
         sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="api", index=False)
     except Exception as e:
-        logger.error("Cannot write to db: %s", e)
-        exit(121)
+       logger.error("Cannot write to db: %s", e)
+       exit(121)
 
 
 if __name__ == "__main__":

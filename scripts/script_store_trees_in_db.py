@@ -34,7 +34,7 @@ def main():
     )
 
     do_update = True
-    logger.debug("Check if table exists")
+    logger.debug("Check if data already exists")
     if sqlalchemy.inspect(engine).has_table("trees", schema="api"):
         with engine.connect() as con:
             rs = con.execute('select COUNT(id) from api.trees')

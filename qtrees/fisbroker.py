@@ -44,6 +44,8 @@ def get_trees(trees_file):
         date = datetime.now().date().strftime('%Y-%m-%d')
         trees_gdf['created_at'] = date
         trees_gdf['updated_at'] = date
+        trees_gdf = trees_gdf.rename(columns={"baumid": "id"})
+        trees_gdf = trees_gdf.drop('gml_id', axis=1)
 
         logger.debug("Saving trees geo data frames to %s.", trees_file)
         trees_gdf.to_file(trees_file, driver='GeoJSON')
