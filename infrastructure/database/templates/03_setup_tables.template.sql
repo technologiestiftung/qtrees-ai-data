@@ -7,7 +7,6 @@ CREATE SCHEMA api;
 --
 CREATE TABLE api.trees (
     id TEXT PRIMARY KEY,
-    id TEXT PRIMARY KEY,
     standortnr TEXT,
     kennzeich TEXT,
     namenr TEXT,
@@ -34,7 +33,6 @@ CREATE TABLE api.trees (
 );
 
 CREATE TABLE api.soil (
-     id              TEXT PRIMARY KEY,
      id              TEXT PRIMARY KEY,
      schl5           BIGINT,
      nutz            FLOAT(53),
@@ -111,12 +109,9 @@ CREATE TABLE "api"."issues" (
 
 CREATE TABLE api.weather_stations (
     id   BIGINT PRIMARY KEY,
-    id   BIGINT PRIMARY KEY,
     von_datum     DATE,
     bis_datum     DATE,
     Stationshoehe bigint,
-    lat     FLOAT(53),
-    lon     FLOAT(53),
     lat     FLOAT(53),
     lon     FLOAT(53),
     Stationsname  text,
@@ -173,10 +168,8 @@ CREATE TABLE api.tree_devices (
 
 CREATE TABLE api.shading (
     tree_id TEXT REFERENCES api.trees(id),
-    tree_id TEXT REFERENCES api.trees(id),
     month SMALLINT,
     index FLOAT(53),
-    PRIMARY KEY(tree_id, month)
     PRIMARY KEY(tree_id, month)
 );
 
@@ -219,12 +212,6 @@ insert into api.sensor_types(id, name) values (1, 'saugspannung_30cm');
 insert into api.sensor_types(id, name) values (2, 'saugspannung_60cm');
 insert into api.sensor_types(id, name) values (3, 'saugspannung_90cm');
 insert into api.sensor_types(id, name) values (4, 'saugspannung_stamm');
-
-insert into api.forecast_types(id, name) values (1, 'saugspannung_30cm');
-insert into api.forecast_types(id, name) values (2, 'saugspannung_60cm');
-insert into api.forecast_types(id, name) values (3, 'saugspannung_90cm');
-insert into api.forecast_types(id, name) values (4, 'saugspannung_stamm');
-
 
 INSERT INTO "api"."issue_types" ("id", "title", "description", "image_url")
 	VALUES (1, 'Hängende Blätter', 'Hängende Blätter könnten ein Mangel am Wasser andeuten. Melde es bitte wenn diesen Baum hängende Blätter hat.', 'https://gxnammfgdsvewxxiuppl.supabase.co/storage/v1/object/sign/issue_images/Screenshot 2022-08-16 at 13.28.03.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJpc3N1ZV9pbWFnZXMvU2NyZWVuc2hvdCAyMDIyLTA4LTE2IGF0IDEzLjI4LjAzLnBuZyIsImlhdCI6MTY2MDc0MjQyOCwiZXhwIjoxOTc2MTAyNDI4fQ.3nppuaaij-MiI6QtAt6mExjme3awUGpKuiUSPt6POhs'),
