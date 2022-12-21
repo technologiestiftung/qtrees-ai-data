@@ -170,10 +170,11 @@ CREATE TABLE api.sensor_types (
 
 CREATE TABLE api.sensor_measurements (
 	tree_id TEXT REFERENCES api.trees(id),
-	sensor_id SMALLINT REFERENCES api.sensor_types(id),
+    type_id SMALLINT REFERENCES api.sensor_types(id),
+	sensor_id SMALLINT,
 	timestamp timestamp,
 	value FLOAT(53),
-    PRIMARY KEY(tree_id, sensor_id, timestamp)
+    PRIMARY KEY(tree_id, type_id, timestamp)
 );
 
 CREATE TABLE api.forecast (
