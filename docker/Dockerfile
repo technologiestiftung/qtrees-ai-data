@@ -2,7 +2,7 @@ FROM python:3.10-alpine
 
 WORKDIR /
 
-COPY scripts/* .
+COPY scripts/* ./
 
 RUN pip install --no-cache-dir boto3
 
