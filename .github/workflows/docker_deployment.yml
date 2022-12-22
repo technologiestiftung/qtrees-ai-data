@@ -96,3 +96,6 @@ jobs:
   #         service: ${{ env.ECS_SERVICE }}
   #         cluster: ${{ env.ECS_CLUSTER }}
   #         wait-for-service-stability: true
+
+  # TODO: Trigger container after Deploy?
+  # TODO: after deployment some check if it worked out in database?
