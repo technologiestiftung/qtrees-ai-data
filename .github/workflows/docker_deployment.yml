@@ -21,7 +21,7 @@ env:
   ECS_CLUSTER: MY_ECS_CLUSTER                 # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION: MY_ECS_TASK_DEFINITION # set this to the path to your Amazon ECS task definition
                                                # file, e.g. .aws/task-definition.json
-  CONTAINER_NAME: MY_CONTAINER_NAME           # set this to the name of the container in the
+  CONTAINER_NAME: qtrees_test_container           # set this to the name of the container in the
                                                # containerDefinitions section of your task definition
 
 jobs:
@@ -42,14 +42,14 @@ jobs:
       run: |
         pytest
 
-  # deploy-docker-image:
-  #   name: Deploy
-  #   runs-on: ubuntu-latest
-  #   # environment: production
-  #   needs: unittests
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+  deploy-docker-image:
+    name: Deploy
+    runs-on: ubuntu-latest
+    # environment: production
+    needs: unittests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
   #     - name: Configure AWS credentials
   #       uses: aws-actions/configure-aws-credentials@13d241b293754004c80624b5567555c4a39ffbe3
@@ -62,18 +62,24 @@ jobs:
   #       id: login-ecr
   #       uses: aws-actions/amazon-ecr-login@aaf69d68aa3fb14c1d5a6be9ac61fe15b48453a2
 
-  #     - name: Build, tag, and push image to Amazon ECR
-  #       id: build-image
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #         IMAGE_TAG: ${{ github.sha }}
-  #       run: |
-  #         # Build a docker container and
-  #         # push it to ECR so that it can
-  #         # be deployed to ECS.
-  #         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-  #         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: FAKE_REGISTRY
+          # ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build a docker container and
+          docker build -f docker/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker run qtrees-image test_script.py
+
+        # run: |
+        #   # Build a docker container and
+        #   # push it to ECR so that it can
+        #   # be deployed to ECS.
+        #   docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        #   docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        #   echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   #     - name: Fill in the new image ID in the Amazon ECS task definition
   #       id: task-def
