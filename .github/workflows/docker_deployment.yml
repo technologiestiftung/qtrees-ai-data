@@ -71,7 +71,7 @@ jobs:
         run: |
           # Build a docker container and
           docker build -f docker/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker run $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG test_script.py
+          docker run $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG dummy_script.py
 
         # run: |
         #   # Build a docker container and

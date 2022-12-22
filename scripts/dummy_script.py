@@ -1,3 +1,3 @@
 import boto3
 
-print("Test script exec successfull!")
+print("Test script exec successful!")
