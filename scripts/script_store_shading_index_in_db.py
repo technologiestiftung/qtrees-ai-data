@@ -39,7 +39,7 @@ def main():
 
     logger.info("Writing into db")
     try:
-       sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="api", index=False)
+       sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="public", index=False)
     except Exception as e:
        logger.error("Cannot write to db: %s", e)
        exit(121)
