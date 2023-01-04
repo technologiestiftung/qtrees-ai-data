@@ -36,7 +36,6 @@ grant all on public.weather_stations to ai_user;
 grant select on public.issue_types to ai_user;
 grant select on public.issues to ai_user;
 
-
 create role ui_user nologin;
 grant ui_user to authenticator;
 
@@ -52,3 +51,4 @@ grant select on public.weather to ui_user;
 grant select on public.weather_stations to ui_user;
 grant select on public.issue_types to ui_user;
 grant all on public.issues to ui_user;
+

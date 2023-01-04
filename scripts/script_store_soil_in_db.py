@@ -60,6 +60,7 @@ def main():
         soil_gdf = soil_gdf.rename(columns={"gml_id": "id"})
         soil_gdf['created_at'] = date
         soil_gdf['updated_at'] = date
+        soil_gdf = soil_gdf.rename(columns={"gml_id": "id"})
 
         logger.info("Writing into db")
         try:

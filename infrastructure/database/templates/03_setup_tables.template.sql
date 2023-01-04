@@ -140,11 +140,18 @@ CREATE TABLE public.weather (
     PRIMARY KEY(STATIONS_ID, timestamp)
 );
 
+
 CREATE TABLE public.radolan (
     id SERIAL PRIMARY KEY,
+    tile_id  BIGINT REFERENCES api.radolan_tiles(id),
+    timestamp   timestamp NOT NULL,
     rainfall_mm FLOAT(53),
-    geometry    geometry(Polygon,4326),
-    timestamp   timestamp
+    PRIMARY KEY(tile_id, timestamp)
+);
+
+CREATE TABLE public.radolan_tiles (
+    id BIGINT PRIMARY KEY,
+    geometry  geometry(Polygon,4326)
 );
 
 CREATE TABLE public.shading (
@@ -159,6 +166,7 @@ CREATE TABLE public.sensor_types (
 	name text NOT NULL
 );
 
+
 CREATE TABLE public.forecast (
 	id SERIAL PRIMARY KEY,
 	tree_id TEXT REFERENCES public.trees(id),
@@ -171,6 +179,7 @@ CREATE TABLE public.forecast (
 
 CREATE TABLE public.nowcast (
 	id SERIAL PRIMARY KEY,
+
 	tree_id TEXT REFERENCES public.trees(id),
 	type_id SMALLINT REFERENCES public.sensor_types(id),
 	timestamp timestamp,
@@ -179,6 +188,7 @@ CREATE TABLE public.nowcast (
 	model_id text
 );
 
+-- some initial data
 insert into public.sensor_types(id, name) values (1, 'saugspannung_30cm');
 insert into public.sensor_types(id, name) values (2, 'saugspannung_60cm');
 insert into public.sensor_types(id, name) values (3, 'saugspannung_90cm');
@@ -207,6 +217,7 @@ CREATE TABLE private.tree_devices (
     PRIMARY KEY(tree_id, customer_id, device_id, site_id)
 );
 
+
 CREATE TABLE private.sensor_measurements (
 	tree_id TEXT REFERENCES public.trees(id),
     type_id SMALLINT REFERENCES public.sensor_types(id),
@@ -216,5 +227,7 @@ CREATE TABLE private.sensor_measurements (
     PRIMARY KEY(tree_id, type_id, timestamp)
 );
 
+
 insert into private.customers(id, name) values (2, 'Mitte');
 insert into private.customers(id, name) values (3, 'Neukölln');
+

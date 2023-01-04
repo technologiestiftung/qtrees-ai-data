@@ -69,6 +69,7 @@ def main():
                                               "rsk": "rainfall_mm",
                                               "tmk": "temp_avg_c", "txk": "temp_max_c",
                                               "fx": "wind_max_ms", "fm": "wind_mean_ms"})
+
         except requests.exceptions.RequestException as e:
             logger.warning(e)
             continue
@@ -77,6 +78,7 @@ def main():
             if sqlalchemy.inspect(engine).has_table("weather", schema="public"):
                 with engine.connect() as con:
                     rs = con.execute('select "timestamp" from public.weather')
+
                     indices = [idx[0] for idx in rs]
                     weather = weather[~weather.timestamp.isin(indices)]
                     if len(weather) > 10 or len(weather) == 0:

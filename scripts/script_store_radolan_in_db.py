@@ -11,7 +11,7 @@ Options:
 """
 import warnings
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 import sqlalchemy
 import datetime
 import geopandas as gpd
@@ -75,6 +75,8 @@ def main():
         else:
             last_date += delta
 
+        first_iteration = True
+
         while last_date <= now:
             # hourly
             radolan = get_radolan_data(
@@ -87,9 +89,24 @@ def main():
                 radolan_gdf, meta_data = radolan
                 radolan_gdf = radolan_gdf.drop(columns=["index_right"])
                 radolan_gdf["timestamp"] = meta_data['datetime']
+                radolan_gdf = radolan_gdf.reset_index()
                 logger.debug("Storing radolan data for '%s'", meta_data['datetime'])
-                radolan_gdf.to_postgis("radolan", engine, if_exists="append", schema="public")
 
+                if first_iteration:
+                    with engine.connect() as con:
+                        result = con.execute('select id from api.radolan_tiles')
+                        tiles = [t[0] for t in list(result.fetchall())]
+                    radolan_gdf_grid = radolan_gdf.rename(columns={"index": "id"})
+                    radolan_gdf_grid = radolan_gdf_grid[~radolan_gdf_grid.id.isin(tiles)]
+                    logger.debug(f"Storing {len(radolan_gdf_grid)} new tiles to the database.")
+                    radolan_gdf_grid[["id", "geometry"]].to_postgis("radolan_tiles", engine, if_exists="append", schema="public")
+
+                    first_iteration=False
+
+                radolan_gdf = radolan_gdf.rename(columns={"index": "tile_id"})
+                radolan_gdf[["tile_id", "timestamp", "rainfall_mm"]].to_sql("radolan", engine, if_exists="append", schema="public", index=False)
+
+                break
             last_date += delta
     except Exception as e:
         logger.error("Cannot write to db: %s", e)

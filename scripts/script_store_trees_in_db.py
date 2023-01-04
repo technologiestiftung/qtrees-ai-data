@@ -47,9 +47,7 @@ def main():
         logger.debug("Do update")
         data_file = os.path.join(data_directory, "trees_gdf_all.geojson")
         joined_trees = get_trees(data_file)
-        logger.info("The following trees are duplicates: %s", joined_trees[joined_trees.duplicated(['id'], keep=False)].id.values)
-        joined_trees = joined_trees.drop_duplicates(subset="id")
-
+        joined_trees = joined_trees.drop_duplicates(subset=['id'], keep='first')
         logger.info("Writing into db")
         try:
             joined_trees.to_postgis("trees", engine, if_exists="append", schema="public")
