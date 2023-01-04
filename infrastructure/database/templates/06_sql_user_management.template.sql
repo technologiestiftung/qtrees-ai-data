@@ -158,16 +158,24 @@ insert into basic_auth.users (username, pass, role) values ('qtrees_frontend', '
 CREATE USER qtrees_admin WITH PASSWORD '$DB_ADMIN_PASSWD';
 GRANT CONNECT ON DATABASE qtrees TO qtrees_admin;
 GRANT ALL ON SCHEMA public TO qtrees_admin;
+GRANT ALL ON SCHEMA private TO qtrees_admin;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO qtrees_admin;
+GRANT ALL ON ALL TABLES IN SCHEMA private TO qtrees_admin;
 -- to grant access to the new table in the future automatically:
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT ALL ON TABLES TO qtrees_admin;
+ALTER DEFAULT PRIVILEGES IN SCHEMA private
 GRANT ALL ON TABLES TO qtrees_admin;
 
 CREATE USER qtrees_user WITH PASSWORD '$DB_USER_PASSWD';
 GRANT CONNECT ON DATABASE qtrees TO qtrees_user;
 GRANT USAGE ON SCHEMA public TO qtrees_user;
+GRANT USAGE ON SCHEMA private TO qtrees_user;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO qtrees_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA private TO qtrees_user;
 -- to grant access to the new table in the future automatically:
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT SELECT ON TABLES TO qtrees_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA private
 GRANT SELECT ON TABLES TO qtrees_user;
 
