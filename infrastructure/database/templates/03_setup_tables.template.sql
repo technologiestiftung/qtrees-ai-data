@@ -90,7 +90,7 @@ CREATE TABLE public.soil (
 
 
 CREATE TABLE "public"."issue_types" (
-	"id" int4 NOT NULL,
+	"id" serial,
 	"title" text NOT NULL,
 	"description" text NOT NULL,
 	"image_url" text,
@@ -119,7 +119,7 @@ CREATE TABLE public.weather_stations (
 );
 
 CREATE TABLE public.weather (
-    STATIONS_ID  BIGINT REFERENCES public.weather_stations (id),
+    stations_id  BIGINT REFERENCES public.weather_stations (id),
     timestamp   timestamp NOT NULL,
     QN_3         BIGINT,
     wind_max_ms  FLOAT(53),
@@ -137,7 +137,7 @@ CREATE TABLE public.weather (
     temp_max_c   FLOAT(53),
     TNK          FLOAT(53),
     TGK          FLOAT(53),
-    PRIMARY KEY(STATIONS_ID, timestamp)
+    PRIMARY KEY(stations_id, timestamp)
 );
 
 CREATE TABLE public.radolan (
@@ -155,7 +155,7 @@ CREATE TABLE public.shading (
 );
 
 CREATE TABLE public.sensor_types (
-	id SMALLINT PRIMARY KEY,
+	id SERIAL PRIMARY KEY,
 	name text NOT NULL
 );
 

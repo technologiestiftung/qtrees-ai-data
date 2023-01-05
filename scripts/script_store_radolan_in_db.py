@@ -43,7 +43,6 @@ def main():
     db_qtrees, postgres_passwd = init_db_args(args, logger)
 
     # specific args
-    print(args)
     days = int(args["--days"])
     path_to_bezirke = args["--path_to_bezirke"]
 

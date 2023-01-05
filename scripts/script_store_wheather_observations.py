@@ -45,15 +45,14 @@ def main():
     gdf["von_datum"] = pd.to_datetime(gdf["von_datum"], format='%Y%m%d')
     gdf["bis_datum"] = pd.to_datetime(gdf["bis_datum"], format='%Y%m%d')
     gdf.columns = [x.lower() for x in gdf.columns]
-    gdf = gdf.rename(columns={"station_id": "id"})
+    gdf = gdf.rename(columns={"stations_id": "id", "geobreite": "lat", "geolaenge": "lon"})
 
     try:
         if sqlalchemy.inspect(engine).has_table("weather_stations", schema="public"):
             with engine.connect() as con:
                 rs = con.execute('select "id" from public.weather_stations')
                 indices = [idx[0] for idx in rs]
-        gdf = gdf[~gdf.stations_id.isin(indices)]
-        gdf = gdf.rename(columns={"stations_id": "id", "geobreite": "lat", "geolaenge": "lon"})
+        gdf = gdf[~gdf.id.isin(indices)]
         gdf.to_postgis("weather_stations", engine, if_exists="append", schema="public")
         logger.info(f"Now, new %s weather stations in database.", len(gdf))
     except Exception as e:
