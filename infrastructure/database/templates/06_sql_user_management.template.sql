@@ -116,7 +116,7 @@ CREATE TYPE jwt_token AS (
 
 -- login should be on your exposed schema
 create or replace function
-api.login(username text, pass text) returns basic_auth.jwt_token as $$
+public.login(username text, pass text) returns basic_auth.jwt_token as $$
 declare
   _role name;
   result basic_auth.jwt_token;
@@ -139,31 +139,43 @@ begin
 end;
 $$ language plpgsql security definer;
 
+-- remove rights to write to public
+REVOKE ALL ON SCHEMA public FROM public;
+
 -- the names "anon" and "authenticator" are configurable and not
 -- sacred, we simply choose them for clarity
 -- create role anon noinherit;
 -- create role authenticator noinherit;
 -- grant web_anon to authenticator;
 
-grant execute on function api.login(text,text) to web_anon;
-grant execute on function api.login(text,text) to authenticator;
+grant execute on function public.login(text,text) to web_anon;
+grant execute on function public.login(text,text) to authenticator;
 
 
 -- create postgREST frontend user
 insert into basic_auth.users (username, pass, role) values ('qtrees_frontend', '$UI_USER_PASSWD', 'ui_user');
 
 CREATE USER qtrees_admin WITH PASSWORD '$DB_ADMIN_PASSWD';
-GRANT CONNECT ON DATABASE qtrees TO admin;
-GRANT USAGE ON SCHEMA api TO admin;
-GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA api TO admin;
+GRANT CONNECT ON DATABASE qtrees TO qtrees_admin;
+GRANT ALL ON SCHEMA public TO qtrees_admin;
+GRANT ALL ON SCHEMA private TO qtrees_admin;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO qtrees_admin;
+GRANT ALL ON ALL TABLES IN SCHEMA private TO qtrees_admin;
 -- to grant access to the new table in the future automatically:
-ALTER DEFAULT PRIVILEGES IN SCHEMA api
-GRANT SELECT, INSERT, UPDATE ON TABLES TO admin;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT ALL ON TABLES TO qtrees_admin;
+ALTER DEFAULT PRIVILEGES IN SCHEMA private
+GRANT ALL ON TABLES TO qtrees_admin;
 
 CREATE USER qtrees_user WITH PASSWORD '$DB_USER_PASSWD';
 GRANT CONNECT ON DATABASE qtrees TO qtrees_user;
-GRANT USAGE ON SCHEMA api TO qtrees_user;
-GRANT SELECT ON ALL TABLES IN SCHEMA api TO qtrees_user;
+GRANT USAGE ON SCHEMA public TO qtrees_user;
+GRANT USAGE ON SCHEMA private TO qtrees_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO qtrees_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA private TO qtrees_user;
 -- to grant access to the new table in the future automatically:
-ALTER DEFAULT PRIVILEGES IN SCHEMA api
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT SELECT ON TABLES TO qtrees_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA private
+GRANT SELECT ON TABLES TO qtrees_user;
+

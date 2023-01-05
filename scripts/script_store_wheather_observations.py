@@ -2,7 +2,7 @@
 """
 Download wheather data and store into db.
 Usage:
-  script_store_trees_in_db.py [--db_qtrees=DB_QTREES]
+  script_store_trees_in_db.py [--db_qtrees=DB_QTREES] [--station_id=STATION_ID] [--measurement=MEASUREMENT]
   script_store_trees_in_db.py (-h | --help)
 Options:
   --db_qtrees=DB_QTREES                        Database name [default:]
@@ -45,15 +45,15 @@ def main():
     gdf["von_datum"] = pd.to_datetime(gdf["von_datum"], format='%Y%m%d')
     gdf["bis_datum"] = pd.to_datetime(gdf["bis_datum"], format='%Y%m%d')
     gdf.columns = [x.lower() for x in gdf.columns]
+    gdf = gdf.rename(columns={"stations_id": "id", "geobreite": "lat", "geolaenge": "lon"})
 
     try:
-        if sqlalchemy.inspect(engine).has_table("weather_stations", schema="api"):
+        if sqlalchemy.inspect(engine).has_table("weather_stations", schema="public"):
             with engine.connect() as con:
-                rs = con.execute('select "id" from api.weather_stations')
+                rs = con.execute('select "id" from public.weather_stations')
                 indices = [idx[0] for idx in rs]
-        gdf = gdf[~gdf.stations_id.isin(indices)]
-        gdf = gdf.rename(columns={"stations_id": "id", "geobreite": "lat", "geolaenge": "lon"})
-        gdf.to_postgis("weather_stations", engine, if_exists="append", schema="api")
+        gdf = gdf[~gdf.id.isin(indices)]
+        gdf.to_postgis("weather_stations", engine, if_exists="append", schema="public")
         logger.info(f"Now, new %s weather stations in database.", len(gdf))
     except Exception as e:
         logger.error("Cannot write to weather_stations: %s", e)
@@ -64,22 +64,26 @@ def main():
 
         try:
             weather = get_observations(station, measurement)
+            weather = weather.rename(columns={"mess_datum": "timestamp",
+                                              "rsk": "rainfall_mm",
+                                              "tmk": "temp_avg_c", "txk": "temp_max_c",
+                                              "fx": "wind_max_ms", "fm": "wind_mean_ms"})
         except requests.exceptions.RequestException as e:
             logger.warning(e)
             continue
 
         try:
-            if sqlalchemy.inspect(engine).has_table("weather", schema="api"):
+            if sqlalchemy.inspect(engine).has_table("weather", schema="public"):
                 with engine.connect() as con:
-                    rs = con.execute('select "mess_datum" from api.weather')
+                    rs = con.execute('select "timestamp" from public.weather')
                     indices = [idx[0] for idx in rs]
-                    weather = weather[~weather.mess_datum.isin(indices)]
+                    weather = weather[~weather.timestamp.isin(indices)]
                     if len(weather) > 10 or len(weather) == 0:
                         logger.info(f"Got {len(weather)} new entries")
                     else:
-                        logger.info(f"Got {len(weather)} new entries: {weather.mess_datum}")
+                        logger.info(f"Got {len(weather)} new entries: {weather.timestamp}")
                 weather = weather.drop(columns=["eor"])
-            weather.to_sql("weather", engine, if_exists="append", schema="api", index=False)
+            weather.to_sql("weather", engine, if_exists="append", schema="public", index=False)
         except Exception as e:
             logger.error("Cannot write to weather:", e)
             exit(121)

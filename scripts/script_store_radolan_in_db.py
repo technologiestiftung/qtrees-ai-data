@@ -2,12 +2,12 @@
 """
 Download radolan data and store into db.
 Usage:
-  script_store_radolan_in_db.py [--db_qtrees=DB_QTREES --days=1 --path_to_bezirke='./data/bezirksgrenzen.geojson']
+  script_store_radolan_in_db.py [--db_qtrees=DB_QTREES] [--days=DAYS] [--path_to_bezirke=PATH_TO_BEZIRKE]
   script_store_radolan_in_db.py (-h | --help)
 Options:
-  --db_qtrees=DB_QTREES                        Database name [default:]
-  --days=int                                   Number of days to retrieve if no data in db [default:1]
-  --path_to_bezirke='./data/bezirksgrenzen.geojson' path to Geojson of Berlin Bezirke
+  --db_qtrees=DB_QTREES                    Database name [default:]
+  --days=DAYS                              Number of days to retrieve if no data in db [default: 14]
+  --path_to_bezirke=PATH_TO_BEZIRKE        Path to Geojson of Berlin Bezirke [default: ./data/bezirksgrenzen.geojson]
 """
 import warnings
 
@@ -43,8 +43,8 @@ def main():
     db_qtrees, postgres_passwd = init_db_args(args, logger)
 
     # specific args
-    days = int(args["--days"]) if args["--days"] else 1
-    path_to_bezirke = args["--path_to_bezirke"] if args["--path_to_bezirke"] else './data/bezirksgrenzen.geojson'
+    days = int(args["--days"])
+    path_to_bezirke = args["--path_to_bezirke"]
 
     if not os.path.exists(path_to_bezirke):
         get_bezirksgrenzen(path_to_bezirke)
@@ -62,9 +62,9 @@ def main():
         now = datetime.datetime.now()
 
         last_date = None
-        if sqlalchemy.inspect(engine).has_table("radolan", schema="api"):
+        if sqlalchemy.inspect(engine).has_table("radolan", schema="public"):
             with engine.connect() as con:
-                rs = con.execute('select MAX("timestamp") from api.radolan')
+                rs = con.execute('select MAX("timestamp") from public.radolan')
                 last_date = [idx[0] for idx in rs][0]
                 logger.debug("Latest timestamp in data: %s. Continue from here.", last_date)
 
@@ -87,7 +87,7 @@ def main():
                 radolan_gdf = radolan_gdf.drop(columns=["index_right"])
                 radolan_gdf["timestamp"] = meta_data['datetime']
                 logger.debug("Storing radolan data for '%s'", meta_data['datetime'])
-                radolan_gdf.to_postgis("radolan", engine, if_exists="append", schema="api")
+                radolan_gdf.to_postgis("radolan", engine, if_exists="append", schema="public")
 
             last_date += delta
     except Exception as e:
