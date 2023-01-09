@@ -13,6 +13,7 @@ grant select on public.weather to web_anon;
 grant select on public.weather_stations to web_anon;
 grant select on public.issue_types to web_anon;
 grant select on public.issues to web_anon;
+grant usage, select on all sequences in schema public to web_anon;
 
 -- create a dedicated role for connecting to the database, instead of using postgres
 create role authenticator noinherit login password '${AUTH_PASSWD}';
@@ -35,6 +36,7 @@ grant all on public.weather to ai_user;
 grant all on public.weather_stations to ai_user;
 grant select on public.issue_types to ai_user;
 grant select on public.issues to ai_user;
+grant usage, select on all sequences in schema public to ai_user;
 
 
 create role ui_user nologin;
@@ -52,3 +54,4 @@ grant select on public.weather to ui_user;
 grant select on public.weather_stations to ui_user;
 grant select on public.issue_types to ui_user;
 grant all on public.issues to ui_user;
+grant usage, select on all sequences in schema public to ui_user;
