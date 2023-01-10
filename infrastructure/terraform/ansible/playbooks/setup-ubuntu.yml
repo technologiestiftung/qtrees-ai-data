@@ -60,6 +60,7 @@
     shell: |
       apt-get update
       apt-get install docker-ce docker-ce-cli containerd.io docker-compose docker-compose-plugin -y
+      sudo usermod -aG docker ubuntu
     when: docker_exists.rc != 0
   # TODO setting variables can be made easier, and split this in multiple tasks
   - name: copy env file to remote
@@ -97,6 +98,7 @@
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_shading_index_in_db.py
     # python logs can be found on host at 'tail -fn +1 qtrees/qtrees_log'
   - name: launch postgrest docker
+    become_user: ubuntu
     shell: |
       . /home/ubuntu/setup_environment.sh
       docker-compose -f qtrees-ai-data/infrastructure/database/docker-compose.yml up -d

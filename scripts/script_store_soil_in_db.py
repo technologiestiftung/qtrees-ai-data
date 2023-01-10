@@ -34,9 +34,9 @@ def main():
     )
 
     do_update = True
-    if sqlalchemy.inspect(engine).has_table("soil", schema="api"):
+    if sqlalchemy.inspect(engine).has_table("soil", schema="public"):
         with engine.connect() as con:
-            rs = con.execute('select COUNT(*) from api.soil')
+            rs = con.execute('select COUNT(*) from public.soil')
             count = [idx[0] for idx in rs][0]
         if count > 0:
             logger.warning("Already %s soil entries in database. Skipping...", count)
@@ -64,9 +64,9 @@ def main():
 
         logger.info("Writing into db")
         try:
-            soil_gdf.to_postgis("soil", engine, if_exists="append", schema="api")
+            soil_gdf.to_postgis("soil", engine, if_exists="append", schema="public")
             with engine.connect() as con:
-                rs = con.execute('select COUNT(*) from api.soil')
+                rs = con.execute('select COUNT(*) from public.soil')
                 count = [idx[0] for idx in rs][0]
             logger.info(f"Now, %s soil entries in database.", count)
         except Exception as e:

@@ -46,9 +46,9 @@ def main():
     
     logger.info("Writing into db")
     try:
-        if inspect(engine).has_table("shading", schema="api"):
+        if inspect(engine).has_table("shading", schema="public"):
             with engine.connect() as con:
-                result = con.execute('TRUNCATE TABLE api.shading CASCADE')
+                con.execute('TRUNCATE TABLE public.shading CASCADE')
 
         sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="api", index=False)
     except Exception as e:
