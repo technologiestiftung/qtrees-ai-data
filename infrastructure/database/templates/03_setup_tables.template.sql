@@ -100,7 +100,7 @@ CREATE TABLE "public"."issue_types" (
 
 CREATE TABLE "public"."issues" (
 	"id" serial,
-	"issue_type_id" int4 NOT NULL REFERENCES public.issue_types (id),
+	"issue_type_id" INTEGER NOT NULL REFERENCES public.issue_types (id),
 	"created_at" timestamptz NOT NULL DEFAULT now(),
 	"tree_id" text NOT NULL REFERENCES public.trees (id),
 	PRIMARY KEY ("id")
@@ -162,7 +162,7 @@ CREATE TABLE public.sensor_types (
 CREATE TABLE public.forecast (
 	id SERIAL PRIMARY KEY,
 	tree_id TEXT REFERENCES public.trees(id),
-	type_id SMALLINT REFERENCES public.sensor_types(id),
+	type_id INTEGER REFERENCES public.sensor_types(id),
 	timestamp timestamp,
 	value FLOAT(53),
 	created_at timestamp,
@@ -172,7 +172,7 @@ CREATE TABLE public.forecast (
 CREATE TABLE public.nowcast (
 	id SERIAL PRIMARY KEY,
 	tree_id TEXT REFERENCES public.trees(id),
-	type_id SMALLINT REFERENCES public.sensor_types(id),
+	type_id INTEGER REFERENCES public.sensor_types(id),
 	timestamp timestamp,
 	value FLOAT(53),
 	created_at timestamp,
@@ -195,13 +195,13 @@ CREATE SCHEMA private;
 GRANT ALL ON SCHEMA private TO postgres;
 
 CREATE TABLE private.customers (
-	id SMALLINT PRIMARY KEY,
+	id INTEGER PRIMARY KEY,
 	name text NOT NULL
 );
 
 CREATE TABLE private.tree_devices (
     tree_id TEXT REFERENCES public.trees(id),
-    customer_id BIGINT REFERENCES private.customers(id),
+    customer_id INTEGER REFERENCES private.customers(id),
     device_id  BIGINT,
     site_id BIGINT,
     PRIMARY KEY(tree_id, customer_id, device_id, site_id)
@@ -209,8 +209,8 @@ CREATE TABLE private.tree_devices (
 
 CREATE TABLE private.sensor_measurements (
 	tree_id TEXT REFERENCES public.trees(id),
-    type_id SMALLINT REFERENCES public.sensor_types(id),
-	sensor_id SMALLINT,
+    type_id INTEGER REFERENCES public.sensor_types(id),
+	sensor_id INTEGER,
 	timestamp timestamp,
 	value FLOAT(53),
     PRIMARY KEY(tree_id, type_id, timestamp)
