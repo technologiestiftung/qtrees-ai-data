@@ -184,11 +184,9 @@ insert into public.sensor_types(id, name) values (2, 'saugspannung_60cm');
 insert into public.sensor_types(id, name) values (3, 'saugspannung_90cm');
 insert into public.sensor_types(id, name) values (4, 'saugspannung_stamm');
 
-
 INSERT INTO "public"."issue_types" ( "title", "description", "image_url") VALUES
 ( 'Missnutzung der Baumscheibe', 'Die Baumscheibe (nicht versiegelte Fläche) am Standort eines Baums wir oft durch falsch parkende Autos, illegalen Müll-Entsorgungen, wie bspw.: alte Waschmaschinen oder Bauschutt, missbraucht. Melde uns bitte, wenn die Baumscheibe seit längerem zugestellt ist.', '/images/issues/missnutzung-baumscheibe.jpg'),
-('Baumschäden', 'Baumschäden, wie bspw. abgeknickte Äste, stellen eine Gefahr für den Straßenraum dar und können die Vitalität eines Baumes nachhaltig einschränken. Melde uns bitte, wenn dieser Baum einen Schaden hat.', '/images/issues/baumschaeden.jpg');mschäden könnten die Fähigkeit eines Baumes verhindern, Wasser ordentlich aufzunehmen. Melde es bitte wenn diesen Baum einen Schaden hat.', 'https://gxnammfgdsvewxxiuppl.supabase.co/storage/v1/object/sign/issue_images/leitschadbaum012020_1-2445280091.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJpc3N1ZV9pbWFnZXMvbGVpdHNjaGFkYmF1bTAxMjAyMF8xLTI0NDUyODAwOTEuanBnIiwiaWF0IjoxNjYxMTc0NzE2LCJleHAiOjE5NzY1MzQ3MTZ9.nIqml2B2RVMVib7BPkRea0CYRc307Jmppx0yM30HEPU');
-
+( 'Baumschäden', 'Baumschäden, wie bspw. abgeknickte Äste, stellen eine Gefahr für den Straßenraum dar und können die Vitalität eines Baumes nachhaltig einschränken. Melde uns bitte, wenn dieser Baum einen Schaden hat.', '/images/issues/baumschaeden.jpg');
 
 CREATE SCHEMA private;
 GRANT ALL ON SCHEMA private TO postgres;
