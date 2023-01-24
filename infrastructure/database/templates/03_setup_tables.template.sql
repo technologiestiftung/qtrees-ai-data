@@ -141,13 +141,6 @@ CREATE TABLE public.weather (
 );
 
 CREATE TABLE public.radolan (
-    id SERIAL PRIMARY KEY,
-    rainfall_mm FLOAT(53),
-    geometry    geometry(Polygon,4326),
-    timestamp   timestamp
-);
-
-CREATE TABLE public.radolan (
     tile_id  BIGINT REFERENCES public.radolan_tiles(id),
     timestamp   timestamp NOT NULL,
     rainfall_mm FLOAT(53),
