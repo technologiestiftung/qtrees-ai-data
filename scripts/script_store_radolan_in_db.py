@@ -91,7 +91,7 @@ def main():
                 radolan_gdf = radolan_gdf.reset_index()
                 logger.debug("Storing radolan data for '%s'", meta_data['datetime'])
                 # old version - to be removed later on
-                radolan_gdf.to_postgis("radolan_", engine, if_exists="append", schema="api")
+                #radolan_gdf.to_postgis("radolan", engine, if_exists="append", schema="api")
 
                 if first_iteration:
                     with engine.connect() as con:
@@ -107,7 +107,7 @@ def main():
                 radolan_gdf = radolan_gdf.rename(columns={"index": "tile_id"})
                 radolan_gdf[["tile_id", "timestamp", "rainfall_mm"]].to_sql("radolan", engine, if_exists="append", schema="api", index=False)
 
-                break
+                #break
             last_date += delta
     except Exception as e:
         logger.error("Cannot write to db: %s", e)
