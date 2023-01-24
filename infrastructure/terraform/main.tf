@@ -1,4 +1,10 @@
 terraform {
+//  backend "s3" {
+//    bucket = "mybucket"
+//    key    = "path/to/my/key"
+//    region = "us-east-1"
+//  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -64,6 +70,7 @@ resource "aws_db_instance" "qtrees" {
 
   tags = {
     Name = "${var.project_name}-iac-${var.qtrees_version}"
+    Restricted = var.restricted
   }
 }
 
@@ -162,6 +169,7 @@ resource "aws_instance" "qtrees" {
 
   tags = {
     Name = "${var.project_name}-iac-${var.qtrees_version}"
+    Restricted = var.restricted
   }
 }
 
@@ -174,8 +182,9 @@ resource "aws_instance" "qtrees" {
 //  }
 //}
 
-# re-use existing elastic ip
+# re-use existing elastic ip (if set)
 data "aws_eip" "qtrees" {
+//  count = try(var.ELASTIC_IP_EC2 == "" ? 0 : 1, 0)
   public_ip = "${var.ELASTIC_IP_EC2}"
 }
 
