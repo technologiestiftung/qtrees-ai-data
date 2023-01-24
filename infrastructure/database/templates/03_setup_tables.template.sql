@@ -140,7 +140,7 @@ CREATE TABLE public.weather (
     PRIMARY KEY(stations_id, timestamp)
 );
 
-CREATE TABLE public.radolan_ (
+CREATE TABLE public.radolan (
     id SERIAL PRIMARY KEY,
     rainfall_mm FLOAT(53),
     geometry    geometry(Polygon,4326),
