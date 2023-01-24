@@ -4,7 +4,6 @@ export AUTH_PASSWD="authauthauth" # needed?
 export JWT_SECRET="secret_with_at_least_thirtytwo_chars"
 export POSTGRES_PASSWD="postgrespostgres"
 export DB_QTREES="localhost"
-export DB_DOCKER=$DB_QTREES #only for docker
 export CMD_GIS_ADMIN="ALTER ROLE gis_admin SUPERUSER;" # local use
 
 export DB_ADMIN_PASSWD="adminadminadmin"
