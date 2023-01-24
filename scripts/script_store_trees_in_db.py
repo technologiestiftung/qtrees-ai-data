@@ -35,9 +35,9 @@ def main():
 
     do_update = True
     logger.debug("Check if data already exists")
-    if sqlalchemy.inspect(engine).has_table("trees", schema="api"):
+    if sqlalchemy.inspect(engine).has_table("trees", schema="public"):
         with engine.connect() as con:
-            rs = con.execute('select COUNT(id) from api.trees')
+            rs = con.execute('select COUNT(id) from public.trees')
             count = [idx[0] for idx in rs][0]
         if count > 0:
             logger.warning("Already %s trees in database. Skipping...", count)
@@ -50,9 +50,9 @@ def main():
         joined_trees = joined_trees.drop_duplicates(subset=['id'], keep='first')
         logger.info("Writing into db")
         try:
-            joined_trees.to_postgis("trees", engine, if_exists="append", schema="api")
+            joined_trees.to_postgis("trees", engine, if_exists="append", schema="public")
             with engine.connect() as con:
-                rs = con.execute('select COUNT(id) from api.trees')
+                rs = con.execute('select COUNT(id) from public.trees')
                 count = [idx[0] for idx in rs][0]
             logger.info(f"Now, %s trees in database.", count)
         except Exception as e:
