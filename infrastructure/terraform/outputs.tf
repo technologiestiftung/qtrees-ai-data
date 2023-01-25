@@ -2,6 +2,10 @@
 #   value = aws_instance.qtrees.id
 # }
 
-output "db_private_address" {
-  value = aws_db_instance.qtrees.address
-}
+# output "db_private_address" {
+#   value = aws_db_instance.qtrees.address
+# }
+
+# output "ecr_url" {
+#   value = aws_ecr_repository.qtrees.repository_url
+# }
