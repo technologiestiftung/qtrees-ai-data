@@ -32,6 +32,11 @@ variable "JWT_SECRET" {
   sensitive   = true
 }
 
+# variable "POSTGRES_USER" {
+#   description = "RDS root user"
+#   sensitive   = true
+# }
+
 variable "POSTGRES_PASSWD" {
   description = "RDS root user password"
   sensitive   = true

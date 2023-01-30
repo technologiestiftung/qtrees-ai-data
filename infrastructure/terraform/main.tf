@@ -31,57 +31,49 @@ module "vpc" {
   }
 }
 
-# resource "aws_db_subnet_group" "qtrees" {
-#   # identifier
-#   name = "${var.project_name}-subnet"
-#   # just use this subnet for now
-#   subnet_ids = module.vpc.private_subnets
+resource "aws_db_subnet_group" "qtrees" {
+  # identifier
+  name = "${var.project_name}-subnet"
+  # just use this subnet for now
+  subnet_ids = module.vpc.private_subnets
 
-#   tags = {
-#     Name = "${var.project_name}-iac-${var.qtrees_version}"
-#   }
-# }
+  tags = {
+    Name = "${var.project_name}-iac-${var.qtrees_version}"
+  }
+}
 
-# resource "aws_db_instance" "qtrees" {
-#   identifier        = "${var.project_name}-iac-rds"
-#   instance_class    = "db.t3.micro"
-#   allocated_storage = 5
-#   engine            = "postgres"
-#   name              = var.project_name
-#   username          = "postgres"
-#   password            = var.POSTGRES_PASSWD
-#   skip_final_snapshot = true
+resource "aws_db_instance" "qtrees" {
+  identifier        = "${var.project_name}-iac-rds"
+  instance_class    = "db.t3.micro"
+  allocated_storage = 5
+  engine            = "postgres"
+  name              = var.project_name
+  username          = "postgres"
+  password            = var.POSTGRES_PASSWD
+  skip_final_snapshot = true
 
-#   # is this needed?
-#   publicly_accessible = true
+  # is this needed?
+  publicly_accessible = true
 
-#   db_subnet_group_name   = aws_db_subnet_group.qtrees.name
-#   vpc_security_group_ids = [aws_security_group.qtrees_db_sg.id]
+  db_subnet_group_name   = aws_db_subnet_group.qtrees.name
+  vpc_security_group_ids = [aws_security_group.qtrees_db_sg.id]
 
-#   tags = {
-#     Name = "${var.project_name}-iac-${var.qtrees_version}"
-#   }
-# }
+  tags = {
+    Name = "${var.project_name}-iac-${var.qtrees_version}"
+  }
+}
 
 resource "aws_security_group" "qtrees" {
   name        = "${var.project_name}_sg"
   vpc_id      = module.vpc.vpc_id
 
   ingress {
-    description = "SSH rule"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    # source IP: can be restricted to special IP
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
     description = "HTTP"
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
     # source IP: can be restricted to special IP
-    # security_groups = [aws_security_group.qtrees_lb_sg.id]
+    cidr_blocks      = ["0.0.0.0/0"]    
   }
 
   egress {
@@ -97,22 +89,22 @@ resource "aws_security_group" "qtrees" {
   }
 }
 
-# resource "aws_security_group" "qtrees_db_sg" {
-#   name   = "${var.project_name}_db_sg"
-#   vpc_id = module.vpc.vpc_id
+resource "aws_security_group" "qtrees_db_sg" {
+  name   = "${var.project_name}_db_sg"
+  vpc_id = module.vpc.vpc_id
 
-#   ingress {
-#     from_port   = 5432
-#     to_port     = 5432
-#     protocol    = "tcp"
-#     # source IP: can be restricted to special IP
-#     security_groups = [aws_security_group.qtrees_ec2_sg.id]
-#   }
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    # source IP: can be restricted to special IP
+    security_groups = [aws_security_group.qtrees.id]
+  }
 
-#   tags = {
-#     Name = "${var.project_name}-iac-${var.qtrees_version}"
-#   }
-# }
+  tags = {
+    Name = "${var.project_name}-iac-${var.qtrees_version}"
+  }
+}
 
 # resource "aws_s3_bucket" "qtrees" {
 #   bucket = "${var.project_name}_data"
@@ -134,6 +126,9 @@ resource "aws_security_group" "qtrees" {
 module "qtrees_ecs" {
   source = "./qtrees_ecs" 
   project_name = var.project_name
-  subnets = module.vpc.private_subnets
-  security_groups = var.project_name
+  subnets = module.vpc.public_subnets
+  security_groups = [aws_security_group.qtrees.id]
+  db_instance_uri = aws_db_instance.qtrees.address
+  postgres_passwd = var.POSTGRES_PASSWD
+  jwt_secret = var.JWT_SECRET
 }
