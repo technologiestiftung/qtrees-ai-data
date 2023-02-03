@@ -19,3 +19,7 @@ variable "postgres_passwd" {
 variable "jwt_secret" {
   
 }
+
+variable "AWS_ACCOUNT_ID" {
+  
+}

@@ -42,20 +42,7 @@ variable "POSTGRES_PASSWD" {
   sensitive   = true
 }
 
-# variable "postgrest_docker_image" {
-#   default = "257772343150.dkr.ecr.eu-central-1.amazonaws.com/test_repo:latest"
-# }
-
-# variable "target_group_arn" {
-#   description = "load balancing target for your service"
-# }
-
-# variable "container_port" {
-#   description = "Port that this container listens on. If you change this from default, you must supply a new healthcheck"
-#   default = "3000"
-# }
-
-# variable "health_check" {
-#   description = "Health check to determine if a spawned task is operational."
-#   default = "wget --quiet http://localhost:3000 || exit 1"
-# }
+variable "AWS_ACCOUNT_ID" {
+  description = "account id"
+  sensitive   = true
+}

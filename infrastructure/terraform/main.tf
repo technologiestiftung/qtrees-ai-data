@@ -131,4 +131,5 @@ module "qtrees_ecs" {
   db_instance_uri = aws_db_instance.qtrees.address
   postgres_passwd = var.POSTGRES_PASSWD
   jwt_secret = var.JWT_SECRET
+  AWS_ACCOUNT_ID = var.AWS_ACCOUNT_ID
 }
