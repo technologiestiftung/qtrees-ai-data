@@ -25,8 +25,8 @@ engine = create_engine(
 )
 
 with engine.connect() as con:
-    train_data = pd.read_sql('select * from api.training_data', con)
-    test_data = pd.read_sql('select * from api.test_data', con)
+    train_data = pd.read_sql('select * from private.training_data', con)
+    test_data = pd.read_sql('select * from private.test_data', con)
 
 #train_data = train_data.dropna()
 

@@ -34,7 +34,7 @@ def main():
     sunindex_df = get_sunindex_df(shadow_index_file)
 
     with engine.connect() as con:
-        result = con.execute('select id from api.trees')
+        result = con.execute('select id from public.trees')
         trees = [t[0] for t in list(result.fetchall())]
 
     sunindex_df_long = pd.melt(sunindex_df, ignore_index=False, value_vars=["spring", "summer", "autumn", "winter"],
@@ -50,7 +50,10 @@ def main():
             with engine.connect() as con:
                 con.execute('TRUNCATE TABLE public.shading CASCADE')
 
-        sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="api", index=False)
+        sunindex_df_long = sunindex_df_long.drop_duplicates(subset=['tree_id'], keep='first')
+
+        sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="public", index=False)
+        logger.info(f"Now, new %s shading entries in database.", len(sunindex_df_long))
     except Exception as e:
        logger.error("Cannot write to db: %s", e)
        exit(121)
