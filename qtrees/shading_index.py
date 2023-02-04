@@ -6,6 +6,7 @@ from pyproj import Proj, transform
 import os
 import pandas as pd
 from qtrees.fisbroker import get_trees
+from qtrees.helper import get_logger
 import json
 
 four_selected_dates = {'spring': datetime.date(2022, 3, 21), 'summer': datetime.date(2022, 6, 21),
@@ -16,6 +17,7 @@ data_directory = "data"
 trees_file = os.path.join(data_directory, "all_trees_gdf.geojson")
 shadow_index_file = 'data/berlin_shadow_index_test.csv'
 
+logger = get_logger(__name__)
 
 # calculate theoretical sunhours of the 4 selected days of solstices & equinoxes
 def calc_theoretical_daylight(dates, city):
@@ -65,6 +67,7 @@ def calculate_sun_index(seasons_theoretical_daylight, sun_hours_map_directory, t
 
 def get_sunindex_df(shadow_index_file):
     if not os.path.isfile(shadow_index_file):
+        logger.debug("File %s does not exist. Starting calculation (this may take a while).", shadow_index_file)
         # create json with baumid as key and coordinates as value
         trees_df = get_trees(trees_file)
         simplified_df = trees_df[["id", "geometry"]]
@@ -79,6 +82,7 @@ def get_sunindex_df(shadow_index_file):
         shadow_index_df.to_csv(shadow_index_file)
         return shadow_index_df
     else:
+        logger.debug("Reading shading from %s.", shadow_index_file)
         shadow_index_df = pd.read_csv(shadow_index_file, index_col=0)
         return shadow_index_df
 
