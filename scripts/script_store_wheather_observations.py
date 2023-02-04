@@ -55,6 +55,10 @@ def main():
         gdf = gdf[~gdf.id.isin(indices)]
         gdf.to_postgis("weather_stations", engine, if_exists="append", schema="public")
         logger.info(f"Now, new %s weather stations in database.", len(gdf))
+
+        with engine.connect() as con:
+            con.execute('REFRESH MATERIALIZED VIEW public.shading_wide')
+        logger.info(f"Updated materialized view shading_wide.")
     except Exception as e:
         logger.error("Cannot write to weather_stations: %s", e)
         exit(121)
@@ -84,6 +88,10 @@ def main():
                         logger.info(f"Got {len(weather)} new entries: {weather.timestamp}")
                 weather = weather.drop(columns=["eor"])
             weather.to_sql("weather", engine, if_exists="append", schema="public", index=False)
+
+            with engine.connect() as con:
+                con.execute('REFRESH MATERIALIZED VIEW public.weather_14d_agg')
+            logger.info(f"Updated materialized view weather_14d_agg")
         except Exception as e:
             logger.error("Cannot write to weather:", e)
             exit(121)
