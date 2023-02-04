@@ -1,6 +1,6 @@
 
 -- views
-CREATE OR REPLACE VIEW public.shading_wide AS
+CREATE MATERIALIZED VIEW public.shading_wide AS
 SELECT tree_id, 
        MAX(index) FILTER (WHERE month = 3) AS spring,
        MAX(index) FILTER (WHERE month = 6) AS summer,
@@ -9,7 +9,7 @@ SELECT tree_id,
 FROM public.shading
 GROUP BY tree_id;
 
-CREATE OR REPLACE VIEW public.weather_14d_agg AS
+CREATE MATERIALIZED VIEW public.weather_14d_agg AS
 select timestamp, 
 		sum(rainfall_mm) OVER(ORDER BY timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as rainfall_mm_14d_sum, 
 		avg(temp_avg_c) OVER(ORDER BY timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as temp_avg_c_14d_avg,
@@ -19,14 +19,19 @@ select timestamp,
 from public.weather
 where stations_id = 433;
 
-CREATE OR REPLACE VIEW public.tree_radolan_tile AS
+CREATE MATERIALIZED VIEW public.tree_radolan_tile AS
 select trees.id as tree_id, tiles.id as tile_id
 from public.trees as trees
 join public.radolan_tiles as tiles
 ON ST_Contains(tiles.geometry, trees.geometry);
 
---CREATE OR REPLACE VIEW public.radolan_14d_agg AS
---SELECT radolan.timestamp, radolan.tile_id,
+CREATE MATERIALIZED VIEW public.radolan_14d_agg AS
+SELECT radolan.timestamp, radolan.tile_id,
+SUM(radolan.rainfall_mm) OVER (partition by radolan.tile_id ORDER BY radolan.timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS rainfall_mm_14d_sum
+FROM public.radolan;
+
+--CREATE OR REPLACE VIEW public.rainfall AS
+-- SELECT radolan.timestamp, radolan.tile_id,
 --SUM(radolan.rainfall_mm) OVER (partition by radolan.tile_id ORDER BY radolan.timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS rainfall_mm_14d_sum
 --FROM public.radolan;
 
@@ -39,7 +44,7 @@ FROM private.sensor_measurements
 LEFT JOIN public.shading_wide ON public.shading_wide.tree_id = sensor_measurements.tree_id
 LEFT JOIN public.trees ON trees.id = sensor_measurements.tree_id
 LEFT JOIN public.weather_14d_agg ON sensor_measurements.timestamp = weather_14d_agg.timestamp
-LEFT JOIN public.rainfall(sensor_measurements.tree_id) ON sensor_measurements.timestamp=public.rainfall.date
+LEFT JOIN public.radolan_14d_agg ON sensor_measurements.timestamp = radolan_14d_agg.timestamp
 ORDER BY timestamp DESC;
 
 CREATE OR REPLACE VIEW private.test_data AS
