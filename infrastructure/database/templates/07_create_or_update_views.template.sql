@@ -1,14 +1,4 @@
-
 -- views
-CREATE MATERIALIZED VIEW public.shading_wide AS
-SELECT tree_id, 
-       MAX(index) FILTER (WHERE month = 3) AS spring,
-       MAX(index) FILTER (WHERE month = 6) AS summer,
-       MAX(index) FILTER (WHERE month = 9) AS fall,
-       MAX(index) FILTER (WHERE month = 12) AS winter
-FROM public.shading
-GROUP BY tree_id;
-
 CREATE MATERIALIZED VIEW public.weather_14d_agg AS
 select timestamp, 
 		sum(rainfall_mm) OVER(ORDER BY timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as rainfall_mm_14d_sum, 
@@ -30,18 +20,23 @@ SELECT radolan.timestamp, radolan.tile_id,
 SUM(radolan.rainfall_mm) OVER (partition by radolan.tile_id ORDER BY radolan.timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS rainfall_mm_14d_sum
 FROM public.radolan;
 
---CREATE OR REPLACE VIEW public.rainfall AS
--- SELECT radolan.timestamp, radolan.tile_id,
---SUM(radolan.rainfall_mm) OVER (partition by radolan.tile_id ORDER BY radolan.timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS rainfall_mm_14d_sum
---FROM public.radolan;
+CREATE MATERIALIZED VIEW public.rainfall AS
+SELECT public.tree_radolan_tile.tree_id, tile_rainfall.rainfall_mm_14d_sum as rainfall_in_mm
+FROM public.tree_radolan_tile 
+JOIN 
+	(SELECT DISTINCT ON (tile_id)
+	tile_id, rainfall_mm_14d_sum
+	FROM public.radolan_14d_agg
+	ORDER BY tile_id, timestamp DESC) as tile_rainfall
+ON public.tree_radolan_tile.tile_id = tile_rainfall.tile_id;
 
 CREATE OR REPLACE VIEW private.training_data AS
 SELECT sensor_measurements.tree_id, sensor_measurements.sensor_id, sensor_measurements.timestamp, sensor_measurements.value,
-		shading_wide.winter, shading_wide.spring, shading_wide.summer, shading_wide.fall,
+		shading.winter, shading.spring, shading.summer, shading.fall,
 		trees.gattung_deutsch, trees.standalter,
 		weather_14d_agg.temp_avg_c_14d_avg, weather_14d_agg.wind_avg_ms_14d_avg, weather_14d_agg.temp_max_c_14d_avg, weather_14d_agg.wind_max_ms_14d_avg 
 FROM private.sensor_measurements
-LEFT JOIN public.shading_wide ON public.shading_wide.tree_id = sensor_measurements.tree_id
+LEFT JOIN public.shading ON public.shading.tree_id = sensor_measurements.tree_id
 LEFT JOIN public.trees ON trees.id = sensor_measurements.tree_id
 LEFT JOIN public.weather_14d_agg ON sensor_measurements.timestamp = weather_14d_agg.timestamp
 LEFT JOIN public.radolan_14d_agg ON sensor_measurements.timestamp = radolan_14d_agg.timestamp
@@ -49,9 +44,9 @@ ORDER BY timestamp DESC;
 
 CREATE OR REPLACE VIEW private.test_data AS
 SELECT trees.id, trees.gattung_deutsch, trees.standalter,
-		shading_wide.winter, shading_wide.spring, shading_wide.summer, shading_wide.fall,
+		shading.winter, shading.spring, shading.summer, shading.fall,
 		(SELECT weather.rainfall_mm  FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as rainfall_mm,
 		(SELECT weather.temp_avg_c  FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_mean,
 		(SELECT weather.temp_max_c FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_max
 FROM public.trees
-LEFT JOIN public.shading_wide ON public.shading_wide.tree_id = public.trees.id;
+LEFT JOIN public.shading ON public.shading.tree_id = public.trees.id;
