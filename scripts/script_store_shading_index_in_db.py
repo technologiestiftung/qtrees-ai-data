@@ -50,10 +50,13 @@ def main():
             with engine.connect() as con:
                 con.execute('TRUNCATE TABLE public.shading CASCADE')
 
-        sunindex_df_long = sunindex_df_long.drop_duplicates(subset=['tree_id'], keep='first')
-
+        sunindex_df_long = sunindex_df_long.drop_duplicates(subset=['tree_id', "month"], keep='first')
         sunindex_df_long.to_sql("shading", engine, if_exists="append", schema="public", index=False)
         logger.info(f"Now, new %s shading entries in database.", len(sunindex_df_long))
+
+        with engine.connect() as con:
+            con.execute('REFRESH MATERIALIZED VIEW public.shading_wide')
+            logger.info(f"Updated materialized view shading_wide.")
     except Exception as e:
        logger.error("Cannot write to db: %s", e)
        exit(121)

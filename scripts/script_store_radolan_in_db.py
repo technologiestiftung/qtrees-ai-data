@@ -106,9 +106,13 @@ def main():
 
                 radolan_gdf = radolan_gdf.rename(columns={"index": "tile_id"})
                 radolan_gdf[["tile_id", "timestamp", "rainfall_mm"]].to_sql("radolan", engine, if_exists="append", schema="public", index=False)
-
-                #break
             last_date += delta
+
+        with engine.connect() as con:
+            con.execute('REFRESH MATERIALIZED VIEW public.tree_radolan_tile')
+            logger.info(f"Updated materialized views tree_radolan_tile")
+            con.execute('REFRESH MATERIALIZED VIEW public.radolan_14d_agg')
+            logger.info(f"Updated materialized views radolan_14d_agg")
     except Exception as e:
         logger.error("Cannot write to db: %s", e)
         exit(121)
