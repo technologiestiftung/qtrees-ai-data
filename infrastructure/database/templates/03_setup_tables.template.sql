@@ -152,11 +152,20 @@ CREATE TABLE public.radolan_tiles (
     geometry  geometry(Polygon,4326)
 );
 
+---CREATE TABLE public.shading (
+--    tree_id TEXT REFERENCES public.trees(id),
+--    month SMALLINT,
+--    index REAL,
+--   PRIMARY KEY(tree_id, month)
+--);
+
 CREATE TABLE public.shading (
     tree_id TEXT REFERENCES public.trees(id),
-    month SMALLINT,
-    index REAL,
-    PRIMARY KEY(tree_id, month)
+    spring REAL,
+    summer REAL,
+    fall REAL,
+    winter REAL,
+    PRIMARY KEY(tree_id)
 );
 
 CREATE TABLE public.sensor_types (

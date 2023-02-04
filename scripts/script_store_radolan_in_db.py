@@ -113,6 +113,8 @@ def main():
             logger.info(f"Updated materialized views tree_radolan_tile")
             con.execute('REFRESH MATERIALIZED VIEW public.radolan_14d_agg')
             logger.info(f"Updated materialized views radolan_14d_agg")
+            con.execute('REFRESH MATERIALIZED VIEW public.rainfall')
+            logger.info(f"Updated materialized views rainfall")
     except Exception as e:
         logger.error("Cannot write to db: %s", e)
         exit(121)
