@@ -12,6 +12,10 @@ variable "qtrees_version" {
   default     = "v2"
 }
 
+variable "restricted" {
+  default = true
+}
+
 variable "pub_key" {
   description = "public key used in provisioned EC2 instance"
   sensitive   = true
