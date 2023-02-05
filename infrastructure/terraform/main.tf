@@ -154,7 +154,7 @@ resource "aws_key_pair" "qtrees" {
 resource "aws_instance" "qtrees" {
   # AMD Ubuntu
   ami           = "ami-065deacbcaac64cf2"
-  instance_type = "t2.large"
+  instance_type = "t2.medium"
 
   root_block_device {
     volume_size = 20
