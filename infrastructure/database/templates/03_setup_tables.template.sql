@@ -140,16 +140,16 @@ CREATE TABLE public.weather (
     PRIMARY KEY(stations_id, timestamp)
 );
 
+CREATE TABLE public.radolan_tiles (
+    id BIGINT PRIMARY KEY,
+    geometry  geometry(Polygon,4326)
+);
+
 CREATE TABLE public.radolan (
     tile_id  BIGINT REFERENCES public.radolan_tiles(id),
     timestamp   timestamp NOT NULL,
     rainfall_mm REAL,
     PRIMARY KEY(tile_id, timestamp)
-);
-
-CREATE TABLE public.radolan_tiles (
-    id BIGINT PRIMARY KEY,
-    geometry  geometry(Polygon,4326)
 );
 
 ---CREATE TABLE public.shading (
