@@ -50,3 +50,7 @@ SELECT trees.id, trees.gattung_deutsch, trees.standalter,
 		(SELECT weather.temp_max_c FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_max
 FROM public.trees
 LEFT JOIN public.shading ON public.shading.tree_id = public.trees.id;
+
+-- all users (are derived from authenticator and) have access to rainfall
+grant select on public.rainfall to authenticator;
+grant select on public.rainfall to web_anon;

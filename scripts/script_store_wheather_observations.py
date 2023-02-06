@@ -57,7 +57,7 @@ def main():
         logger.info(f"Now, new %s weather stations in database.", len(gdf))
 
         with engine.connect() as con:
-            con.execute('REFRESH MATERIALIZED VIEW public.public.weather_14d_agg')
+            con.execute('REFRESH MATERIALIZED VIEW public.weather_14d_agg')
         logger.info(f"Updated materialized view public.weather_14d_agg.")
     except Exception as e:
         logger.error("Cannot write to weather_stations: %s", e)
