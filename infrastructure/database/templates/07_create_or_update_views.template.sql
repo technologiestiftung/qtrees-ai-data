@@ -17,7 +17,7 @@ ON ST_Contains(tiles.geometry, trees.geometry);
 
 CREATE MATERIALIZED VIEW public.radolan_14d_agg AS
 SELECT radolan.timestamp, radolan.tile_id,
-SUM(radolan.rainfall_mm) OVER (partition by radolan.tile_id ORDER BY radolan.timestamp ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS rainfall_mm_14d_sum
+SUM(radolan.rainfall_mm) OVER (partition by radolan.tile_id ORDER BY radolan.timestamp ROWS BETWEEN 14*24-1 PRECEDING AND CURRENT ROW) AS rainfall_mm_14d_sum
 FROM public.radolan;
 
 CREATE MATERIALIZED VIEW public.rainfall AS
