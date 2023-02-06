@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION public.rainfall (tree_id TEXT)
   RETURNS TABLE (
-    date date, rainfall_in_mm float8)
+    date date, rainfall_in_mm real)
   LANGUAGE plpgsql
   AS $$
 BEGIN
