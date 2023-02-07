@@ -132,4 +132,6 @@ module "qtrees_ecs" {
   postgres_passwd = var.POSTGRES_PASSWD
   jwt_secret = var.JWT_SECRET
   AWS_ACCOUNT_ID = var.AWS_ACCOUNT_ID
+  qtrees_version = var.qtrees_version
+  vpc_id = module.vpc.vpc_id
 }

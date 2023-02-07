@@ -23,3 +23,11 @@ variable "jwt_secret" {
 variable "AWS_ACCOUNT_ID" {
   
 }
+
+variable "qtrees_version" {
+  
+}
+
+variable "vpc_id" {
+  
+}
