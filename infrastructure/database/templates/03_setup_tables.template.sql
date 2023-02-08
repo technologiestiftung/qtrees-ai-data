@@ -28,7 +28,8 @@ CREATE TABLE public.trees (
     lng FLOAT(53),
     created_at DATE,
     updated_at DATE,
-    street_tree BOOLEAN
+    street_tree BOOLEAN, 
+    baumscheibe REAL
 );
 
 CREATE TABLE public.soil (
