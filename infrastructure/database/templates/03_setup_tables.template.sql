@@ -219,6 +219,12 @@ CREATE TABLE private.tree_devices (
     PRIMARY KEY(tree_id, customer_id, device_id, site_id)
 );
 
+CREATE TABLE private.vitality (
+    tree_id TEXT REFERENCES public.trees(id),
+    vitality_index REAL,
+    PRIMARY KEY(tree_id)
+);
+
 CREATE TABLE private.sensor_measurements (
 	tree_id TEXT REFERENCES public.trees(id),
     type_id INTEGER REFERENCES public.sensor_types(id),
