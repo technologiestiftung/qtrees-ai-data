@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Download weather data and store into db.
+Download GdK watering data, aggregate and store into db.
 Usage:
   script_store_gdk_watering_in_db.py [--db_qtrees=DB_QTREES] [--db_gdk=DB_GDK]
   script_store_gdk_watering_in_db.py (-h | --help)
