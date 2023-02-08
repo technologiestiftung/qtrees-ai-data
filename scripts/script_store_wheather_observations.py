@@ -26,7 +26,7 @@ def main():
     logger.info("Args: %s", sys.argv[1:])
     # Parse arguments
     args = docopt(__doc__)
-    db_qtrees, postgres_passwd = init_db_args(args, logger)
+    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     station_ids = args["--station_id"].rsplit(sep=',')
     station_ids = list(map(int, station_ids))
