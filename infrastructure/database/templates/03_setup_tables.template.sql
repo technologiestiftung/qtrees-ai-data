@@ -234,5 +234,12 @@ CREATE TABLE private.sensor_measurements (
     PRIMARY KEY(tree_id, type_id, timestamp)
 );
 
+CREATE TABLE private.watering_gdk (
+    tree_id TEXT REFERENCES public.trees(id),
+    amount REAL,
+    date DATE,
+    PRIMARY KEY(tree_id, date)
+);
+
 insert into private.customers(id, name) values (2, 'Mitte');
 insert into private.customers(id, name) values (3, 'Neukölln');
