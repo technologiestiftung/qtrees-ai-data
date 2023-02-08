@@ -30,53 +30,53 @@ JOIN
 	ORDER BY tile_id, timestamp DESC) as tile_rainfall
 ON public.tree_radolan_tile.tile_id = tile_rainfall.tile_id;
 
-CREATE MATERIALIZED VIEW vector_tiles AS
+CREATE MATERIALIZED VIEW public.vector_tiles AS
 SELECT
 	trees.id AS trees_id,
-	trees. "standortnr" AS trees_standortnr,
-	trees. "kennzeich" AS trees_kennzeich,
-	trees. "namenr" AS trees_namenr,
-	trees. "art_dtsch" AS trees_art_dtsch,
-	trees. "art_bot" AS trees_art_bot,
-	trees. "gattung_deutsch" AS trees_gattung_deutsch,
-	trees. "gattung" AS trees_gattung,
-	trees. "strname" AS trees_strname,
-	trees. "hausnr" AS trees_hausnr,
-	trees. "pflanzjahr" AS trees_pflanzjahr,
-	trees. "standalter" AS trees_standalter,
-	trees. "stammumfg" AS trees_stammumfg,
-	trees. "baumhoehe" AS trees_baumhoehe,
-	trees. "bezirk" AS trees_bezirk,
-	trees. "eigentuemer" AS trees_eigentuemer,
-	trees. "zusatz" AS trees_zusatz,
-	trees. "kronedurch" AS trees_kronedurch,
-	trees. "geometry" AS trees_geometry,
-	trees. "lat" AS trees_lat,
-	trees. "lng" AS trees_lng,
-	trees. "created_at" AS trees_created_at,
-	trees. "updated_at" AS trees_updated_at,
-	trees. "street_tree" AS trees_street_tree,
-	_nowcast. "tree_id" AS nowcast_tree_id,
-	_nowcast. "nowcast_type_30cm" AS nowcast_type_30cm,
-	_nowcast. "nowcast_type_60cm" AS nowcast_type_60cm,
-	_nowcast. "nowcast_type_90cm" AS nowcast_type_90cm,
-	_nowcast. "nowcast_type_stamm" AS nowcast_type_stamm,
-	_nowcast. "nowcast_timestamp_30cm" AS nowcast_timestamp_30cm,
-	_nowcast. "nowcast_timestamp_60cm" AS nowcast_timestamp_60cm,
-	_nowcast. "nowcast_timestamp_90cm" AS nowcast_timestamp_90cm,
-	_nowcast. "nowcast_timestamp_stamm" AS nowcast_timestamp_stamm,
-	_nowcast. "nowcast_values_30cm" AS nowcast_values_30cm,
-	_nowcast. "nowcast_values_60cm" AS nowcast_values_60cm,
-	_nowcast. "nowcast_values_90cm" AS nowcast_values_90cm,
-	_nowcast. "nowcast_values_stamm" AS nowcast_values_stamm,
-	_nowcast. "nowcast_created_at_30cm" AS nowcast_created_at_30cm,
-	_nowcast. "nowcast_created_at_60cm" AS nowcast_created_at_60cm,
-	_nowcast. "nowcast_created_at_90cm" AS nowcast_created_at_90cm,
-	_nowcast. "nowcast_created_at_stamm" AS nowcast_created_at_stamm,
-	_nowcast. "nowcast_model_id_30cm" AS nowcast_model_id_30cm,
-	_nowcast. "nowcast_model_id_60cm" AS nowcast_model_id_60cm,
-	_nowcast. "nowcast_model_id_90cm" AS nowcast_model_id_90cm,
-	_nowcast. "nowcast_model_id_stamm" AS nowcast_model_id_4
+	trees.standortnr AS trees_standortnr,
+	trees.kennzeich AS trees_kennzeich,
+	trees.namenr AS trees_namenr,
+	trees.art_dtsch AS trees_art_dtsch,
+	trees.art_bot AS trees_art_bot,
+	trees.gattung_deutsch AS trees_gattung_deutsch,
+	trees.gattung AS trees_gattung,
+	trees.strname AS trees_strname,
+	trees.hausnr AS trees_hausnr,
+	trees.pflanzjahr AS trees_pflanzjahr,
+	trees.standalter AS trees_standalter,
+	trees.stammumfg AS trees_stammumfg,
+	trees.baumhoehe AS trees_baumhoehe,
+	trees.bezirk AS trees_bezirk,
+	trees.eigentuemer AS trees_eigentuemer,
+	trees.zusatz AS trees_zusatz,
+	trees.kronedurch AS trees_kronedurch,
+	trees.geometry AS trees_geometry,
+	trees.lat AS trees_lat,
+	trees.lng AS trees_lng,
+	trees.created_at AS trees_created_at,
+	trees.updated_at AS trees_updated_at,
+	trees.street_tree AS trees_street_tree,
+	_nowcast.tree_id AS nowcast_tree_id,
+	_nowcast.nowcast_type_30cm AS nowcast_type_30cm,
+	_nowcast.nowcast_type_60cm AS nowcast_type_60cm,
+	_nowcast.nowcast_type_90cm AS nowcast_type_90cm,
+	_nowcast.nowcast_type_stamm AS nowcast_type_stamm,
+	_nowcast.nowcast_timestamp_30cm AS nowcast_timestamp_30cm,
+	_nowcast.nowcast_timestamp_60cm AS nowcast_timestamp_60cm,
+	_nowcast.nowcast_timestamp_90cm AS nowcast_timestamp_90cm,
+	_nowcast.nowcast_timestamp_stamm AS nowcast_timestamp_stamm,
+	_nowcast.nowcast_values_30cm AS nowcast_values_30cm,
+	_nowcast.nowcast_values_60cm AS nowcast_values_60cm,
+	_nowcast.nowcast_values_90cm AS nowcast_values_90cm,
+	_nowcast.nowcast_values_stamm AS nowcast_values_stamm,
+	_nowcast.nowcast_created_at_30cm AS nowcast_created_at_30cm,
+	_nowcast.nowcast_created_at_60cm AS nowcast_created_at_60cm,
+	_nowcast.nowcast_created_at_90cm AS nowcast_created_at_90cm,
+	_nowcast.nowcast_created_at_stamm AS nowcast_created_at_stamm,
+	_nowcast.nowcast_model_id_30cm AS nowcast_model_id_30cm,
+	_nowcast.nowcast_model_id_60cm AS nowcast_model_id_60cm,
+	_nowcast.nowcast_model_id_90cm AS nowcast_model_id_90cm,
+	_nowcast.nowcast_model_id_stamm AS nowcast_model_id_4
 FROM
 	public.trees
 	LEFT JOIN (
@@ -103,37 +103,24 @@ FROM
 			(ARRAY_AGG(nowcast_timestamp)) [2] nowcast_timestamp_60cm,
 			(ARRAY_AGG(nowcast_timestamp)) [3] nowcast_timestamp_90cm,
 			(ARRAY_AGG(nowcast_timestamp)) [4] nowcast_timestamp_stamm
-		FROM ( SELECT DISTINCT ON (n.tree_id, f. "name")
+		FROM ( SELECT DISTINCT ON (n.tree_id, f.name)
 				n.id AS nowcast_id,
-				n. "timestamp" AS nowcast_timestamp,
+				n.timestamp AS nowcast_timestamp,
 				n.tree_id AS nowcast_tree_id,
-				n. "value" AS nowcast_value,
+				n.value AS nowcast_value,
 				n.created_at AS nowcast_created_at,
 				n.model_id AS nowcast_model_id,
-				f. "name" AS forcast_type,
+				f.name AS forcast_type,
 				f.id AS sensor_types_id
 			FROM
 				public.nowcast n
 				JOIN public.sensor_types f ON n.type_id = f.id
 			ORDER BY
 				n.tree_id,
-				f. "name",
-				n. "timestamp" DESC) distinct_nowcast
+				f.name,
+				n.timestamp DESC) distinct_nowcast
 		GROUP BY
 			nowcast_tree_id) AS _nowcast ON trees.id = _nowcast.tree_id;
-
-
-CREATE OR REPLACE VIEW private.training_data AS
-SELECT sensor_measurements.tree_id, sensor_measurements.sensor_id, sensor_measurements.timestamp, sensor_measurements.value,
-		shading.winter, shading.spring, shading.summer, shading.fall,
-		trees.gattung_deutsch, trees.standalter,
-		weather_14d_agg.temp_avg_c_14d_avg, weather_14d_agg.wind_avg_ms_14d_avg, weather_14d_agg.temp_max_c_14d_avg, weather_14d_agg.wind_max_ms_14d_avg
-FROM private.sensor_measurements
-LEFT JOIN public.shading ON public.shading.tree_id = sensor_measurements.tree_id
-LEFT JOIN public.trees ON trees.id = sensor_measurements.tree_id
-LEFT JOIN public.weather_14d_agg ON sensor_measurements.timestamp = weather_14d_agg.timestamp
-LEFT JOIN public.radolan_14d_agg ON sensor_measurements.timestamp = radolan_14d_agg.timestamp
-ORDER BY timestamp DESC;
 
 CREATE OR REPLACE VIEW private.test_data AS
 SELECT trees.id, trees.gattung_deutsch, trees.standalter,
