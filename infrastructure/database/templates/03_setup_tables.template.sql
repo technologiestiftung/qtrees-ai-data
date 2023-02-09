@@ -236,7 +236,7 @@ CREATE TABLE private.sensor_measurements (
 
 CREATE TABLE private.watering_gdk (
     tree_id TEXT REFERENCES public.trees(id),
-    amount REAL,
+    amount_liters REAL,
     date DATE,
     PRIMARY KEY(tree_id, date)
 );
