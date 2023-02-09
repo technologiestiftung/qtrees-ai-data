@@ -48,6 +48,7 @@ def main():
         data_file = os.path.join(data_directory, "trees_gdf_all.geojson")
         joined_trees = get_trees(data_file)
         joined_trees = joined_trees.drop_duplicates(subset=['id'], keep='first')
+        joined_trees['baumscheibe'] = ""
         logger.info("Writing into db")
         try:
             joined_trees.to_postgis("trees", engine, if_exists="append", schema="public")

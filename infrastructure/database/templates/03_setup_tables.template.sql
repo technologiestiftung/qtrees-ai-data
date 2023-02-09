@@ -28,7 +28,8 @@ CREATE TABLE public.trees (
     lng FLOAT(53),
     created_at DATE,
     updated_at DATE,
-    street_tree BOOLEAN
+    street_tree BOOLEAN, 
+    baumscheibe REAL
 );
 
 CREATE TABLE public.soil (
@@ -216,6 +217,12 @@ CREATE TABLE private.tree_devices (
     device_id  BIGINT,
     site_id BIGINT,
     PRIMARY KEY(tree_id, customer_id, device_id, site_id)
+);
+
+CREATE TABLE private.vitality (
+    tree_id TEXT REFERENCES public.trees(id),
+    vitality_index REAL,
+    PRIMARY KEY(tree_id)
 );
 
 CREATE TABLE private.sensor_measurements (
