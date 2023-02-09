@@ -25,7 +25,7 @@ def main():
     # Parse arguments
     args = docopt(__doc__)
     logger.debug("Init db args")
-    db_qtrees, postgres_passwd = init_db_args(args, logger)
+    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     data_directory = args["--data_directory"]
     logger.debug("Create db engine")

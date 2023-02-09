@@ -144,9 +144,22 @@ SELECT trees.id, trees.gattung_deutsch, trees.standalter,
 FROM public.trees
 LEFT JOIN public.shading ON public.shading.tree_id = public.trees.id;
 
+CREATE MATERIALIZED VIEW public.watering AS
+SELECT tree_id, sum(amount_liters), "date"
+FROM ((
+  SELECT tree_id, amount_liters, "date" FROM private.watering_gdk
+  UNION ALL
+  SELECT tree_id, amount_liters, "date" FROM private.watering_sga
+)) w
+WHERE "date" >= cast(now() as date) - interval '2 months'
+GROUP BY tree_id, "date";
+
 -- all users (are derived from authenticator and) have access to rainfall
 grant select on public.rainfall to authenticator;
 grant select on public.rainfall to web_anon;
 
 grant select on public.vector_tiles to authenticator;
 grant select on public.vector_tiles to web_anon;
+
+grant select on public.watering to authenticator;
+grant select on public.watering to web_anon;

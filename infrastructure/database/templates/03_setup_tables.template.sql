@@ -194,6 +194,11 @@ CREATE TABLE public.nowcast (
 	model_id text
 );
 
+CREATE INDEX idx_nowcast_tree_id
+ON nowcast(tree_id);
+CREATE INDEX idx_forecast_tree_id
+ON forecast(tree_id);
+
 insert into public.sensor_types(id, name) values (1, 'saugspannung_30cm');
 insert into public.sensor_types(id, name) values (2, 'saugspannung_60cm');
 insert into public.sensor_types(id, name) values (3, 'saugspannung_90cm');
@@ -232,6 +237,20 @@ CREATE TABLE private.sensor_measurements (
 	timestamp timestamp,
 	value REAL,
     PRIMARY KEY(tree_id, type_id, timestamp)
+);
+
+CREATE TABLE private.watering_gdk (
+    tree_id TEXT REFERENCES public.trees(id),
+    amount_liters REAL,
+    date DATE,
+    PRIMARY KEY(tree_id, date)
+);
+
+CREATE TABLE private.watering_sga (
+    tree_id TEXT REFERENCES public.trees(id),
+    amount_liters REAL,
+    date DATE,
+    PRIMARY KEY(tree_id, date)
 );
 
 insert into private.customers(id, name) values (2, 'Mitte');

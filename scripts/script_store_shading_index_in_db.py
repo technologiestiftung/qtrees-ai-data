@@ -22,7 +22,7 @@ def main():
     logger.info("Args: %s", sys.argv[1:])
     # Parse arguments
     args = docopt(__doc__)
-    db_qtrees, postgres_passwd = init_db_args(args, logger)
+    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     shadow_index_file = args["--shadow_index_file"]
 
