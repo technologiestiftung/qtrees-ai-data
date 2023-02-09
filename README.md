@@ -261,7 +261,7 @@ From the project root directory, execute the following steps in the **same shell
 - run `python scripts/script_store_wheather_observations.py` to store latest data from weather stations
 - run `python scripts/script_store_radolan_in_db.py` to store latest radolan data
 - run `python scripts/script_store_shading_index_in_db.py` to store the shading index
-- run `python scripts/script_store_gdk_watering_in_db.py` to store the shading index
+- run `python scripts/script_store_gdk_watering_in_db.py` to store the watering data of GdK
 - restart docker to make changes available to other services via `docker-compose -f docker-compose.local.yml restart`
 
 
