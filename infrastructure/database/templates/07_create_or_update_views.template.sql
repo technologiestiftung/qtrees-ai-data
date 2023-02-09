@@ -30,6 +30,18 @@ JOIN
 	ORDER BY tile_id, timestamp DESC) as tile_rainfall
 ON public.tree_radolan_tile.tile_id = tile_rainfall.tile_id;
 
+CREATE OR REPLACE VIEW private.training_data AS
+SELECT sensor_measurements.tree_id, sensor_measurements.sensor_id, sensor_measurements.timestamp, sensor_measurements.value,
+		shading.winter, shading.spring, shading.summer, shading.fall,
+		trees.gattung_deutsch, trees.standalter,
+		weather_14d_agg.temp_avg_c_14d_avg, weather_14d_agg.wind_avg_ms_14d_avg, weather_14d_agg.temp_max_c_14d_avg, weather_14d_agg.wind_max_ms_14d_avg
+FROM private.sensor_measurements
+LEFT JOIN public.shading ON public.shading.tree_id = sensor_measurements.tree_id
+LEFT JOIN public.trees ON trees.id = sensor_measurements.tree_id
+LEFT JOIN public.weather_14d_agg ON sensor_measurements.timestamp = weather_14d_agg.timestamp
+LEFT JOIN public.radolan_14d_agg ON sensor_measurements.timestamp = radolan_14d_agg.timestamp
+ORDER BY timestamp DESC;
+
 CREATE MATERIALIZED VIEW public.vector_tiles AS
 SELECT
 	trees.id AS trees_id,
