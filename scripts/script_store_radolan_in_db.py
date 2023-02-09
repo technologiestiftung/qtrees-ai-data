@@ -65,17 +65,19 @@ def main():
         last_date = None
         if sqlalchemy.inspect(engine).has_table("radolan", schema="public"):
             with engine.connect() as con:
-                rs = con.execute('select MAX("timestamp") from public.radolan')
+                rs = con.execute('select MAX("date") from public.radolan')
                 last_date = [idx[0] for idx in rs][0]
                 logger.debug("Latest timestamp in data: %s.", last_date)
-                last_date = last_date - datetime.timedelta(days=1)
                 logger.debug("Continue from %s", last_date)
 
         if last_date is None:
             last_date = now - datetime.timedelta(days=days)
             last_date = last_date.replace(minute=50, second=0, microsecond=0)
         else:
-            last_date = last_date.replace(minute=50, second=0, microsecond=0)
+            last_date = pd.to_datetime(last_date).replace(minute=50, second=0, microsecond=0)
+
+        with engine.connect() as con:
+            rs = con.execute(f"DELETE FROM public.radolan WHERE DATE >= %s", last_date.strftime('%Y-%m-%d'))
 
         radolan_data = []
         while last_date <= now:
@@ -100,27 +102,27 @@ def main():
             result = con.execute('select id from public.radolan_tiles')
             tiles = [t[0] for t in list(result.fetchall())]
 
-        if radolan is not None:
-            radolan_gdf_grid = radolan_gdf.rename(columns={"index": "id"})
-            radolan_gdf_grid = radolan_gdf_grid[~radolan_gdf_grid.id.isin(tiles)]
-            logger.debug(f"Storing {len(radolan_gdf_grid)} new tiles to the database.")
-            radolan_gdf_grid[["id", "geometry"]].to_postgis("radolan_tiles", engine, if_exists="append", schema="public")
-            if len(radolan_gdf_grid) > 0:
-                with engine.connect() as con:
-                    con.execute('REFRESH MATERIALIZED VIEW public.tree_radolan_tile')
-                    logger.info(f"Updated materialized views tree_radolan_tile")
+        radolan_gdf_grid = radolan_gdf.rename(columns={"index": "id"})
+        radolan_gdf_grid = radolan_gdf_grid[~radolan_gdf_grid.id.isin(tiles)]
+        logger.debug(f"Storing {len(radolan_gdf_grid)} new tiles to the database.")
+        radolan_gdf_grid[["id", "geometry"]].to_postgis("radolan_tiles", engine, if_exists="append", schema="public")
+        if len(radolan_gdf_grid) > 0:
+            with engine.connect() as con:
+                con.execute('REFRESH MATERIALIZED VIEW public.tree_radolan_tile')
+                logger.info(f"Updated materialized views tree_radolan_tile")
 
-            logger.debug("Storing radolan data for '%s'", meta_data['datetime'])
-            daily_data = gpd.GeoDataFrame(pd.concat(radolan_data, ignore_index=True))
-            daily_data["date"] = daily_data["timestamp"].dt.date
-            daily_mean = daily_data.groupby(["tile_id", "date"]).mean().reset_index()
-            daily_max= daily_data.groupby(["tile_id", "date"]).max().reset_index()
+        logger.debug("Storing radolan data for '%s'", meta_data['datetime'])
+        daily_data = gpd.GeoDataFrame(pd.concat(radolan_data, ignore_index=True))
 
-            daily_df = pd.merge(daily_mean[["tile_id", "date", "rainfall_mm"]],
-                    daily_max[["tile_id", "date", "rainfall_mm"]].rename(columns={"rainfall_mm": "rainfall_max_mm"}),
-                    on=["tile_id", "date"])
+        daily_data["date"] = daily_data["timestamp"].dt.date
+        daily_mean = daily_data.groupby(["tile_id", "date"]).mean().reset_index()
+        daily_max= daily_data.groupby(["tile_id", "date"]).max().reset_index()
 
-            daily_df.to_sql("radolan", engine, if_exists="append", schema="public", index=False)
+        daily_df = pd.merge(daily_mean[["tile_id", "date", "rainfall_mm"]],
+                daily_max[["tile_id", "date", "rainfall_mm"]].rename(columns={"rainfall_mm": "rainfall_max_mm"}),
+                on=["tile_id", "date"])
+
+        daily_df.to_sql("radolan", engine, if_exists="append", schema="public", index=False)
             
         logger.info(f"Updating materialized views...")
         with engine.connect() as con:

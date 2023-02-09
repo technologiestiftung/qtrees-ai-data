@@ -138,7 +138,7 @@ CREATE TABLE public.weather (
     temp_max_c   REAL,
     TNK          REAL,
     TGK          REAL,
-    PRIMARY KEY(stations_id, timestamp)
+    PRIMARY KEY(stations_id, date)
 );
 
 CREATE TABLE public.radolan_tiles (
@@ -151,15 +151,8 @@ CREATE TABLE public.radolan (
     date   DATE NOT NULL,
     rainfall_mm REAL,
     rainfall_max_mm REAL,
-    PRIMARY KEY(tile_id, timestamp)
+    PRIMARY KEY(tile_id, date)
 );
-
----CREATE TABLE public.shading (
---    tree_id TEXT REFERENCES public.trees(id),
---    month SMALLINT,
---    index REAL,
---   PRIMARY KEY(tree_id, month)
---);
 
 CREATE TABLE public.shading (
     tree_id TEXT REFERENCES public.trees(id),
