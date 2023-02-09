@@ -151,6 +151,7 @@ FROM ((
   UNION ALL
   SELECT tree_id, amount_liters, "date" FROM private.watering_sga
 )) w
+WHERE "date" >= cast(now() as date) - interval '2 weeks'
 GROUP BY tree_id, "date";
 
 -- all users (are derived from authenticator and) have access to rainfall
