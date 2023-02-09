@@ -16,8 +16,8 @@ join public.radolan_tiles as tiles
 ON ST_Contains(tiles.geometry, trees.geometry);
 
 CREATE MATERIALIZED VIEW public.radolan_14d_agg AS
-SELECT radolan.timestamp, radolan.tile_id,
-SUM(radolan.rainfall_mm) OVER (partition by radolan.tile_id ORDER BY radolan.timestamp ROWS BETWEEN 14*24-1 PRECEDING AND CURRENT ROW) AS rainfall_mm_14d_sum
+SELECT radolan.date, radolan.tile_id,
+SUM(radolan.rainfall_mm) OVER (partition by radolan.tile_id ORDER BY radolan.date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS rainfall_mm_14d_sum
 FROM public.radolan;
 
 CREATE MATERIALIZED VIEW public.rainfall AS
@@ -27,7 +27,7 @@ JOIN
 	(SELECT DISTINCT ON (tile_id)
 	tile_id, rainfall_mm_14d_sum
 	FROM public.radolan_14d_agg
-	ORDER BY tile_id, timestamp DESC) as tile_rainfall
+	ORDER BY tile_id, date DESC) as tile_rainfall
 ON public.tree_radolan_tile.tile_id = tile_rainfall.tile_id;
 
 CREATE OR REPLACE VIEW private.training_data AS

@@ -52,6 +52,8 @@ def get_radolan_data(nowcast_date=None, aggregation="hourly", mask=None, xmin=0,
     else:
         normalized_date = nowcast_date - datetime.timedelta(minutes=nowcast_date.minute + 50)
 
+    print(normalized_date)
+
     if aggregation == "hourly":
         url = f"https://opendata.dwd.de/climate_environment/CDC/grids_germany/hourly/radolan/recent/bin/" \
               f"raa01-rw_10000-{normalized_date:%y%m%d%H%M}-dwd---bin.gz"
