@@ -63,15 +63,19 @@ def main():
                                       f" WHERE cast(trees_watered.timestamp as date) > '{last_date}';",
                                       con)
         if len(pd_watering) > 0:
-            pd_watering.rename(columns={"gmlid": "tree_id", "timestamp": "date"}, inplace=True)
+            pd_watering.rename(columns={"gmlid": "tree_id", "timestamp": "date", "amount": "amount_liters"}, inplace=True)
             # aggregate watering day- and tree-wise
             pd_agg = pd_watering.groupby([pd_watering.date.dt.date, pd_watering.tree_id]).sum(
                 numeric_only=True).reset_index()
             # write aggregated data to qtrees db
             logger.info("Writing/updating %s new watering data", len(pd_watering))
             pd_agg.to_sql("watering_gdk", engine_qtrees, if_exists="append", schema="private", index=False)
+            # update MATERIALIZED VIEW
+            with engine_qtrees.connect() as con:
+                con.execute("REFRESH MATERIALIZED VIEW public.watering;")
         else:
             logger.info("No update available for watering data")
+
     except Exception as e:
         logger.error("Cannot access db: %s", e)
         exit(121)
