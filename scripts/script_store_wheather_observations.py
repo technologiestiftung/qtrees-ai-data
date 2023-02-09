@@ -68,7 +68,7 @@ def main():
 
         try:
             weather = get_observations(station, measurement)
-            weather = weather.rename(columns={"mess_datum": "timestamp",
+            weather = weather.rename(columns={"mess_datum": "date",
                                               "rsk": "rainfall_mm",
                                               "tmk": "temp_avg_c", "txk": "temp_max_c",
                                               "fx": "wind_max_ms", "fm": "wind_mean_ms"})
@@ -79,13 +79,13 @@ def main():
         try:
             if sqlalchemy.inspect(engine).has_table("weather", schema="public"):
                 with engine.connect() as con:
-                    rs = con.execute('select "timestamp" from public.weather')
+                    rs = con.execute('select "date" from public.weather')
                     indices = [idx[0] for idx in rs]
-                    weather = weather[~weather.timestamp.isin(indices)]
+                    weather = weather[~weather.date.isin(indices)]
                     if len(weather) > 10 or len(weather) == 0:
                         logger.info(f"Got {len(weather)} new entries")
                     else:
-                        logger.info(f"Got {len(weather)} new entries: {weather.timestamp}")
+                        logger.info(f"Got {len(weather)} new entries: {weather.date}")
                 weather = weather.drop(columns=["eor"])
             weather.to_sql("weather", engine, if_exists="append", schema="public", index=False)
 

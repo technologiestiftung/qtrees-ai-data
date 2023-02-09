@@ -121,7 +121,7 @@ CREATE TABLE public.weather_stations (
 
 CREATE TABLE public.weather (
     stations_id  BIGINT REFERENCES public.weather_stations (id),
-    timestamp   timestamp NOT NULL,
+    date   DATE NOT NULL,
     QN_3         BIGINT,
     wind_max_ms  REAL,
     wind_mean_ms REAL,
@@ -138,7 +138,7 @@ CREATE TABLE public.weather (
     temp_max_c   REAL,
     TNK          REAL,
     TGK          REAL,
-    PRIMARY KEY(stations_id, timestamp)
+    PRIMARY KEY(stations_id, date)
 );
 
 CREATE TABLE public.radolan_tiles (
@@ -148,17 +148,11 @@ CREATE TABLE public.radolan_tiles (
 
 CREATE TABLE public.radolan (
     tile_id  BIGINT REFERENCES public.radolan_tiles(id),
-    timestamp   timestamp NOT NULL,
+    date   DATE NOT NULL,
     rainfall_mm REAL,
-    PRIMARY KEY(tile_id, timestamp)
+    rainfall_max_mm REAL,
+    PRIMARY KEY(tile_id, date)
 );
-
----CREATE TABLE public.shading (
---    tree_id TEXT REFERENCES public.trees(id),
---    month SMALLINT,
---    index REAL,
---   PRIMARY KEY(tree_id, month)
---);
 
 CREATE TABLE public.shading (
     tree_id TEXT REFERENCES public.trees(id),
