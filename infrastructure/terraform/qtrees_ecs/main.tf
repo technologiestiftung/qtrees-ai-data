@@ -167,9 +167,9 @@ resource "aws_cloudwatch_log_group" "postgrest_service" {
 }
 
 # ============================= LOAD BALANCING
-resource "aws_eip" "qtrees" {
-  vpc      = true
-}
+# resource "aws_eip" "qtrees" {
+#   vpc      = true
+# }
 resource "aws_lb" "qtrees" {
   name               = "${var.project_name}-lb"
   internal           = false
