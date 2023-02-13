@@ -55,7 +55,7 @@ resource "aws_db_subnet_group" "qtrees" {
 resource "aws_db_instance" "qtrees" {
   identifier        = "${var.project_name}-iac-rds"
   instance_class    = "db.t3.micro"
-  allocated_storage = 5
+  allocated_storage = 10
   engine            = "postgres"
   name              = var.project_name
   username          = "postgres"
@@ -214,7 +214,8 @@ resource "local_file" "setup_env_file" {
     export DB_USER_PASSWD=${var.DB_USER_PASSWD}
     export UI_USER_PASSWD=${var.UI_USER_PASSWD}
     export DB_QTREES=${aws_db_instance.qtrees.address}
-    export DB_DOCKER=${aws_db_instance.qtrees.address} #only for docker
+    export DB_GDK=${var.DB_GDK}
+    export GDK_PASSWD=${var.GDK_PASSWD}
     export CMD_GIS_ADMIN="GRANT rds_superuser TO gis_admin;" # with rds !
     DOC
   filename = "./tf_output/setup_environment.sh"

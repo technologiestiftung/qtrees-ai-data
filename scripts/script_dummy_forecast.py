@@ -75,7 +75,8 @@ def main():
 
     # delete old entries on rolling basis
     with engine.connect() as con:
-        con.execute("delete from public.nowcast where timestamp < now() - interval '14 days'")
+        con.execute("delete from public.nowcast where timestamp < now() - interval '2 days'")
+        con.execute("REFRESH MATERIALIZED VIEW public.vector_tiles;")
 
 
 if __name__ == "__main__":

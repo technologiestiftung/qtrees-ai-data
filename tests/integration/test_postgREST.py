@@ -6,7 +6,8 @@ import json
 
 class TestPostgREST(unittest.TestCase):
     _public_endpoints = ("issue_types", "forecast", "nowcast", "sensor_types", "shading", "weather",
-                         "weather_stations")  # "issues",
+                         "weather_stations", "watering", "trees", "soil", "radolan_tiles", "radolan",
+                         "rainfall", "watering")  # "issues",
 
     def setUp(self):
         url = os.getenv("URL_POSTGREST")
@@ -19,7 +20,8 @@ class TestPostgREST(unittest.TestCase):
 
         try:
             res = requests.get(url)
-        except Exception:
+        except Exception as e:
+            print(e)
             res = None
 
         self.assertIsNotNone(res, f"No connection or response for endpoint {url}")

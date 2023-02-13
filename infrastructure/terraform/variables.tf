@@ -53,3 +53,10 @@ variable "POSTGRES_PASSWD" {
   description = "RDS root user password"
   sensitive   = true
 }
+
+variable "DB_GDK" {
+  sensitive   = true
+}
+variable "GDK_PASSWD" {
+  sensitive   = true
+}
