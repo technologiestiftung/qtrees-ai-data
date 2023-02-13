@@ -2,6 +2,10 @@ export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 export AWS_DEFAULT_REGION=eu-central-1
 
+export TF_VAR_ELASTIC_IP_EC2=
+export TF_VAR_project_name=
+export TF_VAR_restricted=true
+
 export TF_VAR_GIS_PASSWD=
 export TF_VAR_AUTH_PASSWD=
 export TF_VAR_JWT_SECRET=

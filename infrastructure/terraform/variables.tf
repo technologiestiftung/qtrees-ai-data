@@ -12,6 +12,10 @@ variable "qtrees_version" {
   default     = "v2"
 }
 
+variable "restricted" {
+  default = true
+}
+
 variable "pub_key" {
   description = "public key used in provisioned EC2 instance"
   sensitive   = true
@@ -47,5 +51,12 @@ variable "UI_USER_PASSWD" {
 
 variable "POSTGRES_PASSWD" {
   description = "RDS root user password"
+  sensitive   = true
+}
+
+variable "DB_GDK" {
+  sensitive   = true
+}
+variable "GDK_PASSWD" {
   sensitive   = true
 }

@@ -11,10 +11,11 @@ Options:
 """
 import warnings
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 import sqlalchemy
 import datetime
 import geopandas as gpd
+import pandas as pd
 from docopt import docopt, DocoptExit
 from qtrees.helper import get_logger, init_db_args
 from qtrees.dwd import get_radolan_data
@@ -40,7 +41,7 @@ def main():
     logger.info("Args: %s", sys.argv[1:])
     # Parse arguments
     args = docopt(__doc__)
-    db_qtrees, postgres_passwd = init_db_args(args, logger)
+    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     # specific args
     days = int(args["--days"])
@@ -64,17 +65,23 @@ def main():
         last_date = None
         if sqlalchemy.inspect(engine).has_table("radolan", schema="public"):
             with engine.connect() as con:
-                rs = con.execute('select MAX("timestamp") from public.radolan')
+                rs = con.execute('select MAX("date") from public.radolan')
                 last_date = [idx[0] for idx in rs][0]
-                logger.debug("Latest timestamp in data: %s. Continue from here.", last_date)
+                logger.debug("Latest timestamp in data: %s.", last_date)
+                logger.debug("Continue from %s", last_date)
 
         if last_date is None:
             last_date = now - datetime.timedelta(days=days)
             last_date = last_date.replace(minute=50, second=0, microsecond=0)
         else:
-            last_date += delta
+            last_date = pd.to_datetime(last_date).replace(minute=50, second=0, microsecond=0)
 
+        with engine.connect() as con:
+            rs = con.execute(f"DELETE FROM public.radolan WHERE DATE >= %s", last_date.strftime('%Y-%m-%d'))
+
+        radolan_data = []
         while last_date <= now:
+            logger.info("Processing RADOLAN data for '%s'", last_date)
             # hourly
             radolan = get_radolan_data(
                 nowcast_date=last_date, mask=berlin_mask, xmin=600,
@@ -86,10 +93,43 @@ def main():
                 radolan_gdf, meta_data = radolan
                 radolan_gdf = radolan_gdf.drop(columns=["index_right"])
                 radolan_gdf["timestamp"] = meta_data['datetime']
-                logger.debug("Storing radolan data for '%s'", meta_data['datetime'])
-                radolan_gdf.to_postgis("radolan", engine, if_exists="append", schema="public")
-
+                radolan_gdf = radolan_gdf.reset_index()
+                radolan_data.append(radolan_gdf.rename(columns={"index": "tile_id"}))
             last_date += delta
+
+        # write the tiles
+        with engine.connect() as con:
+            result = con.execute('select id from public.radolan_tiles')
+            tiles = [t[0] for t in list(result.fetchall())]
+
+        radolan_gdf_grid = radolan_gdf.rename(columns={"index": "id"})
+        radolan_gdf_grid = radolan_gdf_grid[~radolan_gdf_grid.id.isin(tiles)]
+        logger.debug(f"Storing {len(radolan_gdf_grid)} new tiles to the database.")
+        radolan_gdf_grid[["id", "geometry"]].to_postgis("radolan_tiles", engine, if_exists="append", schema="public")
+        if len(radolan_gdf_grid) > 0:
+            with engine.connect() as con:
+                con.execute('REFRESH MATERIALIZED VIEW public.tree_radolan_tile')
+                logger.info(f"Updated materialized views tree_radolan_tile")
+
+        logger.debug("Storing radolan data for '%s'", meta_data['datetime'])
+        daily_data = gpd.GeoDataFrame(pd.concat(radolan_data, ignore_index=True))
+
+        daily_data["date"] = daily_data["timestamp"].dt.date
+        daily_mean = daily_data.groupby(["tile_id", "date"]).mean().reset_index()
+        daily_max= daily_data.groupby(["tile_id", "date"]).max().reset_index()
+
+        daily_df = pd.merge(daily_mean[["tile_id", "date", "rainfall_mm"]],
+                daily_max[["tile_id", "date", "rainfall_mm"]].rename(columns={"rainfall_mm": "rainfall_max_mm"}),
+                on=["tile_id", "date"])
+
+        daily_df.to_sql("radolan", engine, if_exists="append", schema="public", index=False)
+            
+        logger.info(f"Updating materialized views...")
+        with engine.connect() as con:
+            con.execute('REFRESH MATERIALIZED VIEW public.radolan_14d_agg')
+            logger.info(f"Updated materialized views radolan_14d_agg")
+            con.execute('REFRESH MATERIALIZED VIEW public.rainfall')
+            logger.info(f"Updated materialized views rainfall")
     except Exception as e:
         logger.error("Cannot write to db: %s", e)
         exit(121)

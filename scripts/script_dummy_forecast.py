@@ -25,7 +25,7 @@ def main():
     logger.info("Args: %s", sys.argv[1:])
     # Parse arguments
     args = docopt(__doc__)
-    db_qtrees, postgres_passwd = init_db_args(args, logger)
+    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
@@ -75,7 +75,8 @@ def main():
 
     # delete old entries on rolling basis
     with engine.connect() as con:
-        con.execute("delete from public.nowcast where timestamp < now() - interval '14 days'")
+        con.execute("delete from public.nowcast where timestamp < now() - interval '2 days'")
+        con.execute("REFRESH MATERIALIZED VIEW public.vector_tiles;")
 
 
 if __name__ == "__main__":

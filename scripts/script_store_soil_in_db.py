@@ -25,7 +25,7 @@ def main():
     logger.info("Args: %s", sys.argv[1:])
     # Parse arguments
     args = docopt(__doc__)
-    db_qtrees, postgres_passwd = init_db_args(args, logger)
+    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     data_directory = args["--data_directory"]
 
@@ -60,6 +60,7 @@ def main():
         soil_gdf = soil_gdf.rename(columns={"gml_id": "id"})
         soil_gdf['created_at'] = date
         soil_gdf['updated_at'] = date
+        soil_gdf = soil_gdf.rename(columns={"gml_id": "id"})
 
         logger.info("Writing into db")
         try:

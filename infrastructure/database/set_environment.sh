@@ -8,3 +8,6 @@ export CMD_GIS_ADMIN="GRANT rds_superuser TO gis_admin;" # with rds !
 export DB_ADMIN_PASSWD=
 export DB_USER_PASSWD=
 export UI_USER_PASSWD=
+
+export GDK_PASSWD=
+export DB_GDK=

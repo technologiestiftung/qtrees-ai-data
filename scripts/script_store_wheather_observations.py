@@ -26,7 +26,7 @@ def main():
     logger.info("Args: %s", sys.argv[1:])
     # Parse arguments
     args = docopt(__doc__)
-    db_qtrees, postgres_passwd = init_db_args(args, logger)
+    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     station_ids = args["--station_id"].rsplit(sep=',')
     station_ids = list(map(int, station_ids))
@@ -55,6 +55,10 @@ def main():
         gdf = gdf[~gdf.id.isin(indices)]
         gdf.to_postgis("weather_stations", engine, if_exists="append", schema="public")
         logger.info(f"Now, new %s weather stations in database.", len(gdf))
+
+        with engine.connect() as con:
+            con.execute('REFRESH MATERIALIZED VIEW public.weather_14d_agg')
+        logger.info(f"Updated materialized view public.weather_14d_agg.")
     except Exception as e:
         logger.error("Cannot write to weather_stations: %s", e)
         exit(121)
@@ -64,7 +68,7 @@ def main():
 
         try:
             weather = get_observations(station, measurement)
-            weather = weather.rename(columns={"mess_datum": "timestamp",
+            weather = weather.rename(columns={"mess_datum": "date",
                                               "rsk": "rainfall_mm",
                                               "tmk": "temp_avg_c", "txk": "temp_max_c",
                                               "fx": "wind_max_ms", "fm": "wind_mean_ms"})
@@ -75,15 +79,19 @@ def main():
         try:
             if sqlalchemy.inspect(engine).has_table("weather", schema="public"):
                 with engine.connect() as con:
-                    rs = con.execute('select "timestamp" from public.weather')
+                    rs = con.execute('select "date" from public.weather')
                     indices = [idx[0] for idx in rs]
-                    weather = weather[~weather.timestamp.isin(indices)]
+                    weather = weather[~weather.date.isin(indices)]
                     if len(weather) > 10 or len(weather) == 0:
                         logger.info(f"Got {len(weather)} new entries")
                     else:
-                        logger.info(f"Got {len(weather)} new entries: {weather.timestamp}")
+                        logger.info(f"Got {len(weather)} new entries: {weather.date}")
                 weather = weather.drop(columns=["eor"])
             weather.to_sql("weather", engine, if_exists="append", schema="public", index=False)
+
+            with engine.connect() as con:
+                con.execute('REFRESH MATERIALIZED VIEW public.weather_14d_agg')
+            logger.info(f"Updated materialized view weather_14d_agg")
         except Exception as e:
             logger.error("Cannot write to weather:", e)
             exit(121)

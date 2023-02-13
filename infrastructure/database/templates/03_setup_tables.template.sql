@@ -15,47 +15,48 @@ CREATE TABLE public.trees (
     gattung TEXT,
     strname TEXT,
     hausnr TEXT,
-    pflanzjahr FLOAT(53),
-    standalter FLOAT(53),
-    stammumfg FLOAT(53),
-    baumhoehe FLOAT(53),
+    pflanzjahr REAL,
+    standalter REAL,
+    stammumfg REAL,
+    baumhoehe REAL,
     bezirk TEXT,
     eigentuemer TEXT,
     zusatz TEXT,
-    kronedurch FLOAT(53),
+    kronedurch REAL,
     geometry geometry(POINT,4326),
     lat FLOAT(53),
     lng FLOAT(53),
     created_at DATE,
     updated_at DATE,
-    street_tree BOOLEAN
+    street_tree BOOLEAN, 
+    baumscheibe REAL
 );
 
 CREATE TABLE public.soil (
      id              TEXT PRIMARY KEY,
      schl5           BIGINT,
-     nutz            FLOAT(53),
+     nutz            REAL,
      nutz_bez        TEXT,
-     vgradstufe      FLOAT(53),
+     vgradstufe      REAL,
      vgradstufe_bez  TEXT,
-     boges_neu5      FLOAT(53),
+     boges_neu5      REAL,
      btyp            TEXT,
      bg_alt          TEXT,
      nutzgenese      TEXT,
      ausgangsm       TEXT,
-     geomeinh        FLOAT(53),
+     geomeinh        REAL,
      geomeinh_bez    TEXT,
-     aus_bg          FLOAT(53),
+     aus_bg          REAL,
      aus_bg_bez      TEXT,
-     antro_bg        FLOAT(53),
+     antro_bg        REAL,
      antro_bg_bez    TEXT,
-     torf_bg         FLOAT(53),
+     torf_bg         REAL,
      torf_bg_bez     TEXT,
-     torf_klas       FLOAT(53),
-     flur            FLOAT(53),
-     flurstufe       FLOAT(53),
+     torf_klas       REAL,
+     flur            REAL,
+     flurstufe       REAL,
      flurstufe_bez   TEXT,
-     flurklasse      FLOAT(53),
+     flurklasse      REAL,
      flurklasse_bez  TEXT,
      bnbg_ob_h       TEXT,
      bnbg_ob_h_bez   TEXT,
@@ -65,12 +66,12 @@ CREATE TABLE public.soil (
      bngb_ob_bez     TEXT,
      bnbg_ub         TEXT,
      bnbg_ub_bez     TEXT,
-     bart_gr         FLOAT(53),
+     bart_gr         REAL,
      sg_ob           TEXT,
      sg_ob_bez       TEXT,
      sg_ub           TEXT,
      sg_ub_bez       TEXT,
-     sg_klas         FLOAT(53),
+     sg_klas         REAL,
      sg_klas_bez     TEXT,
      btyp_ka3        TEXT,
      btyp_ka3_bez    TEXT,
@@ -120,38 +121,46 @@ CREATE TABLE public.weather_stations (
 
 CREATE TABLE public.weather (
     stations_id  BIGINT REFERENCES public.weather_stations (id),
-    timestamp   timestamp NOT NULL,
+    date   DATE NOT NULL,
     QN_3         BIGINT,
-    wind_max_ms  FLOAT(53),
-    wind_mean_ms FLOAT(53),
+    wind_max_ms  REAL,
+    wind_mean_ms REAL,
     QN_4         BIGINT,
-    rainfall_mm  FLOAT(53),
+    rainfall_mm  REAL,
     RSKF         BIGINT,
-    SDK          FLOAT(53),
+    SDK          REAL,
     SHK_TAG      BIGINT,
     NM           BIGINT,
-    VPM          FLOAT(53),
-    PM           FLOAT(53),
-    temp_avg_c   FLOAT(53),
-    UPM          FLOAT(53),
-    temp_max_c   FLOAT(53),
-    TNK          FLOAT(53),
-    TGK          FLOAT(53),
-    PRIMARY KEY(stations_id, timestamp)
+    VPM          REAL,
+    PM           REAL,
+    temp_avg_c   REAL,
+    UPM          REAL,
+    temp_max_c   REAL,
+    TNK          REAL,
+    TGK          REAL,
+    PRIMARY KEY(stations_id, date)
+);
+
+CREATE TABLE public.radolan_tiles (
+    id BIGINT PRIMARY KEY,
+    geometry  geometry(Polygon,4326)
 );
 
 CREATE TABLE public.radolan (
-    id SERIAL PRIMARY KEY,
-    rainfall_mm FLOAT(53),
-    geometry    geometry(Polygon,4326),
-    timestamp   timestamp
+    tile_id  BIGINT REFERENCES public.radolan_tiles(id),
+    date   DATE NOT NULL,
+    rainfall_mm REAL,
+    rainfall_max_mm REAL,
+    PRIMARY KEY(tile_id, date)
 );
 
 CREATE TABLE public.shading (
     tree_id TEXT REFERENCES public.trees(id),
-    month SMALLINT,
-    index FLOAT(53),
-    PRIMARY KEY(tree_id, month)
+    spring REAL,
+    summer REAL,
+    fall REAL,
+    winter REAL,
+    PRIMARY KEY(tree_id)
 );
 
 CREATE TABLE public.sensor_types (
@@ -164,7 +173,7 @@ CREATE TABLE public.forecast (
 	tree_id TEXT REFERENCES public.trees(id),
 	type_id INTEGER REFERENCES public.sensor_types(id),
 	timestamp timestamp,
-	value FLOAT(53),
+	value REAL,
 	created_at timestamp,
 	model_id text
 );
@@ -174,10 +183,15 @@ CREATE TABLE public.nowcast (
 	tree_id TEXT REFERENCES public.trees(id),
 	type_id INTEGER REFERENCES public.sensor_types(id),
 	timestamp timestamp,
-	value FLOAT(53),
+	value REAL,
 	created_at timestamp,
 	model_id text
 );
+
+CREATE INDEX idx_nowcast_tree_id
+ON nowcast(tree_id);
+CREATE INDEX idx_forecast_tree_id
+ON forecast(tree_id);
 
 insert into public.sensor_types(id, name) values (1, 'saugspannung_30cm');
 insert into public.sensor_types(id, name) values (2, 'saugspannung_60cm');
@@ -204,13 +218,33 @@ CREATE TABLE private.tree_devices (
     PRIMARY KEY(tree_id, customer_id, device_id, site_id)
 );
 
+CREATE TABLE private.vitality (
+    tree_id TEXT REFERENCES public.trees(id),
+    vitality_index REAL,
+    PRIMARY KEY(tree_id)
+);
+
 CREATE TABLE private.sensor_measurements (
 	tree_id TEXT REFERENCES public.trees(id),
     type_id INTEGER REFERENCES public.sensor_types(id),
 	sensor_id INTEGER,
 	timestamp timestamp,
-	value FLOAT(53),
+	value REAL,
     PRIMARY KEY(tree_id, type_id, timestamp)
+);
+
+CREATE TABLE private.watering_gdk (
+    tree_id TEXT REFERENCES public.trees(id),
+    amount_liters REAL,
+    date DATE,
+    PRIMARY KEY(tree_id, date)
+);
+
+CREATE TABLE private.watering_sga (
+    tree_id TEXT REFERENCES public.trees(id),
+    amount_liters REAL,
+    date DATE,
+    PRIMARY KEY(tree_id, date)
 );
 
 insert into private.customers(id, name) values (2, 'Mitte');

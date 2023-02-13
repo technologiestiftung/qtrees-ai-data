@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION public.rainfall (tree_id TEXT)
   RETURNS TABLE (
-    date date, rainfall_in_mm float8)
+    date date, rainfall_in_mm real)
   LANGUAGE plpgsql
   AS $$
 BEGIN
@@ -10,11 +10,12 @@ BEGIN
     grouped.daily_rainfall_sum_mm AS rainfall_in_mm
   FROM (
     SELECT
-      geometry AS geom,
-      date_trunc('day', timestamp)::date AS weekday,
-      sum(rainfall_mm) AS daily_rainfall_sum_mm
+      public.radolan_tiles.geometry AS geom,
+      date_trunc('day', qtrees.public.radolan.timestamp)::date AS weekday,
+      sum(qtrees.public.radolan.rainfall_mm) AS daily_rainfall_sum_mm
     FROM
-      qtrees.public.radolan
+      qtrees.public.radolan 
+      JOIN qtrees.public.radolan_tiles ON qtrees.public.radolan.tile_id=qtrees.public.radolan_tiles.id 
     GROUP BY
       geometry,
       weekday) AS grouped

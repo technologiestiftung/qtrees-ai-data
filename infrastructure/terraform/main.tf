@@ -1,4 +1,10 @@
 terraform {
+//  backend "s3" {
+//    bucket = "mybucket"
+//    key    = "path/to/my/key"
+//    region = "us-east-1"
+//  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -49,7 +55,7 @@ resource "aws_db_subnet_group" "qtrees" {
 resource "aws_db_instance" "qtrees" {
   identifier        = "${var.project_name}-iac-rds"
   instance_class    = "db.t3.micro"
-  allocated_storage = 5
+  allocated_storage = 10
   engine            = "postgres"
   name              = var.project_name
   username          = "postgres"
@@ -64,6 +70,7 @@ resource "aws_db_instance" "qtrees" {
 
   tags = {
     Name = "${var.project_name}-iac-${var.qtrees_version}"
+    Restricted = var.restricted
   }
 }
 
@@ -147,7 +154,7 @@ resource "aws_key_pair" "qtrees" {
 resource "aws_instance" "qtrees" {
   # AMD Ubuntu
   ami           = "ami-065deacbcaac64cf2"
-  instance_type = "t2.large"
+  instance_type = "t2.medium"
 
   root_block_device {
     volume_size = 20
@@ -162,6 +169,7 @@ resource "aws_instance" "qtrees" {
 
   tags = {
     Name = "${var.project_name}-iac-${var.qtrees_version}"
+    Restricted = var.restricted
   }
 }
 
@@ -174,8 +182,9 @@ resource "aws_instance" "qtrees" {
 //  }
 //}
 
-# re-use existing elastic ip
+# re-use existing elastic ip (if set)
 data "aws_eip" "qtrees" {
+//  count = try(var.ELASTIC_IP_EC2 == "" ? 0 : 1, 0)
   public_ip = "${var.ELASTIC_IP_EC2}"
 }
 
@@ -205,7 +214,8 @@ resource "local_file" "setup_env_file" {
     export DB_USER_PASSWD=${var.DB_USER_PASSWD}
     export UI_USER_PASSWD=${var.UI_USER_PASSWD}
     export DB_QTREES=${aws_db_instance.qtrees.address}
-    export DB_DOCKER=${aws_db_instance.qtrees.address} #only for docker
+    export DB_GDK=${var.DB_GDK}
+    export GDK_PASSWD=${var.GDK_PASSWD}
     export CMD_GIS_ADMIN="GRANT rds_superuser TO gis_admin;" # with rds !
     DOC
   filename = "./tf_output/setup_environment.sh"

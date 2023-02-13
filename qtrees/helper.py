@@ -1,19 +1,28 @@
 import logging
 import os
 
+_db_lookup_env = {
+    "qtrees": {"db": "DB_QTREES", "passwd": "POSTGRES_PASSWD"},
+    "gdk": {"db": "DB_GDK", "passwd": "GDK_PASSWD"},
+}
 
-def init_db_args(args, logger):
-    db_qtrees = args["--db_qtrees"]
-    db_qtrees = db_qtrees or os.getenv("DB_QTREES")
-    postgres_passwd = os.getenv("POSTGRES_PASSWD")
 
-    if postgres_passwd is None:
-        logger.error("Environment variable POSTGRES_PASSWD not set")
+def init_db_args(db, db_type, logger):
+    db_conf = _db_lookup_env.get(db_type)
+    if db_conf is None:
+        logger.error("No config found for %s. Available: %s", db_type, _db_lookup_env.keys())
         exit(2)
-    if db_qtrees is None:
-        logger.error("Environment variable DB_QTREES not set")
+
+    db = db or os.getenv(db_conf["db"])
+    passwd = os.getenv(db_conf["passwd"])
+
+    if passwd is None:
+        logger.error("Environment variable %s not set", db_conf["passwd"])
         exit(2)
-    return db_qtrees, postgres_passwd
+    if db is None:
+        logger.error("Environment variable %s not set", db_conf["db"])
+        exit(2)
+    return db, passwd
 
 
 def get_logger(name, log_level=logging.DEBUG):
