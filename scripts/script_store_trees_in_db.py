@@ -14,7 +14,7 @@ import sys
 import sqlalchemy
 from sqlalchemy import create_engine
 from docopt import docopt, DocoptExit
-from qtrees.helper import get_logger
+from qtrees.helper import get_logger, init_db_args
 from qtrees.fisbroker import store_trees_batchwise_to_db, download_tree_file
 import os.path
 
@@ -26,9 +26,7 @@ def main():
     # Parse arguments
     args = docopt(__doc__)
     logger.debug("Init db args")
-    # db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
-    db_qtrees = "localhost"
-    postgres_passwd = "postgrespostgres"
+    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     data_directory = args["--data_directory"]
     n_batch_size = int(args["--batch_size"])
