@@ -38,7 +38,8 @@ def main():
         con.execute("TRUNCATE public.forecast")
 
     logger.info(f"Creating forecasts for {len(qtree_trees)} trees")
-    now_str = datetime.today().strftime("%m/%d/%Y")
+    now_str = datetime.today().strftime("%m/%d/%Y %H:%M:%S")
+    today_str = datetime.today().strftime("%m/%d/%Y")
 
     for tree in qtree_trees:
         for type_id in [1, 2, 3, 4]:
@@ -62,7 +63,7 @@ def main():
                     value = random.gauss(60, 10)
                     con.execute(
                         f"INSERT INTO public.nowcast(tree_id, type_id, timestamp, value, created_at, model_id) "
-                        f"VALUES ('{tree}', {type_id}, '{now_str}', {value}, '{now_str}', 'Dummymodel');")
+                        f"VALUES ('{tree}', {type_id}, '{today_str}', {value}, '{now_str}', 'Dummymodel');")
 
                 # and forecast
                 for day in pd.date_range(start=datetime.today() + pd.Timedelta("1d"),
@@ -72,6 +73,7 @@ def main():
                     con.execute(
                         f"INSERT INTO public.forecast(tree_id, type_id, timestamp, value, created_at, "
                         f"model_id) VALUES ('{tree}', {type_id}, '{date_str}', {value}, '{now_str}', 'Dummymodel');")
+        break 
 
     # delete old entries on rolling basis
     with engine.connect() as con:
