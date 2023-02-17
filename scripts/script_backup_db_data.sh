@@ -9,13 +9,13 @@ if [ -n "$QTREES_VERSION" ]; then
   fi
   # create dir in case of need
   mkdir -p $data_dir
-  filename=$data_dir"/dump_$now.sql"
+  filename=$data_dir"/$now.dump"
 
   echo "Deleting dumps older than 7 days"
-  find $data_dir -name "*.sql" -mindepth 1 -mtime +7 -delete
+  find $data_dir -name "*.dump" -mindepth 1 -mtime +7 -delete
 
-  echo "Dumping db data to \"$filename\""
-  PGPASSWORD=${POSTGRES_PASSWD} pg_dump --host $DB_QTREES --port 5432 --username postgres --format custom --file $filename --table public.issues --table public.issue_types --table public.weather --table public.radolan --data-only qtrees
+  echo "Dumping db data into \"$filename\""
+  PGPASSWORD=${POSTGRES_PASSWD} pg_dump --host $DB_QTREES --port 5432 --username postgres --format custom --file $filename -n public -n private --exclude-table public.spatial_ref_sys --data-only qtrees
 else
   echo "Error: Variable QTREES_VERSION is not set"
 fi

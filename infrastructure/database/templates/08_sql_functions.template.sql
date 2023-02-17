@@ -31,5 +31,24 @@ ORDER BY
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION private.truncate_tables()
+  RETURNS void AS
+$$
+DECLARE
+    exec_str TEXT;
+BEGIN
+  SELECT INTO exec_str 'TRUNCATE TABLE '
+       || string_agg(quote_ident(schemaname) || '.' || quote_ident(tablename), ', ')
+       || ' CASCADE'
+   FROM   pg_tables
+   WHERE  (schemaname = 'public' OR schemaname = 'private')
+   -- add exceptions here
+   AND    tablename != 'spatial_ref_sys';
+
+   RAISE NOTICE '%', exec_str;
+   EXECUTE exec_str;
+END
+$$ LANGUAGE plpgsql;
+
 -- all users (are derived from authenticator and) have access to rainfall
 grant execute on function public.rainfall(text) to authenticator;
