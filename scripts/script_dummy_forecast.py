@@ -72,8 +72,7 @@ def main():
                     date_str = day.normalize().strftime("%m/%d/%Y")
                     con.execute(
                         f"INSERT INTO public.forecast(tree_id, type_id, timestamp, value, created_at, "
-                        f"model_id) VALUES ('{tree}', {type_id}, '{date_str}', {value}, '{now_str}', 'Dummymodel');")
-        break 
+                        f"model_id) VALUES ('{tree}', {type_id}, '{date_str}', {value}, '{now_str}', 'Dummymodel');") 
 
     # delete old entries on rolling basis
     with engine.connect() as con:
