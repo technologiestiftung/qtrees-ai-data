@@ -89,13 +89,14 @@
     become_user: ubuntu
     shell: |
       . /home/ubuntu/setup_environment.sh
+      . /home/ubuntu/qtrees-ai-data/scripts/script_restore_db_data.sh /home/ubuntu/qtrees-ai-data/data/db
       cd qtrees-ai-data
       export PYTHONPATH=/home/ubuntu/qtrees-ai-data
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_trees_in_db.py
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_wheather_observations.py
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_soil_in_db.py
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_radolan_in_db.py
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_shading_index_in_db.py
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_shading_index_in_db.py --shadow_index_file=berlin_shading_rounded_150222.csv
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_gdk_watering_in_db.py
     # python logs can be found on host at 'tail -fn +1 qtrees/qtrees_log'
   - name: launch postgrest docker

@@ -11,3 +11,5 @@ export UI_USER_PASSWD=
 
 export GDK_PASSWD=
 export DB_GDK=
+
+export QTREES_VERSION=

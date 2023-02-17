@@ -12,3 +12,6 @@ export UI_USER_PASSWD="uiuiuiuiui"
 
 export GDK_PASSWD=
 export DB_GDK=
+
+export QTREES_VERSION="local"
+

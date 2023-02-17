@@ -1,9 +1,9 @@
 terraform {
-//  backend "s3" {
-//    bucket = "mybucket"
-//    key    = "path/to/my/key"
-//    region = "us-east-1"
-//  }
+  backend "s3" {
+    bucket = "qtrees-terraform"
+    key    = "tfstate"
+    region = "eu-central-1"
+  }
 
   required_providers {
     aws = {
@@ -206,6 +206,7 @@ resource "local_file" "tf_ansible_vars_file" {
 
 resource "local_file" "setup_env_file" {
   content  = <<-DOC
+    export QTREES_VERSION=${var.qtrees_version}
     export GIS_PASSWD=${var.GIS_PASSWD}
     export AUTH_PASSWD=${var.AUTH_PASSWD}
     export JWT_SECRET=${var.JWT_SECRET}

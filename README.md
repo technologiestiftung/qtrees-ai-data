@@ -116,7 +116,7 @@ The setup of postgREST is based on:
 The setup of JWT in postgres is taken from:
  https://github.com/michelp/pgjwt.
 
-### Get data into database
+### Get intial data into database
 First, run `source set_environment.sh`.
 
 In the same shell run:
@@ -127,6 +127,7 @@ In the same shell run:
 - run `python scripts/script_store_wheather_observations.py` to store latest data from weather stations
 - run `python scripts/script_store_radolan_in_db.py` to store latest radolan data
 - run `python scripts/script_store_shading_index_in_db.py` to store the shading index
+- run `python script/script_store_gdk_watering_in_db.py` to store GdK watering data
 
 **Note: Die RDS-Instanz ist gerade sehr klein was Ressourcen angeht (aber dafür günstig).
 Deswegen kann das Schreiben in die DB recht lange dauern.
@@ -139,25 +140,35 @@ It is really simple, if the data is provided in `geopandas`:
 - connect to db and check via `\d api.<table>`, how the generated table looks like.
 - add new table definition to `infrastructure/database/03_setup_table.template.sql`
 
+### Database backups
+Instead of loading data into the db from scratch, you can also dump data into a file and restore from file.
+- Run `. scripts/script_backup_db_data.sh` to dump data into a file. The DB structure is not part of the backup.
+- Run `. scripts/script_restore_db_data.sh` to restore data from that file.
+
+By default, the data is stored into `data/db/<qtrees_version>`. If you run it locally, `qtrees_version` is set as `local`.
+
+If you want to store somewhere else, just provide the destination folder, e.g.
+```
+. scripts/script_backup_db_data.sh data/foo
+```
+
+Note:
+- The postfix `<qtrees_version>` is automatically appended to the data directory.
+- If you get the message `pg_dump: error: aborting because of server version mismatch`, deactivating the conda env might be a quick fix.
+
 ### Clean up database
-You made a mistake? You want to start from the beginning?
-
-Then, connect to database `postgres` and run
+Just getting rid of the data but not the structure is quite simple.
+Run:
 ```
-DROP SCHEMA api CASCADE;
-DROP DATABASE lab_gis;
-DROP SCHEMA basic_auth CASCADE;
-DROP DATABASE qtrees;
-DROP ROLE gis_admin;
-DROP ROLE ui_user;
-DROP ROLE ai_user;
-DROP ROLE authenticator;
-DROP ROLE web_anon;
-DROP TYPE basic_auth.jwt_token CASCADE;
+PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -d qtrees -c "SELECT * from private.truncate_tables()"
 ```
-TODO: there might be only 1 or 2 commands to drop everything.
 
-**Note: all connection to db must be resolved before droping database "qtrees". That means no `psql`-connections and `postgREST`-service must be down!**
+You want to start from scratch?
+
+You can drop all qtrees databases and roles via:
+```
+PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -c "DROP DATABASE qtrees WITH (FORCE);" -c "DROP DATABASE lab_gis;" -c "DROP ROLE gis_admin, ui_user, ai_user, authenticator, web_anon;"
+```
 
 ### Run postgREST
 First, run `source set_environment.sh` again.
