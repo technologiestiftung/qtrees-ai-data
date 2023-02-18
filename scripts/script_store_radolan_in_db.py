@@ -102,11 +102,16 @@ def main():
             result = con.execute('select id from public.radolan_tiles')
             tiles = [t[0] for t in list(result.fetchall())]
 
+        # check if there are no radolan tiles
+        with engine.connect() as con:
+            rs = con.execute('select COUNT(*) from public.tree_radolan_tile')
+            n_tree_radolan_tile = [idx[0] for idx in rs][0]
+
         radolan_gdf_grid = radolan_gdf.rename(columns={"index": "id"})
         radolan_gdf_grid = radolan_gdf_grid[~radolan_gdf_grid.id.isin(tiles)]
         logger.debug(f"Storing {len(radolan_gdf_grid)} new tiles to the database.")
         radolan_gdf_grid[["id", "geometry"]].to_postgis("radolan_tiles", engine, if_exists="append", schema="public")
-        if len(radolan_gdf_grid) > 0:
+        if len(radolan_gdf_grid) > 0 or n_tree_radolan_tile == 0:
             with engine.connect() as con:
                 con.execute('REFRESH MATERIALIZED VIEW public.tree_radolan_tile')
                 logger.info(f"Updated materialized views tree_radolan_tile")
