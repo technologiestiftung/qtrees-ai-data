@@ -3,7 +3,7 @@ CREATE MATERIALIZED VIEW public.weather_14d_agg AS
 select date,
 		sum(rainfall_mm) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as rainfall_mm_14d_sum,
 		avg(temp_avg_c) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as temp_avg_c_14d_avg,
-		avg(wind_mean_ms) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as wind_avg_ms_14d_avg,
+		avg(wind_avg_ms) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as wind_avg_ms_14d_avg,
 		avg(temp_max_c) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as temp_max_c_14d_avg,
 		avg(wind_max_ms) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as wind_max_ms_14d_avg
 from public.weather
@@ -139,7 +139,7 @@ CREATE OR REPLACE VIEW private.test_data AS
 SELECT trees.id, trees.gattung_deutsch, trees.standalter,
 		shading.winter, shading.spring, shading.summer, shading.fall,
 		(SELECT weather.rainfall_mm  FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as rainfall_mm,
-		(SELECT weather.temp_avg_c  FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_mean,
+		(SELECT weather.temp_avg_c  FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_avg,
 		(SELECT weather.temp_max_c FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_max
 FROM public.trees
 LEFT JOIN public.shading ON public.shading.tree_id = public.trees.id;

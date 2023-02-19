@@ -124,7 +124,7 @@ CREATE TABLE public.weather (
     date   DATE NOT NULL,
     QN_3         BIGINT,
     wind_max_ms  REAL,
-    wind_mean_ms REAL,
+    wind_avg_ms REAL,
     QN_4         BIGINT,
     rainfall_mm  REAL,
     RSKF         BIGINT,
@@ -249,3 +249,52 @@ CREATE TABLE private.watering_sga (
 
 insert into private.customers(id, name) values (2, 'Mitte');
 insert into private.customers(id, name) values (3, 'Neukölln');
+
+
+CREATE TABLE private.weather_tiles (
+    id BIGINT PRIMARY KEY,
+    lat FLOAT(53),
+    lng FLOAT(53),
+    geometry  geometry(Polygon,4326)
+);
+
+CREATE TABLE private.weather_tile_measurement (
+    tile_id  BIGINT REFERENCES private.weather_tiles (id),
+    date DATE NOT NULL,
+    ghi_max_wm2 REAL,
+    dni_max_wm2 REAL,
+    dhi_max_wm2 REAL,
+    ghi_sum_whm2 REAL,
+    dni_sum_whm2 REAL,
+    dhi_sum_whm2 REAL,
+    wind_avg_ms REAL,
+    wind_max_ms REAL,
+    temp_avg_c   REAL,
+    temp_max_c   REAL,
+    rainfall_mm  REAL,
+    PRIMARY KEY(tile_id, date)
+);
+
+CREATE TABLE private.weather_tile_forecast (
+    tile_id  BIGINT REFERENCES private.weather_tiles (id),
+    date DATE NOT NULL,
+    created_at timestamp NOT NULL,
+    ghi_max_wm2 REAL,
+    dni_max_wm2 REAL,
+    dhi_max_wm2 REAL,
+    ghi_sum_whm2 REAL,
+    dni_sum_whm2 REAL,
+    dhi_sum_whm2 REAL,
+    wind_avg_ms REAL,
+    wind_max_ms REAL,
+    temp_avg_c   REAL,
+    temp_max_c   REAL,
+    rainfall_mm  REAL,
+    PRIMARY KEY(tile_id, date, created_at)
+);
+
+
+-- it's not really sqare. So may adjust at some time.
+INSERT INTO private.weather_tiles(id, lng, lat, geometry)
+VALUES (2, 13.367615, 52.526836, 'POLYGON ((13.309444 52.572556, 13.425786 52.572556, 13.425786 52.472556, 13.309444 52.472556, 13.309444 52.572556))'),
+       (3, 13.447711, 52.448092, 'POLYGON ((13.377733038944818 52.49809199460378, 13.517688961055182 52.4980919946037, 13.517532424761926 52.39809199460377, 13.377876575238076 52.39809199460377, 13.377733038944818 52.49809199460378))');
