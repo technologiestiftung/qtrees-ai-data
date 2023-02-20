@@ -70,8 +70,8 @@ def main():
             weather = get_observations(station, measurement)
             weather = weather.rename(columns={"mess_datum": "date",
                                               "rsk": "rainfall_mm",
-                                              "tmk": "temp_mean_c", "txk": "temp_max_c",
-                                              "fx": "wind_max_ms", "fm": "wind_mean_ms"})
+                                              "tmk": "temp_avg_c", "txk": "temp_max_c",
+                                              "fx": "wind_max_ms", "fm": "wind_avg_ms"})
         except requests.exceptions.RequestException as e:
             logger.warning(e)
             continue
