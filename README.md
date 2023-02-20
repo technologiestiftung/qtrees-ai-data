@@ -125,6 +125,8 @@ In the same shell run:
 - run `python scripts/script_store_trees_in_db.py` to get tree data into db (once)
 - run `python scripts/script_store_soil_in_db.py` to get soil data into db (once)
 - run `python scripts/script_store_wheather_observations.py` to store latest data from weather stations
+- run `python scripts/script_store_solaranywhere_weather_in_db.py` to store latest data from solaranywhere
+- run `python scripts/script_store_solaranywhere_forecast_in_db.py` to store latest forecast from solaranywhere
 - run `python scripts/script_store_radolan_in_db.py` to store latest radolan data
 - run `python scripts/script_store_shading_index_in_db.py` to store the shading index
 - run `python script/script_store_gdk_watering_in_db.py` to store GdK watering data

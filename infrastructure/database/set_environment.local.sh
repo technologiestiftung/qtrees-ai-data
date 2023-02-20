@@ -15,3 +15,5 @@ export DB_GDK=
 
 export QTREES_VERSION="local"
 
+export SOLARANYWHERE_API_KEY='' # needs to be single quote to escape the api keys dollar sign
+
