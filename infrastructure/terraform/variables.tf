@@ -60,3 +60,7 @@ variable "DB_GDK" {
 variable "GDK_PASSWD" {
   sensitive   = true
 }
+
+variable "SOLARANYWHERE_API_KEY" {
+  sensitive   = true
+}

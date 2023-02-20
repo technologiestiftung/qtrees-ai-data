@@ -206,7 +206,7 @@ resource "local_file" "tf_ansible_vars_file" {
 
 resource "local_file" "setup_env_file" {
   content  = <<-DOC
-    export QTREES_VERSION=${var.qtrees_version}
+    export QTREES_VERSION=${var.project_name}
     export GIS_PASSWD=${var.GIS_PASSWD}
     export AUTH_PASSWD=${var.AUTH_PASSWD}
     export JWT_SECRET=${var.JWT_SECRET}
@@ -217,6 +217,7 @@ resource "local_file" "setup_env_file" {
     export DB_QTREES=${aws_db_instance.qtrees.address}
     export DB_GDK=${var.DB_GDK}
     export GDK_PASSWD=${var.GDK_PASSWD}
+    export SOLARANYWHERE_API_KEY='${var.SOLARANYWHERE_API_KEY}'
     export CMD_GIS_ADMIN="GRANT rds_superuser TO gis_admin;" # with rds !
     DOC
   filename = "./tf_output/setup_environment.sh"
