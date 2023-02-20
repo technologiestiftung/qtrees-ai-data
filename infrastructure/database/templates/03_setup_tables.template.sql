@@ -215,7 +215,9 @@ CREATE TABLE private.tree_devices (
     customer_id INTEGER REFERENCES private.customers(id),
     device_id  BIGINT,
     site_id BIGINT,
-    PRIMARY KEY(tree_id, customer_id, device_id, site_id)
+    valid_from_date DATE,
+    valid_to_date DATE,
+    PRIMARY KEY(tree_id, customer_id, device_id)
 );
 
 CREATE TABLE private.vitality (
