@@ -1,4 +1,8 @@
 if [ -n "$QTREES_VERSION" ]; then
+  echo "Input arguments:"
+  for i in "$@"; do
+    echo $i
+  done
   if [ $# -eq 0 ]; then
     # default dir
     data_dir="data/db/"$QTREES_VERSION

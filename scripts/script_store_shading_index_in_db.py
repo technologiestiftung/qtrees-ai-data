@@ -12,7 +12,7 @@ from sqlalchemy import create_engine, inspect
 from docopt import docopt, DocoptExit
 from qtrees.helper import get_logger, init_db_args
 from qtrees.shading_index import get_sunindex_df
-import pandas as pd
+import os.path
 import sys
 
 logger = get_logger(__name__)
@@ -25,6 +25,9 @@ def main():
     db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     shadow_index_file = args["--shadow_index_file"]
+    if not os.path.exists(shadow_index_file):
+        logger.warning("Shadow index file '%s' does not exist", shadow_index_file)
+        exit(128)
 
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"

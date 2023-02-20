@@ -1,5 +1,8 @@
 if [ -n "$QTREES_VERSION" ]; then
-  now=$(date +"%m_%d_%Y")
+  echo "Input arguments:"
+  for i in "$@"; do
+    echo $i
+  done
   if [ $# -eq 0 ]; then
     # default dir
     data_dir="data/db/"$QTREES_VERSION
@@ -9,6 +12,7 @@ if [ -n "$QTREES_VERSION" ]; then
   fi
   # create dir in case of need
   mkdir -p $data_dir
+  now=$(date +"%m_%d_%Y")
   filename=$data_dir"/$now.dump"
 
   echo "Deleting dumps older than 7 days"
