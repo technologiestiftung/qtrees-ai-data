@@ -67,7 +67,6 @@ def main():
             if last_date >= yesterday:
                 logger.info("Last available data from %s. No need to update!", last_date)
             else:
-                last_date = last_date + pd.Timedelta(days=1)
                 logger.info("Inserting data from %s to %s.", last_date, yesterday)
                 weather_data  = get_weather(loc[1], loc[2], api_key, start=last_date, end=yesterday)
                 weather_data["tile_id"] = loc[0]
