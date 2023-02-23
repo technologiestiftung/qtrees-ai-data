@@ -8,10 +8,10 @@ from fisbroker import get_trees
 import json
 from pyproj import CRS, Transformer
 
-four_selected_dates = {'spring': datetime.date(2022, 3, 21), 
-                       'summer': datetime.date(2022, 6, 21),
-                       'autumn': datetime.date(2022, 9, 23),   
-                       'winter': datetime.date(2022, 12, 21)}
+selected_dates = {'spring': datetime.date(2022, 3, 21), 
+                  'summer': datetime.date(2022, 6, 21),
+                  'autumn': datetime.date(2022, 9, 23),   
+                  'winter': datetime.date(2022, 12, 21)}
 city = LocationInfo(name="Berlin", region="Germany", 
                     timezone="Europe/Berlin", latitude=52.5200, longitude=13.4050)
 qgis_sun_hours_folder = "data/berlin_maps_filtered"
@@ -56,11 +56,11 @@ def calculate_sun_index(seasons_theoretical_daylight,
             f = os.path.join(sun_hours_map_directory, filename)
             if os.path.isfile(f) and season in filename:
                 qgis_sun_hours_map = rioxarray.open_rasterio(f)
+                print(f"calculating {season}...")
                 for tree in list(tree_json.items()):
                     baum_id = tree[0]
                     lat, lon = tree[1]
                     lon, lat = transformer.transform(lon, lat)
-                    print(f"lon: {lon} lat: {lat}")
                     tree_marked = qgis_sun_hours_map.sel(x=[lon], y=[lat], method="nearest")
                     tree_actual_sun_hours = float(tree_marked.values)
                     shading_index = tree_actual_sun_hours * 3600 / theoretical_daylight
@@ -79,8 +79,7 @@ def get_sunindex_df(shadow_index_file):
         trees_dict = {}
         for baumid, coordinate in simplified_df.itertuples(index=False):
             trees_dict[baumid] = (coordinate.y, coordinate.x)
-        seasons_theoretical_daylight = calc_theoretical_daylight(four_selected_dates, 
-                                                                 city)
+        seasons_theoretical_daylight = calc_theoretical_daylight(selected_dates, city)
         sun_index = calculate_sun_index(seasons_theoretical_daylight, 
                                         qgis_sun_hours_folder, trees_dict)
         sun_index_df = pd.DataFrame(sun_index)
@@ -91,4 +90,4 @@ def get_sunindex_df(shadow_index_file):
         shadow_index_df = pd.read_csv(shadow_index_file, index_col=0)
         return shadow_index_df
 
-# get_sunindex_df(shadow_index_file)
+get_sunindex_df(shadow_index_file)
