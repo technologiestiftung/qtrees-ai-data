@@ -60,11 +60,15 @@ def calculate_sun_index(seasons_theoretical_daylight,
                 for tree in list(tree_json.items()):
                     baum_id = tree[0]
                     lat, lon = tree[1]
+                    print(f"lat: {lat}, longitud: {lon}")
                     lon, lat = transformer.transform(lon, lat)
+                    print(f"transformed lat: {lat}, longitud: {lon}")
                     tree_marked = qgis_sun_hours_map.sel(x=[lon], y=[lat], method="nearest")
+                    print(f"season: {season} daylight value: {theoretical_daylight} ")
                     tree_actual_sun_hours = float(tree_marked.values)
+                    print(f"tree sun hours: {tree_actual_sun_hours}")
                     shading_index = tree_actual_sun_hours * 3600 / theoretical_daylight
-                    seasonal_values[baum_id] = round(shading_index, 2)
+                    print(f"shading index: {shading_index}, tree sun seconds: {tree_actual_sun_hours*3600}")
         actual_sun_hours[season] = seasonal_values
         with open('temp_shading.json', 'w') as fp:
             json.dump(actual_sun_hours, fp)
