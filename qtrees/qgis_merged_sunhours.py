@@ -105,8 +105,9 @@ def process_all_tiles(elevation_tiles_folder, slope_aspect_folder, selected_date
     
     # Calculate sun hours for the selected dates
     for day in selected_dates:
+        sunhours_folder = os.path.join(sun_hour_map_folder, str(day))
         os.makedirs(sun_hour_map_folder, exist_ok=True)
-        sunhours_file_path = sun_hour_map_folder + str(day) + "sunhours_merged.tiff"
+        sunhours_file_path = os.path.join(sunhours_folder, str(day) + "sunhours_merged.tiff")
         if not os.path.exists(sunhours_file_path):
             insoltime_calc(elevation_map=merged_elevation_file,slope_path=slope_path, aspect_path=aspect_path,sunhours_file_path=sunhours_file_path,day=day)
 
