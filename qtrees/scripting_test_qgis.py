@@ -89,7 +89,7 @@ def merge_sunhour_maps(sunhours_folder, target_file):
                          'PCT':False,
                          'SEPARATE':False,
                          'NODATA_INPUT':None,
-                         'NODATA_OUTPUT':None,
+                         'NODATA_OUTPUT':0,
                          'OPTIONS':'COMPRESS=NONE|BIGTIFF=IF_NEEDED',
                          'DATA_TYPE':5,
                          'OUTPUT': target_file})
@@ -101,10 +101,10 @@ def process_all_tiles(tiles_folder, slope_aspect_folder, selected_dates):
         file_name = os.path.basename(file_path)
         slope_path = os.path.join(slope_aspect_folder, 'slope' + file_name)
         aspect_path = os.path.join(slope_aspect_folder, 'aspect' + file_name)
-        """
+        
         if not (os.path.exists(slope_path) and os.path.exists(aspect_path)):
             run_slope_aspect_processing(elevation_map=file_path, slope_path=slope_path,aspect_path=aspect_path)
-        """
+        
         for day in selected_dates:
             sunhours_folder = os.path.join(sun_hour_map_folder, str(day))
             os.makedirs(sunhours_folder, exist_ok=True)
@@ -112,7 +112,7 @@ def process_all_tiles(tiles_folder, slope_aspect_folder, selected_dates):
             if not os.path.exists(sunhours_file_path):
                 insoltime_calc(elevation_map=file_path,slope_path=slope_path, aspect_path=aspect_path,sunhours_file_path=sunhours_file_path,day=day)       
 
-process_all_tiles(tiles_folder=elevation_maps_folder, slope_aspect_folder=slope_aspect_folder, selected_dates=selected_dates)
+#process_all_tiles(tiles_folder=elevation_maps_folder, slope_aspect_folder=slope_aspect_folder, selected_dates=selected_dates)
 merge_sunhour_maps(sun_hour_map_folder, target_file=None)
     
 
