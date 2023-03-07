@@ -112,7 +112,7 @@ def process_all_tiles(tiles_folder, slope_aspect_folder, selected_dates):
             if not os.path.exists(sunhours_file_path):
                 insoltime_calc(elevation_map=file_path,slope_path=slope_path, aspect_path=aspect_path,sunhours_file_path=sunhours_file_path,day=day)       
 
-#process_all_tiles(tiles_folder=elevation_maps_folder, slope_aspect_folder=slope_aspect_folder, selected_dates=selected_dates)
+process_all_tiles(tiles_folder=elevation_maps_folder, slope_aspect_folder=slope_aspect_folder, selected_dates=selected_dates)
 merge_sunhour_maps(sun_hour_map_folder, target_file=None)
     
 
