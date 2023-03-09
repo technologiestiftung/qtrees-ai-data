@@ -10,6 +10,8 @@ terrain with 'run_slope_aspect_processing'. It generates sun hour maps for selec
 This script is designed to be run in the Python console of QGIS and is not intended to be 
 used as a standalone script.
 """
+
+#  replace the data path
 data_path = "/Users/yagmuruckunkaya/Documents/repos/qtrees-ai-data/data"
 elevation_maps_folder = os.path.join(data_path, "elevation_maps")
 merged_elevation_file = os.path.join(data_path, "merged_elevation.tiff")
@@ -37,7 +39,7 @@ def run_slope_aspect_processing(elevation_map, slope_path, aspect_path):
                     'format':0,
                     'precision':0,
                     '-a':True,
-                    '-e':False,
+                    '-e':True,
                     '-n':False,
                     'zscale':1,
                     'min_slope':0,

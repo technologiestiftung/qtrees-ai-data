@@ -1,5 +1,5 @@
-from qgis import processing
 import os
+from qgis import processing
 import glob
 
 """
@@ -11,8 +11,8 @@ To merge all computed maps into one big merged file for each date, use the 'merg
 This script is designed to be run in the Python console of QGIS and is not intended to be 
 used as a standalone script.
 """
-
-data_path = "/Users/yagmuruckunkaya/Documents/repos/qtrees-ai-data/data"
+#  replace the data path
+data_path = ""
 elevation_maps_folder = os.path.join(data_path, "elevation_maps")
 slope_aspect_folder= os.path.join(data_path, "slope_aspect")
 sun_hour_map_folder = os.path.join(data_path, "sun_hour_maps")
@@ -25,7 +25,7 @@ def run_slope_aspect_processing(elevation_map, slope_path, aspect_path):
                     'format':0,
                     'precision':0,
                     '-a':True,
-                    '-e':False,
+                    '-e':True,
                     '-n':False,
                     'zscale':1,
                     'min_slope':0,
@@ -99,8 +99,8 @@ def process_all_tiles(tiles_folder, slope_aspect_folder, selected_dates):
     
     for file_path in glob.glob(os.path.join(tiles_folder, '*.tiff')):
         file_name = os.path.basename(file_path)
-        slope_path = os.path.join(slope_aspect_folder, 'slope' + file_name)
-        aspect_path = os.path.join(slope_aspect_folder, 'aspect' + file_name)
+        slope_path = os.path.join(slope_aspect_folder, 'slope_' + file_name)
+        aspect_path = os.path.join(slope_aspect_folder, 'aspect_' + file_name)
         
         if not (os.path.exists(slope_path) and os.path.exists(aspect_path)):
             run_slope_aspect_processing(elevation_map=file_path, slope_path=slope_path,aspect_path=aspect_path)

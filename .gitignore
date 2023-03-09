@@ -151,3 +151,6 @@ infrastructure/terraform/tf_output/*
 infrastructure/database/pgdata
 hosts
 infrastructure/database/*.sql
+
+# qgis
+*.qgz
