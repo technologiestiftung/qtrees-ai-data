@@ -58,17 +58,19 @@ def store_trees_batchwise_to_db(trees_file, street_tree, engine, lu_ids=None,
     while True:
         n_end = n_start + n_batch_size
         gdf = gpd.read_file(trees_file, rows=slice(n_start, n_end))
-        n_gdf = len(gdf)
+        n_rows = len(gdf)
         # prepare data and remove patch-internal duplicates
         gdf, duplicates_in_batch = _prepare_tree_data(gdf,
                                                       street_tree=street_tree)
         duplicates_between_batches = lu_ids.intersection(gdf["id"])
         duplicates = duplicates_between_batches | duplicates_in_batch
-        n_duplicates = len(duplicates)
-        if n_duplicates > 0:
-            logger.warning(f"Found {n_duplicates} unique duplicates: \
-                           {list(duplicates)}")
+
         gdf = gdf[~gdf["id"].isin(duplicates_between_batches)]
+        n_duplicates = n_rows - len(gdf)
+
+        if n_duplicates > 0:
+            logger.warning(f"Found {n_duplicates} duplicates: \
+                           {list(duplicates)}")
 
         lu_ids.update(gdf["id"])
 
@@ -84,7 +86,7 @@ def store_trees_batchwise_to_db(trees_file, street_tree, engine, lu_ids=None,
             exit(121)
 
         # running out of data
-        if n_gdf < n_batch_size:
+        if len(gdf) < n_batch_size - n_duplicates:
             break
 
     return lu_ids
