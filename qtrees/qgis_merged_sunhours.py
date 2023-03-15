@@ -1,6 +1,8 @@
 from qgis import processing
 import os
-import glob
+from osgeo import gdal
+import rasterio
+from rasterio.merge import merge
 """
 This script computes sun hour maps based on merged elevation tile file. It first merges all the 
 elevation tiles with 'merge_elevation_maps' and then calculates the slope and aspect of the 
@@ -10,28 +12,42 @@ terrain with 'run_slope_aspect_processing'. It generates sun hour maps for selec
 This script is designed to be run in the Python console of QGIS and is not intended to be 
 used as a standalone script.
 """
-
-#  replace the data path
-data_path = "/Users/yagmuruckunkaya/Documents/repos/qtrees-ai-data/data"
-elevation_maps_folder = os.path.join(data_path, "elevation_maps")
+data_path = "path/to/data/folder"
+elevation_maps_folder = os.path.join(data_path, "elevation_maps_berlin")
 merged_elevation_file = os.path.join(data_path, "merged_elevation.tiff")
 slope_aspect_folder = os.path.join(data_path, "slope_aspect")
 sun_hour_map_folder = os.path.join(data_path, "sun_hour_maps")
 selected_dates = [80, 172, 266, 355]
 
 def merge_elevation_maps(tiles_folder, target_file):
-    input_files = []
-    for file_path in glob.glob(os.path.join(tiles_folder, '*.tiff')):
-        input_files.append(file_path)
+
+    # List all GeoTIFF files in the directory
+    tiff_files = [os.path.join(tiles_folder, f) for f in os.listdir(tiles_folder) if f.endswith('.tiff')]
+
+    # Initialize an empty list to hold the data arrays
+    src_files_to_mosaic = []
+
+    # Loop through all the GeoTIFF files and add them to the list
+    for tiff_file in tiff_files:
+        src = rasterio.open(tiff_file)
+        src_files_to_mosaic.append(src)
+
+    # Merge all the individual GeoTIFF files into a single mosaic
+    mosaic, out_trans = merge(src_files_to_mosaic)
+
+    # Update the metadata for the mosaic file
+    out_meta = src.meta.copy()
+    out_meta.update({
+        "driver": "GTiff",
+        "height": mosaic.shape[1],
+        "width": mosaic.shape[2],
+        "transform": out_trans,
+        "compress": "None"
+    })
+
+    with rasterio.open(target_file, "w", **out_meta) as dest:
+        dest.write(mosaic)
     
-    processing.run("gdal:merge",
-                   {'INPUT': input_files,
-                    'PCT':False,'SEPARATE':False,
-                    'NODATA_INPUT':None,
-                    'NODATA_OUTPUT':0,
-                    'OPTIONS':'COMPRESS=NONE|BIGTIFF=IF_NEEDED',
-                    'DATA_TYPE':5,
-                    'OUTPUT': target_file})
 def run_slope_aspect_processing(elevation_map, slope_path, aspect_path):
     
     processing.run("grass7:r.slope.aspect", 
@@ -56,7 +72,9 @@ def run_slope_aspect_processing(elevation_map, slope_path, aspect_path):
                     'GRASS_REGION_CELLSIZE_PARAMETER':0,
                     'GRASS_RASTER_FORMAT_OPT':'',
                     'GRASS_RASTER_FORMAT_META':''})
+
 def insoltime_calc(elevation_map, slope_path, aspect_path, sunhours_file_path, day):
+
     
     processing.run("grass7:r.sun.insoltime", 
                    {'elevation': elevation_map,
