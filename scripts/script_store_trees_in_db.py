@@ -2,14 +2,12 @@
 """
 Download tree data and store into db.
 Usage:
-  script_store_trees_in_db.py [--data_directory=DATA_DIRECTORY]
-    [--db_qtrees=DB_QTREES] [--batch_size=BATCH_SIZE]
+  script_store_trees_in_db.py [--data_directory=DATA_DIRECTORY] [--db_qtrees=DB_QTREES] [--batch_size=BATCH_SIZE]
   script_store_trees_in_db.py (-h | --help)
 Options:
-  --data_directory=DATA_DIRECTORY       Directory for data
-    [default: data/trees]
-  --db_qtrees=DB_QTREES                 Database name [default:]
-  --batch_size=BATCH_SiZE               Batch size [default: 100000]
+  --data_directory=DATA_DIRECTORY              Directory for data [default: data/trees]
+  --db_qtrees=DB_QTREES                        Database name [default:]
+  --batch_size=BATCH_SiZE                      Batch size [default: 100000]
 """
 
 import sys
@@ -26,11 +24,9 @@ logger = get_logger(__name__, log_level="INFO")
 def main():
     logger.info("Args: %s", sys.argv[1:])
     # Parse arguments
-    args = docopt(__doc__) 
+    args = docopt(__doc__)
     logger.debug("Init db args")
-    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"],
-                                              db_type="qtrees",
-                                              logger=logger)
+    db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     data_directory = args["--data_directory"]
     n_batch_size = int(args["--batch_size"])
@@ -50,7 +46,6 @@ def main():
             return
 
     logger.debug("Do update")
-
     if not os.path.exists(data_directory):
         os.makedirs(data_directory)
 

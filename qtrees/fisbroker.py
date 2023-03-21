@@ -28,12 +28,9 @@ def _prepare_tree_data(gdf, street_tree):
     gdf.drop_duplicates(subset=['id'], keep='first', inplace=True)
     return gdf, duplicates_in_batch
 
-
-def store_trees_batchwise_to_db(trees_file, street_tree, engine, lu_ids=None,
-                                n_batch_size=100000):
+def store_trees_batchwise_to_db(trees_file, street_tree, engine, lu_ids=None, n_batch_size=100000):
     """
-    load tree file, process data, remove duplicates and stored it into a db -
-    all batchwise
+    load tree file, process data, remove duplicates and stored it into a db - all batchwise
 
     Parameters
     ----------
@@ -60,8 +57,7 @@ def store_trees_batchwise_to_db(trees_file, street_tree, engine, lu_ids=None,
         gdf = gpd.read_file(trees_file, rows=slice(n_start, n_end))
         n_rows = len(gdf)
         # prepare data and remove patch-internal duplicates
-        gdf, duplicates_in_batch = _prepare_tree_data(gdf,
-                                                      street_tree=street_tree)
+        gdf, duplicates_in_batch = _prepare_tree_data(gdf, street_tree=street_tree)
         duplicates_between_batches = lu_ids.intersection(gdf["id"])
         duplicates = duplicates_between_batches | duplicates_in_batch
 
@@ -69,8 +65,7 @@ def store_trees_batchwise_to_db(trees_file, street_tree, engine, lu_ids=None,
         n_duplicates = n_rows - len(gdf)
 
         if n_duplicates > 0:
-            logger.warning(f"Found {n_duplicates} duplicates: \
-                           {list(duplicates)}")
+            logger.warning(f"Found {n_duplicates} duplicates: {list(duplicates)}")
 
         lu_ids.update(gdf["id"])
 
@@ -79,8 +74,7 @@ def store_trees_batchwise_to_db(trees_file, street_tree, engine, lu_ids=None,
         n_start = n_end
 
         try:
-            gdf.to_postgis("trees", engine, if_exists="append",
-                           schema="public")
+            gdf.to_postgis("trees", engine, if_exists="append", schema="public")
         except Exception as e:
             logger.error("Cannot write to db: %s", e)
             exit(121)
@@ -101,8 +95,7 @@ def download_tree_file(dir_data, type, use_cached=True):
     dir_data: str
         cache dir
     type: str
-        defines tree dataset - currently 'wfs_baumbestand' or
-        'wfs_baumbestand_an'
+        defines tree dataset - currently 'wfs_baumbestand' or 'wfs_baumbestand_an'
     use_cached: bool
         defines if cached data is used or data should be downloaded again
 
@@ -116,8 +109,8 @@ def download_tree_file(dir_data, type, use_cached=True):
         return trees_file
 
     logger.info("Downloading '%s' data", type)
-    params = dict(service="WFS", version="2.0.0", request='GetFeature',
-                  typeNames=f"fis:s_{type}", srsName="EPSG:25833")
+    params = dict(service="WFS", version="2.0.0", request='GetFeature', typeNames=f"fis:s_{type}",
+                  srsName="EPSG:25833")
     url = f"http://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_{type}"
 
     r = requests.get(url, params=params)
@@ -138,16 +131,14 @@ def get_trees(trees_file):
         trees_gdf = gpd.read_file(trees_file, driver='GeoJSON')
         logger.debug("Reading trees geo data frames from %s.", trees_file)
     else:
-        params = dict(service="WFS", version="2.0.0", request='GetFeature',
-                      typeNames="fis:s_wfs_baumbestand_an", 
+        params = dict(service="WFS", version="2.0.0", request='GetFeature', typeNames="fis:s_wfs_baumbestand_an",
                       srsName="EPSG:25833")
         url = "http://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_wfs_baumbestand_an"
         q = requests.Request('GET', url, params=params).prepare().url
         trees_gdf_an = gpd.read_file(q).to_crs(4326)
         trees_gdf_an["street_tree"] = False
 
-        params = dict(service="WFS", version="2.0.0", request='GetFeature',
-                      typeNames="fis:s_wfs_baumbestand",
+        params = dict(service="WFS", version="2.0.0", request='GetFeature', typeNames="fis:s_wfs_baumbestand",
                       srsName="EPSG:25833")
         url = "http://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_wfs_baumbestand"
         q = requests.Request('GET', url, params=params).prepare().url
@@ -179,8 +170,7 @@ def get_gdf(url, crs, geojson_file):
         logger.debug("Gdf doesn't exist, making a wfs request.")
         wfs = WebFeatureService(url=url)
         layer = list(wfs.contents)[-1]
-        params = dict(service="wfs", version="2.0.0", request='GetFeature',
-                      TYPENAMES=layer, crs=crs)
+        params = dict(service="wfs", version="2.0.0", request='GetFeature', TYPENAMES=layer, crs=crs)
         q = Request('GET', url, params=params).prepare().url
         gdf = gpd.read_file(q).set_crs(epsg=25833)
         gdf = gdf.to_crs(4326)
