@@ -30,6 +30,18 @@ JOIN
 	ORDER BY tile_id, date DESC) as tile_rainfall
 ON public.tree_radolan_tile.tile_id = tile_rainfall.tile_id;
 
+CREATE MATERIALIZED VIEW private.sensor_measurements_agg AS
+SELECT 
+    type_id, 
+    "timestamp", 
+    AVG(CAST(value AS double precision)) AS mean_value,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(value AS double precision)) AS median_value
+FROM 
+    private.sensor_measurements 
+GROUP BY 
+    type_id, 
+    "timestamp";
+
 CREATE OR REPLACE VIEW private.training_data AS
 SELECT sensor_measurements.tree_id, sensor_measurements.sensor_id, sensor_measurements.timestamp, sensor_measurements.value,
 		shading.winter, shading.spring, shading.summer, shading.fall,
