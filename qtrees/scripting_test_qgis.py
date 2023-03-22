@@ -1,6 +1,8 @@
 import os
 from qgis import processing
 import glob
+import rasterio
+from rasterio.merge import merge
 
 """
 This script computes sun hour maps based on elevation tile files. It first calculates 
@@ -13,7 +15,7 @@ used as a standalone script.
 """
 #  replace the data path
 data_path = ""
-elevation_maps_folder = os.path.join(data_path, "elevation_maps")
+elevation_maps_folder = os.path.join(data_path, "elevation_maps_berlin")
 slope_aspect_folder= os.path.join(data_path, "slope_aspect")
 sun_hour_map_folder = os.path.join(data_path, "sun_hour_maps")
 selected_dates = [80, 172, 266, 355]
@@ -79,21 +81,34 @@ def insoltime_calc(elevation_map, slope_path, aspect_path, sunhours_file_path, d
                 'GRASS_RASTER_FORMAT_META':''})  
 
 def merge_sunhour_maps(sunhours_folder, target_file):
+    
     for subdir in os.listdir(sunhours_folder):
-        input_files = []
-        for file_path in glob.glob(os.path.join(sunhours_folder, subdir, '*.tiff')):
-            input_files.append(file_path)
+        sunhour_maps_subdir = os.path.join(sunhours_folder, subdir)
+        tiff_files = [os.path.join(sunhour_maps_subdir, f) for f in os.listdir(sunhour_maps_subdir) if f.endswith('.tiff')]
         target_file = os.path.join(sunhours_folder, subdir + '_merged.tiff')
-        processing.run("gdal:merge",
-                        {'INPUT': input_files,
-                         'PCT':False,
-                         'SEPARATE':False,
-                         'NODATA_INPUT':None,
-                         'NODATA_OUTPUT':0,
-                         'OPTIONS':'COMPRESS=NONE|BIGTIFF=IF_NEEDED',
-                         'DATA_TYPE':5,
-                         'OUTPUT': target_file})
-            
+
+        # Initialize an empty list to hold the data arrays
+        src_files_to_mosaic = []
+
+        # Loop through all the GeoTIFF files and add them to the list
+        for tiff_file in tiff_files:
+            src = rasterio.open(tiff_file)
+            src_files_to_mosaic.append(src)
+
+        # Merge all the individual GeoTIFF files into a single mosaic
+        mosaic, out_trans = merge(src_files_to_mosaic)
+
+        # Update the metadata for the mosaic file
+        out_meta = src.meta.copy()
+        out_meta.update({
+                "driver": "GTiff",
+                "height": mosaic.shape[1],
+                "width": mosaic.shape[2],
+                "transform": out_trans,
+                "compress": "None"
+        })
+        with rasterio.open(target_file, "w", **out_meta) as dest:
+            dest.write(mosaic)
 
 def process_all_tiles(tiles_folder, slope_aspect_folder, selected_dates):
     
