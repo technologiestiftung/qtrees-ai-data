@@ -14,7 +14,7 @@ def create_box_filter_maps(maps_directory, kernel_size):
     print('creted target directory')
 
     for filename in os.listdir(maps_directory):
-         if not filename.startswith('.') and filename.endswith('.tiff'):
+         if not filename.startswith('.') and filename.endswith('merged.tiff'):
             f_path = os.path.join(sun_hour_map_folder, filename)
             apply_box_filter(kernel_size, filename, f_path)
 
