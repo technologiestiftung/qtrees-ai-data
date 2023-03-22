@@ -1,5 +1,6 @@
 from astral import LocationInfo
 from astral.sun import sun
+import geopandas as gpd
 import datetime
 import rioxarray
 import os
@@ -14,10 +15,11 @@ selected_dates = {'spring': datetime.date(2022, 3, 21),
                   'winter': datetime.date(2022, 12, 21)}
 city = LocationInfo(name="Berlin", region="Germany", 
                     timezone="Europe/Berlin", latitude=52.5200, longitude=13.4050)
-qgis_sun_hours_folder = "data/berlin_maps_filtered"
-data_directory = "data"
+qgis_sun_hours_folder = "../data/berlin_maps_filtered"
+data_directory = "../data/shadow_index"
+os.makedirs(data_directory, exist_ok=True)
 trees_file = os.path.join(data_directory, "all_trees_gdf.geojson")
-shadow_index_file = os.path.join(data_directory, "berlin_shadow_box_08_03.csv")
+shadow_index_file = os.path.join(data_directory, "berlin_shadow_box_22_03.csv")
 
 
 # calculate theoretical sunhours of the 4 selected days of solstices & equinoxes
@@ -69,6 +71,7 @@ def calculate_sun_index(seasons_theoretical_daylight,
                     print(f"tree sun hours: {tree_actual_sun_hours}")
                     shading_index = tree_actual_sun_hours * 3600 / theoretical_daylight
                     print(f"shading index: {shading_index}, tree sun seconds: {tree_actual_sun_hours*3600}")
+                    seasonal_values[baum_id] = round(shading_index, 2)
         actual_sun_hours[season] = seasonal_values
         with open('temp_shading.json', 'w') as fp:
             json.dump(actual_sun_hours, fp)
@@ -77,12 +80,14 @@ def calculate_sun_index(seasons_theoretical_daylight,
 
 def get_sunindex_df(shadow_index_file):
     if not os.path.isfile(shadow_index_file):
-        # create json with baumid as key and coordinates as value
-        trees_df = get_trees(trees_file)
-        simplified_df = trees_df[["baumid", "geometry"]]
+        # create json with id as key and coordinates as value
+        if not os.path.exists(trees_file):
+            trees_df = get_trees(trees_file)
+        trees_df = gpd.read_file(trees_file)
+        simplified_df = trees_df[["id", "geometry"]]
         trees_dict = {}
-        for baumid, coordinate in simplified_df.itertuples(index=False):
-            trees_dict[baumid] = (coordinate.y, coordinate.x)
+        for id, coordinate in simplified_df.itertuples(index=False):
+            trees_dict[id] = (coordinate.y, coordinate.x)
         seasons_theoretical_daylight = calc_theoretical_daylight(selected_dates, city)
         sun_index = calculate_sun_index(seasons_theoretical_daylight, 
                                         qgis_sun_hours_folder, trees_dict)
