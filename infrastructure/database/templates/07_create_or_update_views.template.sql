@@ -9,6 +9,16 @@ select date,
 from public.weather
 where stations_id = 433;
 
+CREATE MATERIALIZED VIEW private.weather_solaranywhere_14d_agg AS
+select date,
+		sum(rainfall_mm) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as rainfall_mm_14d_sum,
+		avg(temp_avg_c) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as temp_avg_c_14d_avg,
+		avg(wind_avg_ms) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as wind_avg_ms_14d_avg,
+		avg(temp_max_c) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as temp_max_c_14d_avg,
+		avg(wind_max_ms) OVER(ORDER BY date ROWS BETWEEN 13 PRECEDING AND CURRENT ROW ) as wind_max_ms_14d_avg
+from private.weather_tile_measurement
+where tile_id = 2;
+
 CREATE MATERIALIZED VIEW public.tree_radolan_tile AS
 select trees.id as tree_id, tiles.id as tile_id
 from public.trees as trees
@@ -43,16 +53,18 @@ GROUP BY
     "timestamp";
 
 CREATE OR REPLACE VIEW private.training_data AS
-SELECT sensor_measurements.tree_id, sensor_measurements.sensor_id, sensor_measurements.timestamp, sensor_measurements.value,
+SELECT sensor_measurements.tree_id, sensor_measurements.type_id, sensor_measurements.timestamp, 
 		shading.winter, shading.spring, shading.summer, shading.fall,
 		trees.gattung_deutsch, trees.standalter,
-		weather_14d_agg.temp_avg_c_14d_avg, weather_14d_agg.wind_avg_ms_14d_avg, weather_14d_agg.temp_max_c_14d_avg, weather_14d_agg.wind_max_ms_14d_avg
+		weather_solaranywhere_14d_agg.rainfall_mm_14d_sum, weather_solaranywhere_14d_agg.temp_avg_c_14d_avg,
+		sensor_measurements_agg.median_value,
+		sensor_measurements.value as target
 FROM private.sensor_measurements
 LEFT JOIN public.shading ON public.shading.tree_id = sensor_measurements.tree_id
 LEFT JOIN public.trees ON trees.id = sensor_measurements.tree_id
-LEFT JOIN public.weather_14d_agg ON sensor_measurements.timestamp = weather_14d_agg.timestamp
-LEFT JOIN public.radolan_14d_agg ON sensor_measurements.timestamp = radolan_14d_agg.timestamp
-ORDER BY timestamp DESC;
+LEFT JOIN private.weather_solaranywhere_14d_agg ON date(sensor_measurements.timestamp) = weather_solaranywhere_14d_agg.date
+LEFT JOIN private.sensor_measurements_agg ON (date(sensor_measurements.timestamp) = date(sensor_measurements_agg.timestamp) AND sensor_measurements.type_id = sensor_measurements_agg.type_id)
+ORDER BY tree_id, timestamp DESC;
 
 CREATE MATERIALIZED VIEW public.vector_tiles AS
 SELECT

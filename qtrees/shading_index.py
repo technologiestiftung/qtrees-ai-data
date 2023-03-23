@@ -4,7 +4,7 @@ import datetime
 import rioxarray
 import os
 import pandas as pd
-from fisbroker import get_trees
+from qtrees.fisbroker import get_trees
 import json
 from pyproj import CRS, Transformer
 
@@ -17,8 +17,8 @@ city = LocationInfo(name="Berlin", region="Germany",
 qgis_sun_hours_folder = "data/berlin_maps_filtered"
 data_directory = "data"
 trees_file = os.path.join(data_directory, "all_trees_gdf.geojson")
-shadow_index_file = os.path.join(data_directory, "berlin_shadow_box_08_03.csv")
-
+#shadow_index_file = os.path.join(data_directory, "berlin_shadow_box_08_03.csv")
+shadow_index_file = os.path.join(data_directory, "shading/berlin_shadow_index.csv")
 
 # calculate theoretical sunhours of the 4 selected days of solstices & equinoxes
 def calc_theoretical_daylight(dates, city):
@@ -73,6 +73,7 @@ def calculate_sun_index(seasons_theoretical_daylight,
 
 def get_sunindex_df(shadow_index_file):
     if not os.path.isfile(shadow_index_file):
+        print("no found file")
         # create json with baumid as key and coordinates as value
         trees_df = get_trees(trees_file)
         simplified_df = trees_df[["baumid", "geometry"]]
@@ -87,6 +88,7 @@ def get_sunindex_df(shadow_index_file):
         shadow_index_df.to_csv(shadow_index_file)
         return shadow_index_df
     else:
+        print("found file")
         shadow_index_df = pd.read_csv(shadow_index_file, index_col=0)
         return shadow_index_df
 

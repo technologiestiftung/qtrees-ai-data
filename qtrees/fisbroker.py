@@ -5,7 +5,7 @@ from requests import Request
 from owslib.wfs import WebFeatureService
 import os
 from datetime import datetime
-from helper import get_logger
+from qtrees.helper import get_logger
 
 logger = get_logger(__name__)
 
