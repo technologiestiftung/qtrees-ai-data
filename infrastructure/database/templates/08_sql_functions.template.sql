@@ -50,5 +50,19 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION public.nowcast_input(_nowcast_date date, _type_id int)
+  RETURNS TABLE (tree_id text, type_id int, nowcast_date date, shading_spring real, shading_summer real, shading_fall real, shading_winter real, 
+				 tree_gattung text, tree_standalter real,  weather_rainfall_mm_14d_sum real, weather_temp_avg_c_14d_avg real, sensor_group_median real)
+  LANGUAGE sql
+  AS 
+$body$
+	SELECT trees.id as tree_id, _type_id as type_id, _nowcast_date as nowcast_date,
+	shading.spring, shading.summer, shading.fall, shading.winter, trees.gattung_deutsch, trees.standalter, 
+	(select rainfall_mm_14d_sum FROM private.weather_solaranywhere_14d_agg WHERE date = _nowcast_date),
+	(select temp_avg_c_14d_avg FROM private.weather_solaranywhere_14d_agg WHERE date = _nowcast_date),
+	(select median_value FROM private.sensor_measurements_agg WHERE (date(sensor_measurements_agg.timestamp) = _nowcast_date) AND sensor_measurements_agg.type_id = _type_id)
+	FROM (SELECT * FROM public.trees WHERE trees.street_tree = True) AS trees LEFT JOIN public.shading ON shading.tree_id = trees.id
+$body$;
+
 -- all users (are derived from authenticator and) have access to rainfall
 grant execute on function public.rainfall(text) to authenticator;

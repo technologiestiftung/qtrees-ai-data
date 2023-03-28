@@ -52,19 +52,20 @@ GROUP BY
     type_id, 
     "timestamp";
 
-CREATE OR REPLACE VIEW private.training_data AS
-SELECT sensor_measurements.tree_id, sensor_measurements.type_id, sensor_measurements.timestamp, 
-		shading.winter, shading.spring, shading.summer, shading.fall,
-		trees.gattung_deutsch, trees.standalter,
-		weather_solaranywhere_14d_agg.rainfall_mm_14d_sum, weather_solaranywhere_14d_agg.temp_avg_c_14d_avg,
-		sensor_measurements_agg.median_value,
+CREATE OR REPLACE VIEW private.nowcast_training_data AS
+SELECT sensor_measurements.tree_id, sensor_measurements.type_id, sensor_measurements.timestamp as nowcast_date, 
+		shading.winter as shading_winter, shading.spring as shading_spring, shading.summer as shading_summer, shading.fall as shading_fall,
+		trees.gattung_deutsch as tree_gattung, trees.standalter as tree_standalter,
+		weather_solaranywhere_14d_agg.rainfall_mm_14d_sum as weather_rainfall_mm_14d_sum, 
+		weather_solaranywhere_14d_agg.temp_avg_c_14d_avg as weather_temp_avg_c_14d_avg,
+		sensor_measurements_agg.median_value as sensor_group_median,
 		sensor_measurements.value as target
 FROM private.sensor_measurements
 LEFT JOIN public.shading ON public.shading.tree_id = sensor_measurements.tree_id
 LEFT JOIN public.trees ON trees.id = sensor_measurements.tree_id
 LEFT JOIN private.weather_solaranywhere_14d_agg ON date(sensor_measurements.timestamp) = weather_solaranywhere_14d_agg.date
 LEFT JOIN private.sensor_measurements_agg ON (date(sensor_measurements.timestamp) = date(sensor_measurements_agg.timestamp) AND sensor_measurements.type_id = sensor_measurements_agg.type_id)
-ORDER BY tree_id, timestamp DESC;
+ORDER BY tree_id, nowcast_date DESC;
 
 CREATE MATERIALIZED VIEW public.vector_tiles AS
 SELECT
@@ -158,15 +159,6 @@ FROM
 				n.timestamp DESC) distinct_nowcast
 		GROUP BY
 			nowcast_tree_id) AS _nowcast ON trees.id = _nowcast.tree_id;
-
-CREATE OR REPLACE VIEW private.test_data AS
-SELECT trees.id, trees.gattung_deutsch, trees.standalter,
-		shading.winter, shading.spring, shading.summer, shading.fall,
-		(SELECT weather.rainfall_mm  FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as rainfall_mm,
-		(SELECT weather.temp_avg_c  FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_avg,
-		(SELECT weather.temp_max_c FROM public.weather WHERE timestamp = (SELECT current_date - INTEGER '1')) as temp_max
-FROM public.trees
-LEFT JOIN public.shading ON public.shading.tree_id = public.trees.id;
 
 CREATE MATERIALIZED VIEW public.watering AS
 SELECT tree_id, sum(amount_liters), "date"

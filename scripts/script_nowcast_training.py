@@ -30,11 +30,11 @@ def main():
     )
 
     with engine.connect() as con:
-        train_data = pd.read_sql('select * from private.training_data', con)
+        train_data = pd.read_sql('select * from private.nowcast_training_data', con)
     train_data = train_data.dropna()
 
     # TODO put into some config where also the model is configured (YAML?)
-    FEATURES = ["winter", "spring", "summer", "fall", "standalter", "rainfall_mm_14d_sum", "temp_avg_c_14d_avg", "median_value"]
+    FEATURES = ["shading_winter", "shading_spring", "shading_summer", "shading_fall", "tree_standalter", "weather_rainfall_mm_14d_sum", "weather_temp_avg_c_14d_avg", "sensor_group_median"]
     
     if not os.path.exists('./models/simplemodel/'):
         os.makedirs('./models/simplemodel/')
