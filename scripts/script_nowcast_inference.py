@@ -35,27 +35,38 @@ def main():
     
     with engine.connect() as con:
         rs = con.execute('select max(date) FROM private.weather_solaranywhere_14d_agg')
-        last_weather_date = [idx[0] for idx in rs][0]
-        logger.debug("Last weather data from: %s.", last_weather_date)
+        result = [r[0] for r in rs][0]
+        if result:
+            last_weather_date = result
+            logger.debug("Last weather data from: %s.", last_weather_date)
+        else:
+            logger.error("There is not weather data available for the model. Please insert weather data into the database.")
+            return
 
         rs = con.execute('select max(timestamp) FROM private.sensor_measurements_agg')
-        last_sensor_date = datetime.datetime.strptime([idx[0] for idx in rs][0], "%Y-%m-%d").date()
-        logger.debug("Last sensor data from: %s.", last_sensor_date)
+        result = [r[0] for r in rs][0]
+        if result:
+            last_sensor_date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
+            logger.debug("Last sensor data from: %s.", last_sensor_date)
+        else:
+            logger.error("There is not sensor data available for the model. Please insert sensor data into the database.")
+            return
 
         yesterday = datetime.date.today()-pd.Timedelta("1D")
         if (last_weather_date < yesterday) or (last_sensor_date < yesterday):
             nowcast_date = min(last_sensor_date, last_weather_date)
-            logger.error("No up-to-date data. Creating nowcast based on data from: %s.", nowcast_date)
+            logger.info("No up-to-date data. Creating nowcast based on data from: %s.", nowcast_date)
         else:
             nowcast_date = yesterday
             logger.info("Creating nowcast for yesterday: %s.", nowcast_date)
 
     logger.info("Start prediction for each depth.")
     for type_id in [1, 2, 3]:
+        model = pickle.load(open(f'./models/simplemodel/model_{type_id}.m', 'rb'))
         for input_chunk in pd.read_sql("SELECT * FROM nowcast_input(%s, %s)", engine, params=(nowcast_date, type_id), chunksize=batch_size):
             X = input_chunk[FEATURES+["tree_id"]].set_index("tree_id").dropna()
+
             # TODO read model config from yaml?
-            model = pickle.load(open(f'./models/simplemodel/model_{type_id}.m', 'rb'))
             y_hat = pd.DataFrame(model.predict(X), index=X.index).reset_index()
             y_hat.columns = ["tree_id", "value"]
             y_hat["type_id"] = type_id
