@@ -38,6 +38,12 @@ def main():
         result = [r[0] for r in rs][0]
         if result:
             last_weather_date = result
+            if isinstance(result, str):
+                last_weather_date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
+            elif isinstance(result, datetime.datetime):
+                last_weather_date = result
+            else:
+                logger.error("Result is neither str nor datetime.")
             logger.debug("Last weather data from: %s.", last_weather_date)
         else:
             logger.error("There is not weather data available for the model. Please insert weather data into the database.")
@@ -46,7 +52,12 @@ def main():
         rs = con.execute('select max(timestamp) FROM private.sensor_measurements_agg')
         result = [r[0] for r in rs][0]
         if result:
-            last_sensor_date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
+            if isinstance(result, str):
+                last_sensor_date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
+            elif isinstance(result, datetime.datetime):
+                last_sensor_date = result
+            else:
+                logger.error("Result is neither str nor datetime.")
             logger.debug("Last sensor data from: %s.", last_sensor_date)
         else:
             logger.error("There is not sensor data available for the model. Please insert sensor data into the database.")
