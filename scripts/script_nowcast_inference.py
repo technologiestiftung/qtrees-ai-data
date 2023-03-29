@@ -40,10 +40,10 @@ def main():
             last_weather_date = result
             if isinstance(result, str):
                 last_weather_date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
-            elif isinstance(result, datetime.datetime):
+            elif isinstance(result, datetime.date):
                 last_weather_date = result
             else:
-                logger.error("Result is neither str nor datetime.")
+                logger.error("Result is neither str nor datetime, but of type %s." % type(result))
             logger.debug("Last weather data from: %s.", last_weather_date)
         else:
             logger.error("There is not weather data available for the model. Please insert weather data into the database.")
@@ -54,10 +54,10 @@ def main():
         if result:
             if isinstance(result, str):
                 last_sensor_date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
-            elif isinstance(result, datetime.datetime):
+            elif isinstance(result, datetime.date):
                 last_sensor_date = result
             else:
-                logger.error("Result is neither str nor datetime.")
+                logger.error("Result is neither str nor datetime, but of type %s." % type(result))
             logger.debug("Last sensor data from: %s.", last_sensor_date)
         else:
             logger.error("There is not sensor data available for the model. Please insert sensor data into the database.")
