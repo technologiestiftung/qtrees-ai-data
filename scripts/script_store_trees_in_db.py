@@ -46,8 +46,8 @@ def main():
             return
 
     logger.debug("Do update")
-    if not os.path.exists(os.path.dirname(data_directory)):
-        os.makedirs(os.path.dirname(data_directory))
+    if not os.path.exists(data_directory):
+        os.makedirs(data_directory)
 
     # download tree files in case of need
     filename_street_trees = download_tree_file(
