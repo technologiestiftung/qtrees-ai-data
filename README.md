@@ -223,6 +223,8 @@ From the project root directory, execute the following steps in the **same shell
   - follow instructions [here](https://docs.docker.com/desktop/mac/install/)
 - install `docker-compose`
   - `brew install docker-compose`
+- install `Golang-Migrate` 
+- `brew install golang-migrate` 
 
 #### Start `docker` containers for database
 - `cd infrastructure/database`
@@ -237,8 +239,7 @@ From the project root directory, execute the following steps in the **same shell
 
 #### Configure database
 - `source set_environment.local.sh`
-- `source create_sql_files.sh`
-- `source setup_database.sh`
+- `source init_db.local.sh`
 - `docker-compose -f docker-compose.local.yml restart` to make changes visible
 - read the database password from environment variables with this command:
 - `echo $POSTGRES_PASSWD`
@@ -302,6 +303,21 @@ To turn it down, run:
 `docker-compose -f docker-compose.yml down`
 
 **Note: if you run it locally, you have of course to use `docker-compose.local.yml` and `set_environment.local.sh`.**
+
+
+#### Use DB change management migrate 
+All the database migration steps are found in the infrastructure/database/migrations folder. To add a change to the database structure, go to the `infrastructure/database` folder and run: 
+- `source set_environment.local.sh`
+- `migrate create -ext sql -dir  ${MIGRATIONS} -seq XXXXXX_informative_name_of_migration`
+
+where XXXXXX is the current date on the form YYMMDD. 
+This will create two files in the `infrastructure/database/migrations` folder, one "up.sql" file, and one "down.sql" file. Implement the change in the "up" file and reverse it in the "down" file. 
+To run the change: 
+- `migrate -database ${PGRST_DB_URI} -path ${MIGRATIONS} up 1`
+
+For more information on how to use Golang Migrate see: 
+https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md
+
 
 ### Get data in python
 To connect to the database, run the following lines in python:
