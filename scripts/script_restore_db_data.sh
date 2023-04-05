@@ -1,15 +1,12 @@
 if [ -n "$QTREES_VERSION" ]; then
-  echo "Input arguments:"
-  for i in "$@"; do
-    echo $i
-  done
-  if [ $# -eq 0 ]; then
+  if [ -n "$QTREES_BACKUP_DIR" ]; then
+    # given dir as variable
+    data_dir=$QTREES_BACKUP_DIR"/"$QTREES_VERSION
+  else
     # default dir
     data_dir="data/db/"$QTREES_VERSION
-  else
-    # custom dir as first parameter
-    data_dir=$1"/"$QTREES_VERSION
   fi
+
   files=$(ls -t $data_dir/*.dump 2>/dev/null)
   if [ -z "$files" ]; then
     # no dump file found
