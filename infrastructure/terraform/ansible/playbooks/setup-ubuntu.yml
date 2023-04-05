@@ -85,13 +85,14 @@
     become_user: ubuntu
     shell: |
       aws s3 sync s3://qtrees-data ~/qtrees-ai-data/data --no-progress --exclude 'img/*' --exclude '.*'
-  - name: restore database
-    become_user: ubuntu
-    shell: |
-      . /home/ubuntu/setup_environment.sh
-      cd qtrees-ai-data
-      . /home/ubuntu/qtrees-ai-data/scripts/script_restore_db_data.sh /home/ubuntu/qtrees-ai-data/data/db
-    ignore_errors: true
+#  - name: restore database
+#    become_user: ubuntu
+#    shell: |
+#      . /home/ubuntu/setup_environment.sh
+#      cd qtrees-ai-data
+#      export QTREES_BACKUP_DIR=/home/ubuntu/qtrees-ai-data/data/db
+#      . /home/ubuntu/qtrees-ai-data/scripts/script_restore_db_data.sh
+#    ignore_errors: true
   - name: fill database
     become_user: ubuntu
     shell: |
@@ -102,7 +103,7 @@
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_wheather_observations.py >> /home/ubuntu/download-cron.log 2>&1
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_soil_in_db.py >> /home/ubuntu/download-cron.log 2>&1
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_radolan_in_db.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_shading_index_in_db.py --shadow_index_file=data/shading/berlin_shading_rounded_150222.csv >> /home/ubuntu/download-cron.log 2>&1
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_shading_index_in_db.py --shadow_index_file=data/shading/berlin_shadow_box_220323.csv >> /home/ubuntu/download-cron.log 2>&1
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_gdk_watering_in_db.py >> /home/ubuntu/download-cron.log 2>&1
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python /home/ubuntu/qtrees-ai-data/scripts/script_store_solaranywhere_weather_in_db.py --days=450 >> /home/ubuntu/download-cron.log 2>&1
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python /home/ubuntu/qtrees-ai-data/scripts/script_store_solaranywhere_forecast_in_db.py >> /home/ubuntu/download-cron.log 2>&1
