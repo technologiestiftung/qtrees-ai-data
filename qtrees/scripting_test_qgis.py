@@ -14,11 +14,11 @@ This script is designed to be run in the Python console of QGIS and is not inten
 used as a standalone script.
 """
 #  replace the data path
-data_path = ""
+data_path = "/Users/yagmuruckunkaya/Documents/repos/qtrees-ai-data/data/data_single_tile/"
 elevation_maps_folder = os.path.join(data_path, "elevation_maps_berlin")
 slope_aspect_folder= os.path.join(data_path, "slope_aspect")
 sun_hour_map_folder = os.path.join(data_path, "sun_hour_maps")
-selected_dates = [80, 172, 266, 355]
+selected_dates = [1, 31, 61, 91, 121, 151, 181, 211, 241, 271, 301, 331]
 
 def run_slope_aspect_processing(elevation_map, slope_path, aspect_path):
 
@@ -114,9 +114,9 @@ def process_all_tiles(tiles_folder, slope_aspect_folder, selected_dates):
     
     for file_path in glob.glob(os.path.join(tiles_folder, '*.tiff')):
         file_name = os.path.basename(file_path)
+        os.makedirs(slope_aspect_folder, exist_ok=True)
         slope_path = os.path.join(slope_aspect_folder, 'slope_' + file_name)
         aspect_path = os.path.join(slope_aspect_folder, 'aspect_' + file_name)
-        
         if not (os.path.exists(slope_path) and os.path.exists(aspect_path)):
             run_slope_aspect_processing(elevation_map=file_path, slope_path=slope_path,aspect_path=aspect_path)
         
