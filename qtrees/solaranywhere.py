@@ -37,6 +37,7 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
     if (start is not None) or (end is not None):
         start = pd.to_datetime(start)
         end = pd.to_datetime(end)
+        print(start, end)
         if start.tz is None:
             start = start.tz_localize('CET')
         if end.tz is None:
@@ -44,6 +45,7 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
         end += pd.Timedelta("1D")
         payload['Options']["StartTime"] = start.isoformat()
         payload['Options']["EndTime"] = end.isoformat()
+        print(start.isoformat(), end.isoformat())
 
     payload = json.dumps(payload)
     request = requests.post(URL+'/WeatherData', data=payload, headers=header)
@@ -64,9 +66,14 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
             raise TimeoutError('Time exceeded the `max_response_time`.')
         time.sleep(5)  # Sleep for 5 seconds before each data retrieval attempt
 
+
     data = pd.DataFrame(results_json['WeatherDataResults'][0]['WeatherDataPeriods']['WeatherDataPeriods'])
     data.index = pd.to_datetime(data['StartTime'])
+    data.index = data.index.tz_convert("CET")
     data = data.drop(["StartTime"], axis=1).rename(columns=VARIABLE_MAP)
+
+    print(data)
+
  
     daily_frames = []
     daily_frames.append(data.groupby(data.index.date).max().rename(columns={"ghi": "ghi_max_wm2", "dni": "dni_max_wm2", "dhi": "dhi_max_wm2", "temp": "temp_max_c", "wind": "wind_max_ms"}))

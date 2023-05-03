@@ -69,6 +69,7 @@ def main():
 
         yesterday = datetime.date.today()-pd.Timedelta("1D")
         if (last_weather_date < yesterday) or (last_sensor_date < yesterday):
+            print(type(last_sensor_date, last_weather_date))
             nowcast_date = min(last_sensor_date, last_weather_date)
             logger.info("No up-to-date data. Creating nowcast based on data from: %s.", nowcast_date)
         else:

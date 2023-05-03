@@ -60,7 +60,7 @@ def main():
                 logger.info("Last available forecast from today. No need to update!")
             else:
                 logger.info("Inserting data from %s to %s.", today, today+pd.Timedelta(days=14))
-                weather_data  = get_weather(loc[1], loc[2], api_key, start=today, end=today+pd.Timedelta(days=14))
+                weather_data  = get_weather(loc[1], loc[2], api_key, start=today, end=today+pd.Timedelta(days=13))
                 weather_data["tile_id"] = loc[0]
                 weather_data["created_at"] = now
                 weather_data.to_sql("weather_tile_forecast", engine, if_exists="append", schema="private", index=False)
