@@ -52,7 +52,7 @@ def main():
         logger.debug("Data for location with id=%s and coordinates (%s, %s)", loc[0], loc[1], loc[2])
         # write data to db
         try:
-            today_local = datetime.date.today(pytz.timezone("CET"))
+            today_local = datetime.date.today()
 
             last_date = None
             if sqlalchemy.inspect(engine).has_table("weather_tile_measurement", schema="private"):
