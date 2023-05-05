@@ -23,11 +23,11 @@ logger = get_logger(__name__)
 
 def _check_datetime(value):
     if isinstance(value, str):
-        output = datetime.datetime.strptime(value, "%Y-%m-%d").date()
+        output = pytz.timezone("CET").localize(datetime.datetime.strptime(value, "%Y-%m-%d")).date()
     elif isinstance(value, datetime.datetime):
         output = value.date()
     elif isinstance(value, datetime.date):  
-        output = value.tz_localize("CET").date()
+        output = value
     else:
         logger.error("Result is neither str nor datetime, but of type %s.", type(value))
         output = None
@@ -69,9 +69,8 @@ def main():
                          "Please insert sensor data into the database.")
             return
 
-        yesterday = datetime.date.today(pytz.timezone('CET'))-pd.Timedelta("1D")
+        yesterday = datetime.date.today()-pd.Timedelta("1D")
         if (last_weather_date < yesterday) or (last_sensor_date < yesterday):
-            print(type(last_sensor_date, last_weather_date))
             nowcast_date = min(last_sensor_date, last_weather_date)
             logger.info("No up-to-date data. Creating nowcast based on data from: %s.", nowcast_date)
         else:

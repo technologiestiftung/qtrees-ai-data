@@ -34,13 +34,15 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
         }
     }
 
-    if (start is not None) and (end is not None):
-        payload['Options']["StartTime"] = start.isoformat()
-        payload['Options']["EndTime"] = end.isoformat()
+    if (start is not None) or (end is not None):
+        payload['Options']["StartTime"] = pd.to_datetime(start).tz_localize('CET').isoformat()
+        payload['Options']["EndTime"] = pd.to_datetime(end).tz_localize('CET').isoformat()
         print(start.isoformat(), end.isoformat())
 
     payload = json.dumps(payload)
+
     request = requests.post(URL+'/WeatherData', data=payload, headers=header)
+    
     if request.ok is False:
         raise ValueError(request.json()['Message'])
     weather_request_id = request.json()["WeatherRequestId"]
@@ -64,9 +66,6 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
     data.index = data.index.tz_convert("CET")
     data = data.drop(["StartTime"], axis=1).rename(columns=VARIABLE_MAP)
 
-    print(data)
-
- 
     daily_frames = []
     daily_frames.append(data.groupby(data.index.date).max().rename(columns={"ghi": "ghi_max_wm2", "dni": "dni_max_wm2", "dhi": "dhi_max_wm2", "temp": "temp_max_c", "wind": "wind_max_ms"}))
     daily_frames.append(data[["ghi", "dni", "dhi", "rainfall_mm"]].groupby(data.index.date).sum().rename(columns={"ghi": "ghi_sum_whm2", "dni": "dni_sum_whm2", "dhi": "dhi_sum_whm2"}))
