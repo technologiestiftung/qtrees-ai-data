@@ -20,6 +20,19 @@ import pytz
 
 logger = get_logger(__name__)
 
+
+def _check_datetime(value):
+    if isinstance(value, str):
+        output = datetime.datetime.strptime(value, "%Y-%m-%d").date()
+    elif isinstance(value, datetime.datetime):
+        output = value.date()
+    elif isinstance(value, datetime.date):  
+        output = value.tz_localize("CET").date()
+    else:
+        logger.error("Result is neither str nor datetime, but of type %s.", type(value))
+        output = None
+    return output
+
 def main():
     logger.info("Args: %s", sys.argv[1:])
     # Parse arguments
@@ -32,41 +45,28 @@ def main():
     )
 
     # TODO put into some config where also the model is configured (YAML? Database?)
-    FEATURES = ["shading_winter", "shading_spring", "shading_summer", "shading_fall", "tree_standalter", "weather_rainfall_mm_14d_sum", "weather_temp_avg_c_14d_avg", "sensor_group_median"]
+    FEATURES = ["shading_winter", "shading_spring", "shading_summer", "shading_fall", "tree_standalter",
+                "weather_rainfall_mm_14d_sum", "weather_temp_avg_c_14d_avg", "sensor_group_median"]
     
     with engine.connect() as con:
         rs = con.execute('select max(date) FROM private.weather_solaranywhere_14d_agg')
         result = [r[0] for r in rs][0]
         if result:
-            # is a date, so no need to handle tz
-            last_weather_date = result
-            if isinstance(result, str):
-                last_weather_date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
-            elif isinstance(result, datetime.date):
-                last_weather_date = result
-            elif isinstance(result, datetime.datetime):
-                last_weather_date = result.tz_localize("CET").date()
-            else:
-                logger.error("Result is neither str nor datetime, but of type %s." % type(result))
+            last_weather_date = _check_datetime(result)
             logger.debug("Last weather data from: %s.", last_weather_date)
         else:
-            logger.error("There is not weather data available for the model. Please insert weather data into the database.")
+            logger.error("There is not weather data available for the model. "
+                         "Please insert weather data into the database.")
             return
 
         rs = con.execute('select max(timestamp) FROM private.sensor_measurements_agg')
         result = [r[0] for r in rs][0]
         if result:
-            if isinstance(result, str):
-                last_sensor_date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
-            elif isinstance(result, datetime.date):
-                last_sensor_date = result
-            elif isinstance(result, datetime.datetime):
-                last_sensor_date = result.tz_localize("CET").date()
-            else:
-                logger.error("Result is neither str nor datetime, but of type %s." % type(result))
+            last_sensor_date = _check_datetime(result)
             logger.debug("Last sensor data from: %s.", last_sensor_date)
         else:
-            logger.error("There is not sensor data available for the model. Please insert sensor data into the database.")
+            logger.error("There is not sensor data available for the model. "
+                         "Please insert sensor data into the database.")
             return
 
         yesterday = datetime.date.today(pytz.timezone('CET'))-pd.Timedelta("1D")
@@ -81,7 +81,8 @@ def main():
     logger.info("Start prediction for each depth.")
     for type_id in [1, 2, 3]:
         model = pickle.load(open(f'./models/simplemodel/model_{type_id}.m', 'rb'))
-        for input_chunk in pd.read_sql("SELECT * FROM nowcast_input(%s, %s)", engine, params=(nowcast_date, type_id), chunksize=batch_size):
+        for input_chunk in pd.read_sql("SELECT * FROM nowcast_input(%s, %s)", engine, params=(nowcast_date, type_id),
+                                       chunksize=batch_size):
             X = input_chunk[FEATURES+["tree_id"]].set_index("tree_id").dropna()
 
             # TODO read model config from yaml?
