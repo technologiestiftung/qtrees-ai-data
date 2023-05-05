@@ -34,15 +34,7 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
         }
     }
 
-    if (start is not None) or (end is not None):
-        start = pd.to_datetime(start)
-        end = pd.to_datetime(end)
-        print(start, end)
-        if start.tz is None:
-            start = start.tz_localize('CET')
-        if end.tz is None:
-            end = end.tz_localize('CET')
-        end += pd.Timedelta("1D")
+    if (start is not None) and (end is not None):
         payload['Options']["StartTime"] = start.isoformat()
         payload['Options']["EndTime"] = end.isoformat()
         print(start.isoformat(), end.isoformat())

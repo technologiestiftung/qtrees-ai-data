@@ -21,6 +21,7 @@ from qtrees.helper import get_logger, init_db_args
 from qtrees.dwd import get_radolan_data
 import os.path
 import sys
+import pytz
 
 logger = get_logger(__name__)
 warnings.filterwarnings('ignore')
@@ -60,7 +61,7 @@ def main():
             f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
         )
         delta = datetime.timedelta(hours=1)
-        now = datetime.datetime.now()
+        now = datetime.datetime.now(pytz.timezone("UTC"))
 
         last_date = None
         if sqlalchemy.inspect(engine).has_table("radolan", schema="public"):

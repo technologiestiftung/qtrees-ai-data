@@ -16,6 +16,7 @@ from docopt import docopt, DocoptExit
 import pickle
 from qtrees.helper import get_logger, init_db_args
 import datetime
+import pytz
 
 logger = get_logger(__name__)
 
@@ -37,13 +38,14 @@ def main():
         rs = con.execute('select max(date) FROM private.weather_solaranywhere_14d_agg')
         result = [r[0] for r in rs][0]
         if result:
+            # is a date, so no need to handle tz
             last_weather_date = result
             if isinstance(result, str):
                 last_weather_date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
             elif isinstance(result, datetime.date):
                 last_weather_date = result
             elif isinstance(result, datetime.datetime):
-                last_sensor_date = result.date()
+                last_weather_date = result.tz_localize("CET").date()
             else:
                 logger.error("Result is neither str nor datetime, but of type %s." % type(result))
             logger.debug("Last weather data from: %s.", last_weather_date)
@@ -59,7 +61,7 @@ def main():
             elif isinstance(result, datetime.date):
                 last_sensor_date = result
             elif isinstance(result, datetime.datetime):
-                last_sensor_date = result.date()
+                last_sensor_date = result.tz_localize("CET").date()
             else:
                 logger.error("Result is neither str nor datetime, but of type %s." % type(result))
             logger.debug("Last sensor data from: %s.", last_sensor_date)
@@ -67,7 +69,7 @@ def main():
             logger.error("There is not sensor data available for the model. Please insert sensor data into the database.")
             return
 
-        yesterday = datetime.date.today()-pd.Timedelta("1D")
+        yesterday = datetime.date.today(pytz.timezone('CET'))-pd.Timedelta("1D")
         if (last_weather_date < yesterday) or (last_sensor_date < yesterday):
             print(type(last_sensor_date, last_weather_date))
             nowcast_date = min(last_sensor_date, last_weather_date)
@@ -87,11 +89,15 @@ def main():
             y_hat.columns = ["tree_id", "value"]
             y_hat["type_id"] = type_id
             y_hat["timestamp"] = yesterday
-            y_hat["created_at"] = datetime.datetime.now()
+            y_hat["created_at"] = datetime.datetime.now(pytz.timezone('UTC'))
             y_hat["model_id"] = "Random Forest (simple)" # TODO id from file?
             y_hat.to_sql("nowcast", engine, if_exists="append", schema="public", index=False, method='multi')
     logger.info("Made all predictions all models.")
-    
+
+    with engine.connect() as con:
+        con.execute('REFRESH MATERIALIZED VIEW public.expert_dashboard')
+    logger.info(f"Updated materialized view public.expert_dashboard.")
+
 if __name__ == "__main__":
     try:
         main()

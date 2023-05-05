@@ -17,6 +17,7 @@ from docopt import docopt, DocoptExit
 from qtrees.helper import get_logger, init_db_args
 from qtrees.fisbroker import store_trees_batchwise_to_db, download_tree_file
 import os.path
+import pytz
 
 logger = get_logger(__name__, log_level="INFO")
 

@@ -19,6 +19,7 @@ from qtrees.helper import get_logger, init_db_args
 import os.path
 import sys
 from qtrees.solaranywhere import get_weather
+import pytz
 
 logger = get_logger(__name__)
 warnings.filterwarnings('ignore')
@@ -51,7 +52,7 @@ def main():
         logger.debug("Data for location with id=%s and coordinates (%s, %s)", loc[0], loc[1], loc[2])
         # write data to db
         try:
-            now = datetime.date.today()
+            today_local = datetime.date.today(pytz.timezone("CET"))
 
             last_date = None
             if sqlalchemy.inspect(engine).has_table("weather_tile_measurement", schema="private"):
@@ -61,9 +62,9 @@ def main():
                     logger.debug("Latest timestamp in data: %s.", last_date)
  
             if last_date is None:
-                last_date = now - datetime.timedelta(days=days)
+                last_date = today_local - datetime.timedelta(days=days)
             
-            yesterday = now - pd.Timedelta(days=1)
+            yesterday = today_local - pd.Timedelta(days=1)
             if last_date >= yesterday:
                 logger.info("Last available data from %s. No need to update!", last_date)
             else:

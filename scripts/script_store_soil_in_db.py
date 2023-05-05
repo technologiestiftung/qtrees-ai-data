@@ -11,6 +11,7 @@ Options:
 import os.path
 import os
 from datetime import datetime
+import pytz
 from sqlalchemy import create_engine
 import sqlalchemy
 from docopt import docopt, DocoptExit
@@ -56,10 +57,10 @@ def main():
         soil_gdf_file = os.path.join(data_directory, "soil_gdf.geojson")
         soil_gdf = get_gdf(s_boden_wfs1_2015_url, crs, soil_gdf_file)
 
-        date = datetime.now().date()
+        now = datetime.now(pytz.timezone("UTC"))
         soil_gdf = soil_gdf.rename(columns={"gml_id": "id"})
-        soil_gdf['created_at'] = date
-        soil_gdf['updated_at'] = date
+        soil_gdf['created_at'] = now
+        soil_gdf['updated_at'] = now
         soil_gdf = soil_gdf.rename(columns={"gml_id": "id"})
 
         logger.info("Writing into db")

@@ -18,6 +18,7 @@ from qtrees.helper import get_logger, init_db_args
 import os.path
 import sys
 from qtrees.solaranywhere import get_weather
+import pytz
 
 logger = get_logger(__name__)
 warnings.filterwarnings('ignore')
@@ -46,8 +47,7 @@ def main():
         logger.debug("Data for location with id=%s and coordinates (%s, %s)", loc[0], loc[1], loc[2])
         # write data to db
         try:
-            now = datetime.datetime.now()
-            today = datetime.date.today()
+            today_local = datetime.date.today(pytz.timezone("CET"))
 
             last_date = None
             if sqlalchemy.inspect(engine).has_table("weather_tile_forecast", schema="private"):
@@ -56,13 +56,13 @@ def main():
                     last_date = [idx[0] for idx in rs][0]
                     logger.debug("Latest created_at timestamp in data: %s.", last_date)
  
-            if last_date is not None and last_date.date() >= now.date():
+            if last_date is not None and last_date.date() >= today_local:
                 logger.info("Last available forecast from today. No need to update!")
             else:
-                logger.info("Inserting data from %s to %s.", today, today+pd.Timedelta(days=14))
-                weather_data  = get_weather(loc[1], loc[2], api_key, start=today, end=today+pd.Timedelta(days=13))
+                logger.info("Inserting data from %s to %s.", today_local, today_local+pd.Timedelta(days=14))
+                weather_data  = get_weather(loc[1], loc[2], api_key, start=today_local, end=today_local+pd.Timedelta(days=13))
                 weather_data["tile_id"] = loc[0]
-                weather_data["created_at"] = now
+                weather_data["created_at"] = datetime.now(pytz.timezone("UTC"))
                 weather_data.to_sql("weather_tile_forecast", engine, if_exists="append", schema="private", index=False)
                 
                 #logger.info(f"Updating materialized views...")
