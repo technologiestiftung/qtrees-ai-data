@@ -69,11 +69,12 @@ ORDER BY tree_id, nowcast_date DESC;
 
 CREATE MATERIALIZED VIEW public.expert_dashboard AS
 SELECT trees.id, CAST(value as int) as saugspannung, timestamp as datum, shading.spring as "Verschattung Frühling", shading.summer as "Verschattung Sommer", shading.fall as "Verschattung Herbst", shading.winter as "Verschattung Winter", art_dtsch, art_bot, bezirk, stammumfg, standalter, baumhoehe, type_id, model_id, kennzeich, standortnr, lat, lng, strname, hausnr
-FROM public.trees
-LEFT JOIN public.nowcast
-   ON trees.id = nowcast.tree_id
-LEFT JOIN public.shading
-  ON trees.id = shading.tree_id;
+FROM (public.trees
+	LEFT JOIN public.nowcast
+	   ON trees.id = nowcast.tree_id
+	LEFT JOIN public.shading
+	  ON trees.id = shading.tree_id)
+WHERE (public.trees.street_tree = true) AND (nowcast.timestamp = (SELECT MAX(timestamp) from nowcast));
 
 CREATE MATERIALIZED VIEW public.vector_tiles AS
 SELECT
