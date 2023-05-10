@@ -19,6 +19,7 @@ from qtrees.helper import get_logger, init_db_args
 import os.path
 import sys
 from qtrees.solaranywhere import get_weather
+import pytz
 
 logger = get_logger(__name__)
 warnings.filterwarnings('ignore')
@@ -51,7 +52,7 @@ def main():
         logger.debug("Data for location with id=%s and coordinates (%s, %s)", loc[0], loc[1], loc[2])
         # write data to db
         try:
-            now = datetime.date.today()
+            today_local = datetime.date.today()
 
             last_date = None
             if sqlalchemy.inspect(engine).has_table("weather_tile_measurement", schema="private"):
@@ -61,20 +62,20 @@ def main():
                     logger.debug("Latest timestamp in data: %s.", last_date)
  
             if last_date is None:
-                last_date = now - datetime.timedelta(days=days)
+                last_date = today_local - datetime.timedelta(days=days)
             
-            yesterday = now - pd.Timedelta(days=1)
+            yesterday = today_local - pd.Timedelta(days=1)
             if last_date >= yesterday:
                 logger.info("Last available data from %s. No need to update!", last_date)
             else:
                 logger.info("Inserting data from %s to %s.", last_date, yesterday)
-                weather_data  = get_weather(loc[1], loc[2], api_key, start=last_date, end=yesterday)
+                weather_data  = get_weather(loc[1], loc[2], api_key, start=last_date+datetime.timedelta(days=1), end=yesterday+datetime.timedelta(days=1))
                 weather_data["tile_id"] = loc[0]
-                weather_data.to_sql("weather_tile_measurement", engine, if_exists="append", schema="private", index=False)
+                weather_data.to_sql("weather_tile_measurement", engine, if_exists="append", schema="private", index=False, method='multi')
                 
-                #logger.info(f"Updating materialized views...")
-                #with engine.connect() as con:
-                    # TODO add views if used. 
+                logger.info(f"Updating materialized views...")
+                with engine.connect() as con:
+                    con.execute('REFRESH MATERIALIZED VIEW private.weather_solaranywhere_14d_agg')
         except Exception as e:
             logger.error("Cannot write to db: %s", e)
             exit(121)

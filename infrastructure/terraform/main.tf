@@ -55,7 +55,8 @@ resource "aws_db_subnet_group" "qtrees" {
 resource "aws_db_instance" "qtrees" {
   identifier        = "${var.project_name}-iac-rds"
   instance_class    = "db.t3.micro"
-  allocated_storage = 10
+  allocated_storage = 20
+  max_allocated_storage = 100
   engine            = "postgres"
   name              = var.project_name
   username          = "postgres"
