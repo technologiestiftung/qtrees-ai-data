@@ -50,7 +50,10 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION public.nowcast_input(_nowcast_date date, _type_id int)
+CREATE OR REPLACE FUNCTION public.nowcast_inference_input(_nowcast_date date, _type_id int)
+/*  
+Returns a table with current data for the nowcast inference script.
+*/
   RETURNS TABLE (tree_id text, type_id int, nowcast_date date, shading_spring real, shading_summer real, shading_fall real, shading_winter real, 
 				 tree_gattung text, tree_standalter real,  weather_rainfall_mm_14d_sum real, weather_temp_avg_c_14d_avg real, sensor_group_median real)
   LANGUAGE sql
