@@ -123,6 +123,8 @@ def get_observations(station, measurement):
 
     zipdata = ZipFile(io.BytesIO(response_kl.content))
     txtfile = zipdata.open(zipdata.infolist()[len(zipdata.infolist()) - 1])
+    # -999 is considered error/missing data as per documentation available here:
+    # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/BESCHREIBUNG_obsgermany_climate_daily_kl_recent_de.pdf
     weather = pd.read_csv(txtfile, sep=";", skipinitialspace=True, na_values="-999")
     weather.columns = [x.lower() for x in weather.columns]
     weather["mess_datum"] = pd.to_datetime(weather["mess_datum"], format='%Y%m%d')
