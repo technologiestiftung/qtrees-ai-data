@@ -2,6 +2,7 @@ import unittest
 import os
 import requests
 import json
+from qtrees.helper import get_logger
 
 
 class TestPostgREST(unittest.TestCase):
@@ -14,6 +15,7 @@ class TestPostgREST(unittest.TestCase):
         if not url:
             self.skipTest("No postgREST URL set")
         self.url_postgREST = url
+        self.logger = get_logger(__name__)
 
     def _test_url(self, endpoint, min_count=None):
         url = os.path.join(self.url_postgREST, endpoint)
@@ -36,6 +38,7 @@ class TestPostgREST(unittest.TestCase):
             self._test_url(endpoint=endpoint, min_count=None)
 
         self._test_url(endpoint="issues", min_count=0)
+        self._test_url(endpoint="vector_tiles", min_count=0)
 
     def _get_token(self):
         url = os.path.join(self.url_postgREST, "rpc/login")
