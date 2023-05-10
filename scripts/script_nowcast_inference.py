@@ -80,7 +80,7 @@ def main():
     logger.info("Start prediction for each depth.")
     for type_id in [1, 2, 3]:
         model = pickle.load(open(f'./models/simplemodel/model_{type_id}.m', 'rb'))
-        for input_chunk in pd.read_sql("SELECT * FROM nowcast_input(%s, %s)", engine, params=(nowcast_date, type_id),
+        for input_chunk in pd.read_sql("SELECT * FROM nowcast_inference_input(%s, %s)", engine, params=(nowcast_date, type_id),
                                        chunksize=batch_size):
             X = input_chunk[FEATURES+["tree_id"]].set_index("tree_id").dropna()
 
