@@ -188,8 +188,8 @@ grant select on public.vector_tiles to authenticator;
 grant select on public.vector_tiles to web_anon;
 grant select on public.vector_tiles to qtrees_user;
 
-grant select on public.expert_dashboard to authenticator;
-grant select on public.expert_dashboard to web_anon;
+--grant select on public.expert_dashboard to authenticator;
+--grant select on public.expert_dashboard to web_anon;
 grant select on public.expert_dashboard to qtrees_user;
 
 grant select on public.watering to authenticator;
