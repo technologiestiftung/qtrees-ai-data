@@ -3,22 +3,22 @@ from astral.sun import sun
 import datetime
 import rioxarray
 import os
-import pandas as pd
-from qtrees.fisbroker import get_trees
 import json
 from pyproj import CRS, Transformer
+import pandas as pd
 
-selected_dates = {'spring': datetime.date(2022, 3, 21), 
+from qtrees.fisbroker import get_trees
+from qtrees.helper import get_logger
+
+logger = get_logger(__name__)
+
+selected_dates = {'spring': datetime.date(2022, 3, 21),
                   'summer': datetime.date(2022, 6, 21),
-                  'autumn': datetime.date(2022, 9, 23),   
+                  'autumn': datetime.date(2022, 9, 23),
                   'winter': datetime.date(2022, 12, 21)}
-city = LocationInfo(name="Berlin", region="Germany", 
+city = LocationInfo(name="Berlin", region="Germany",
                     timezone="Europe/Berlin", latitude=52.5200, longitude=13.4050)
-qgis_sun_hours_folder = "data/berlin_maps_filtered"
-data_directory = "data"
-trees_file = os.path.join(data_directory, "all_trees_gdf.geojson")
-#shadow_index_file = os.path.join(data_directory, "berlin_shadow_box_08_03.csv")
-shadow_index_file = os.path.join(data_directory, "shading/berlin_shadow_index.csv")
+
 
 # calculate theoretical sunhours of the 4 selected days of solstices & equinoxes
 def calc_theoretical_daylight(dates, city):
@@ -30,19 +30,20 @@ def calc_theoretical_daylight(dates, city):
         sun_hours = s['sunset'] - s['sunrise']
         print("Daylight hours on the selected day", sun_hours)
         sun_seconds = sun_hours.total_seconds()
-        print("Theoretical total seconds of daylight on the selected day", 
+        print("Theoretical total seconds of daylight on the selected day",
               sun_seconds)
         total_sun_seconds[season] = sun_seconds
     print(total_sun_seconds)
     return total_sun_seconds
 
-def calculate_sun_index(seasons_theoretical_daylight, 
+
+def calculate_sun_index(seasons_theoretical_daylight,
                         sun_hours_map_directory, tree_json):
     # transform tree coordinates to the crs of sun hours map
     out_proj = CRS('EPSG:25833')
     in_proj = CRS('EPSG:4326')
-    transformer = Transformer.from_crs(crs_from=in_proj, 
-                                       crs_to=out_proj, 
+    transformer = Transformer.from_crs(crs_from=in_proj,
+                                       crs_to=out_proj,
                                        always_xy=True)
     actual_sun_hours = {}
     """ goes through the trees & calculates the sun&shadow index per tree for 
@@ -71,9 +72,9 @@ def calculate_sun_index(seasons_theoretical_daylight,
     return actual_sun_hours
 
 
-def get_sunindex_df(shadow_index_file):
+def get_sunindex_df(shadow_index_file, trees_file=None, qgis_sun_hours_folder="data/berlin_maps_filtered"):
     if not os.path.isfile(shadow_index_file):
-        print("no found file")
+        logger.warning("%s not found", shadow_index_file)
         # create json with baumid as key and coordinates as value
         trees_df = get_trees(trees_file)
         simplified_df = trees_df[["baumid", "geometry"]]
@@ -81,15 +82,13 @@ def get_sunindex_df(shadow_index_file):
         for baumid, coordinate in simplified_df.itertuples(index=False):
             trees_dict[baumid] = (coordinate.y, coordinate.x)
         seasons_theoretical_daylight = calc_theoretical_daylight(selected_dates, city)
-        sun_index = calculate_sun_index(seasons_theoretical_daylight, 
+        sun_index = calculate_sun_index(seasons_theoretical_daylight,
                                         qgis_sun_hours_folder, trees_dict)
         sun_index_df = pd.DataFrame(sun_index)
         shadow_index_df = (1.0 - sun_index_df).round(2)
         shadow_index_df.to_csv(shadow_index_file)
         return shadow_index_df
     else:
-        print("found file")
+        logger.warning("Using %s", shadow_index_file)
         shadow_index_df = pd.read_csv(shadow_index_file, index_col=0)
         return shadow_index_df
-
-get_sunindex_df(shadow_index_file)
