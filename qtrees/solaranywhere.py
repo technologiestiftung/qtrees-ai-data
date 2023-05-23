@@ -37,7 +37,6 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
     if (start is not None) or (end is not None):
         payload['Options']["StartTime"] = pd.to_datetime(start).tz_localize('CET').isoformat()
         payload['Options']["EndTime"] = pd.to_datetime(end).tz_localize('CET').isoformat()
-        print(start.isoformat(), end.isoformat())
 
     payload = json.dumps(payload)
 
