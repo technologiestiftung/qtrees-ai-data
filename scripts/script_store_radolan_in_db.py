@@ -75,7 +75,7 @@ def main():
             last_date = now - datetime.timedelta(days=days)
             last_date = last_date.replace(minute=50, second=0, microsecond=0)
         else:
-            last_date = pd.to_datetime(last_date).replace(minute=50, second=0, microsecond=0)
+            last_date = pd.to_datetime(last_date).tz_localize("UTC").replace(minute=50, second=0, microsecond=0)
 
         with engine.connect() as con:
             rs = con.execute(f"DELETE FROM public.radolan WHERE DATE >= %s", last_date.strftime('%Y-%m-%d'))
