@@ -5,6 +5,7 @@ import pandas as pd
 from requests import Request
 from owslib.wfs import WebFeatureService
 from datetime import datetime
+import pytz
 from qtrees.helper import get_logger
 
 logger = get_logger(__name__)
@@ -19,7 +20,7 @@ def _prepare_tree_data(gdf, street_tree):
     gdf['lat'] = gdf.geometry.y
     gdf['lng'] = gdf.geometry.x
     # geopandas.to_file has problems with datetime
-    date = pd.to_datetime(datetime.now().date().strftime('%Y-%m-%d'))
+    date = pd.to_datetime(datetime.now(tz=pytz.timezone("UTC")).date().strftime('%Y-%m-%d'))
     gdf['created_at'] = date
     gdf['updated_at'] = date
     gdf = gdf.rename(columns={"baumid": "id"})
@@ -150,9 +151,9 @@ def get_trees(trees_file):
         trees_gdf['lat'] = trees_gdf.geometry.y
         trees_gdf['lng'] = trees_gdf.geometry.x
         # geopandas.to_file has problems with datetime
-        date = datetime.now().date().strftime('%Y-%m-%d')
-        trees_gdf['created_at'] = date
-        trees_gdf['updated_at'] = date
+        now = datetime.now(pytz.timezone("UTC"))
+        trees_gdf['created_at'] = now
+        trees_gdf['updated_at'] = now
         trees_gdf = trees_gdf.rename(columns={"baumid": "id"})
         trees_gdf = trees_gdf.drop('gml_id', axis=1)
 

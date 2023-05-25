@@ -8,7 +8,7 @@ from shapely.geometry import Polygon
 import datetime
 from zipfile import ZipFile
 from requests.exceptions import RequestException
-
+import pytz
 
 def get_radolan_data(nowcast_date=None, aggregation="hourly", mask=None, xmin=0, xmax=900, ymin=0, ymax=900):
     """Gets the RADOLAN (Radar-Online-Aneichung) data of DWD
@@ -45,7 +45,7 @@ def get_radolan_data(nowcast_date=None, aggregation="hourly", mask=None, xmin=0,
         If Radolan request went wrong
     """
     if nowcast_date is None:
-        nowcast_date = datetime.datetime.now()
+        nowcast_date = datetime.datetime.now(tz=pytz.timezone("UTC"))
 
     if nowcast_date.minute >= 50:
         normalized_date = nowcast_date - datetime.timedelta(minutes=nowcast_date.minute - 50)
@@ -123,7 +123,9 @@ def get_observations(station, measurement):
 
     zipdata = ZipFile(io.BytesIO(response_kl.content))
     txtfile = zipdata.open(zipdata.infolist()[len(zipdata.infolist()) - 1])
-    weather = pd.read_csv(txtfile, sep=";", skipinitialspace=True)
+    # -999 is considered error/missing data as per documentation available here:
+    # https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/BESCHREIBUNG_obsgermany_climate_daily_kl_recent_de.pdf
+    weather = pd.read_csv(txtfile, sep=";", skipinitialspace=True, na_values="-999")
     weather.columns = [x.lower() for x in weather.columns]
     weather["mess_datum"] = pd.to_datetime(weather["mess_datum"], format='%Y%m%d')
     return weather
