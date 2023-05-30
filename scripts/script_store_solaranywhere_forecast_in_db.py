@@ -2,10 +2,11 @@
 """
 Download solaranyhwere data and store into db.
 Usage:
-  script_store_solanywhere_weather_in_db.py [--db_qtrees=DB_QTREES]
+  script_store_solanywhere_weather_in_db.py [--db_qtrees=DB_QTREES][--days=DAYS]
   script_store_solanywhere_weather_in_db.py (-h | --help)
 Options:
   --db_qtrees=DB_QTREES                    Database name [default:]
+  --days=DAYS                              Number of days to retrieve if no data in db [default: 14]
 """
 import warnings
 
@@ -33,6 +34,8 @@ def main():
     if api_key is None:
         logger.error("Environment variable SOLARANYWHERE_API_KEY not set")
         exit(2)
+
+    days = int(args["--days"])
    
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
@@ -59,8 +62,13 @@ def main():
             if last_date is not None and last_date.date() >= today_local:
                 logger.info("Last available forecast from today. No need to update!")
             else:
-                logger.info("Inserting data from %s to %s.", today_local, today_local+pd.Timedelta(days=14))
-                weather_data  = get_weather(loc[1], loc[2], api_key, start=today_local, end=today_local+pd.Timedelta(days=13))
+                if last_date is None:
+                    start_from = today_local - datetime.timedelta(days=days)
+                else:
+                    start_from = today_local
+
+                logger.info("Inserting data from %s to %s.", start_from, today_local+pd.Timedelta(days=14))
+                weather_data  = get_weather(loc[1], loc[2], api_key, start=start_from, end=today_local+pd.Timedelta(days=14))
                 weather_data["tile_id"] = loc[0]
                 weather_data["created_at"] = datetime.datetime.now(pytz.timezone("UTC"))
                 weather_data.to_sql("weather_tile_forecast", engine, if_exists="append", schema="private", index=False)
