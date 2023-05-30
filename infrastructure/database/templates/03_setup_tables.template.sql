@@ -188,6 +188,36 @@ CREATE TABLE public.nowcast (
 	model_id text
 );
 
+CREATE OR REPLACE VIEW public.latest_nowcast AS
+SELECT DISTINCT ON (tree_id, type_id)
+    id,
+    tree_id,
+    type_id,
+    timestamp,
+    value,
+    created_at,
+    model_id
+FROM public.nowcast
+ORDER BY tree_id, type_id, timestamp DESC;
+
+CREATE OR REPLACE VIEW public.latest_forecast AS
+SELECT *
+FROM crosstab(
+    $$
+    SELECT
+        tree_id,
+        type_id,
+        row_number() OVER (PARTITION BY tree_id, type_id ORDER BY timestamp) AS day,
+        value
+    FROM public.nowcast
+    ORDER BY 1, 2, 3
+    $$,
+    $$
+    SELECT generate_series(1, 14)
+    $$
+) AS ct (tree_id TEXT, type_id INTEGER, day1_timestamp timestamptz, day1 REAL, day2 REAL, day3 REAL, day4 REAL, day5 REAL, day6 REAL, day7 REAL, day8 REAL, day9 REAL, day10 REAL, day11 REAL, day12 REAL, day13 REAL, day14 REAL);
+
+
 CREATE INDEX idx_nowcast_tree_id
 ON nowcast(tree_id);
 CREATE INDEX idx_forecast_tree_id

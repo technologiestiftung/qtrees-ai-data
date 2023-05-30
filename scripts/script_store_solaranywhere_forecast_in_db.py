@@ -67,8 +67,9 @@ def main():
                 else:
                     start_from = today_local
 
-                logger.info("Inserting data from %s to %s.", start_from, today_local+pd.Timedelta(days=14))
-                weather_data  = get_weather(loc[1], loc[2], api_key, start=start_from, end=today_local+pd.Timedelta(days=14))
+                logger.info("Retrieving data from %s to %s.", start_from, today_local+pd.Timedelta(days=15))
+                weather_data  = get_weather(loc[1], loc[2], api_key, start=start_from, end=today_local+pd.Timedelta(days=15))
+                logger.info("Inserted data from %s to %s.", weather_data.date.min(), weather_data.date.max())
                 weather_data["tile_id"] = loc[0]
                 weather_data["created_at"] = datetime.datetime.now(pytz.timezone("UTC"))
                 weather_data.to_sql("weather_tile_forecast", engine, if_exists="append", schema="private", index=False)

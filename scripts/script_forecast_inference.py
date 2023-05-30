@@ -51,7 +51,7 @@ def main():
             for h in range(1, FORECAST_HORIZON+1):
                 forecast_date = last_date + pd.Timedelta(days=h)
 
-                logger.info(f"Start prediction for {forecast_date}.")
+                logger.info(f"Start prediction for {forecast_date} for type {type_id}.")
                 
                 current_weather = pd.read_sql("SELECT DISTINCT ON (date) date, temp_max_c, rainfall_mm FROM private.weather_tile_forecast WHERE date = %s ORDER BY date, created_at DESC", 
                                               engine, params=(forecast_date, ))
