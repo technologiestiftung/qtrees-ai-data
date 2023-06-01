@@ -121,8 +121,8 @@ def main():
         daily_data = gpd.GeoDataFrame(pd.concat(radolan_data, ignore_index=True))
 
         daily_data["date"] = daily_data["timestamp"].dt.date
-        daily_mean = daily_data.groupby(["tile_id", "date"]).mean().reset_index()
-        daily_max= daily_data.groupby(["tile_id", "date"]).max().reset_index()
+        daily_mean = daily_data.groupby(["tile_id", "date"]).mean(numeric_only = True).reset_index()
+        daily_max= daily_data.groupby(["tile_id", "date"]).max(numeric_only = True).reset_index()
 
         daily_df = pd.merge(daily_mean[["tile_id", "date", "rainfall_mm"]],
                 daily_max[["tile_id", "date", "rainfall_mm"]].rename(columns={"rainfall_mm": "rainfall_max_mm"}),
