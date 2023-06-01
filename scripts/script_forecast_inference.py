@@ -42,10 +42,11 @@ def main():
         con.execute("TRUNCATE public.forecast")
 
     logger.info("Start prediction for each depth.")
+    
     for type_id in [1, 2, 3]:
         model = pickle.load(open(f'./models/simplemodel_forecast/model_{type_id}.m', 'rb'))
         for input_chunk in pd.read_sql("SELECT * FROM nowcast_inference_input(%s, %s)", engine, params=(last_date, type_id),
-                                       chunksize=batch_size):
+                                    chunksize=batch_size):
             
             base_X = input_chunk[NOWCAST_FEATURES+["tree_id"]].set_index("tree_id").dropna()
             for h in range(1, FORECAST_HORIZON+1):
@@ -54,7 +55,7 @@ def main():
                 logger.info(f"Start prediction for {forecast_date} for type {type_id}.")
                 
                 current_weather = pd.read_sql("SELECT DISTINCT ON (date) date, temp_max_c, rainfall_mm FROM private.weather_tile_forecast WHERE date = %s ORDER BY date, created_at DESC", 
-                                              engine, params=(forecast_date, ))
+                                            engine, params=(forecast_date, ))
 
                 X = base_X.copy()
                 X.loc[:,"temp_max_c"] = current_weather.loc[:,"temp_max_c"].values[0]
@@ -70,16 +71,15 @@ def main():
                 y_hat["created_at"] = datetime.datetime.now(pytz.timezone('UTC'))
                 y_hat["model_id"] = "Random Forest (simple)" # TODO id from file?
                 try: 
-                    y_hat.to_sql("forecast", engine, if_exists="append", schema="public", index=False, method='multi')
+                    #y_hat.to_sql("forecast", engine, if_exists="append", schema="public", index=False, method='multi')
+                    y_hat.to_sql("forecast", engine, if_exists="append", schema="public", index=False, method=None)
                 except:
                     logger.error(f"Forecast failed for chunk. Trying to continue for next chunk.")
-
-            #break
-
     logger.info("Made all predictions all models.")
 
     with engine.connect() as con:
         con.execute('REFRESH MATERIALIZED VIEW public.expert_dashboard')
+
     logger.info(f"Updated materialized view public.expert_dashboard.")
 
 if __name__ == "__main__":

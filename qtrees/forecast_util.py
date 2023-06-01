@@ -40,12 +40,12 @@ def check_last_data(engine):
                          "Please insert sensor data into the database.")
             return
 
-        yesterday = datetime.date.today()-pd.Timedelta("1D")
-        if (last_weather_date < yesterday) or (last_sensor_date < yesterday):
-            nowcast_date = min(last_sensor_date, last_weather_date)
-            logger.info("No up-to-date data. Creating nowcast based on data from: %s.", nowcast_date)
-        else:
-            nowcast_date = yesterday
-            logger.info("Creating nowcast for yesterday: %s.", nowcast_date)
+    yesterday = datetime.date.today()-pd.Timedelta("1D")
+    if (last_weather_date < yesterday) or (last_sensor_date < yesterday):
+        nowcast_date = min(last_sensor_date, last_weather_date)
+        logger.info("No up-to-date data. Creating nowcast based on data from: %s.", nowcast_date)
+    else:
+        nowcast_date = yesterday
+        logger.info("Creating nowcast for yesterday: %s.", nowcast_date)
 
-        return nowcast_date
+    return nowcast_date
