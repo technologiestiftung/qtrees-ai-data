@@ -10,6 +10,7 @@ Options:
   --batch_size=BATCH_SiZE                      Batch size [default: 100000]
 """
 import pandas as pd
+import numpy as np
 from sqlalchemy import create_engine
 import sys
 from docopt import docopt, DocoptExit
@@ -44,7 +45,8 @@ def main():
     for type_id in [1, 2, 3]:
         model = pickle.load(open(f'./models/simplemodel/model_{type_id}.m', 'rb'))
         for input_chunk in pd.read_sql("SELECT * FROM nowcast_inference_input(%s, %s)", engine, params=(nowcast_date, type_id),
-                                       chunksize=batch_size):
+                                       chunksize=batch_size, parse_dates=["nowcast_date"]):
+            
             X = input_chunk[NOWCAST_FEATURES+["tree_id"]].set_index("tree_id").dropna()
 
             # TODO read model config from yaml?
@@ -55,10 +57,11 @@ def main():
             y_hat["timestamp"] = nowcast_date
             y_hat["created_at"] = datetime.datetime.now(pytz.timezone('UTC'))
             y_hat["model_id"] = "Random Forest (simple)" # TODO id from file?
-            try: 
-                y_hat.to_sql("nowcast", engine, if_exists="append", schema="public", index=False, method='multi')
+            try:
+                y_hat.to_sql("nowcast", engine, if_exists="append", schema="public", index=False, method=None)
             except:
                 logger.error(f"Nowcast failed for chunk. Trying to continue for next chunk.")
+
     logger.info("Made all predictions all models.")
 
     with engine.connect() as con:
