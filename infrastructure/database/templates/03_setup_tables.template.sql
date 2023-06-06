@@ -251,7 +251,7 @@ CREATE TABLE private.tree_devices (
 );
 
 CREATE TABLE private.vitality (
-    tree_id TEXT REFERENCES public.trees(id),
+    tree_id TEXT, -- ommited REFERENCES public.trees(id) as we allow trees that are not (yet) in trees table
     vitality_index REAL,
     PRIMARY KEY(tree_id)
 );
@@ -273,7 +273,7 @@ CREATE TABLE private.watering_gdk (
 );
 
 CREATE TABLE private.watering_sga (
-    tree_id TEXT REFERENCES public.trees(id),
+    tree_id TEXT, -- ommited REFERENCES public.trees(id) as we allow trees that are not (yet) in trees table
     amount_liters REAL,
     date DATE,
     PRIMARY KEY(tree_id, date)
