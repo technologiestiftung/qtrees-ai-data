@@ -43,7 +43,8 @@ def main():
     logger.debug("Prepare shading index")
     sunindex_df = get_sunindex_df(shadow_index_file).reset_index().rename(columns={"index": "tree_id", "autumn": "fall"})
     interpolated_sunindex_df = pd.read_csv(shadow_index_file_interpolated, index_col=0)
-    interpolated_sunindex_df.columns = list(range(12))
+    interpolated_sunindex_df.columns = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+    interpolated_sunindex_df = interpolated_sunindex_df.reset_index()
 
     with engine.connect() as con:
         result = con.execute('select id from public.trees')
@@ -61,7 +62,8 @@ def main():
 
         sunindex_df = sunindex_df.drop_duplicates(subset=['tree_id'], keep='first')
         interpolated_sunindex_df = interpolated_sunindex_df.drop_duplicates(subset=['tree_id'], keep='first')
-        sunindex_df.to_sql("shading", engine, if_exists="append", schema="public", index=False)
+        #sunindex_df.to_sql("shading", engine, if_exists="append", schema="public", index=False)
+        
         interpolated_sunindex_df.to_sql("shading_monthly", engine, if_exists="append", schema="public", index=False)
         logger.info(f"Now, new %s shading entries in database.", len(sunindex_df))
     except Exception as e:
