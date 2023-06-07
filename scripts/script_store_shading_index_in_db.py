@@ -62,7 +62,7 @@ def main():
 
         sunindex_df = sunindex_df.drop_duplicates(subset=['tree_id'], keep='first')
         interpolated_sunindex_df = interpolated_sunindex_df.drop_duplicates(subset=['tree_id'], keep='first')
-        #sunindex_df.to_sql("shading", engine, if_exists="append", schema="public", index=False)
+        sunindex_df.to_sql("shading", engine, if_exists="append", schema="public", index=False)
         
         interpolated_sunindex_df.to_sql("shading_monthly", engine, if_exists="append", schema="public", index=False)
         logger.info(f"Now, new %s shading entries in database.", len(sunindex_df))
