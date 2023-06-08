@@ -28,8 +28,7 @@ CREATE TABLE public.trees (
     lng FLOAT(53),
     created_at timestamptz,
     updated_at timestamptz,
-    street_tree BOOLEAN, 
-    baumscheibe REAL
+    street_tree BOOLEAN
 );
 
 CREATE TABLE public.soil (
@@ -243,7 +242,8 @@ ON forecast(tree_id);
 insert into public.sensor_types(id, name) values (1, 'saugspannung_30cm');
 insert into public.sensor_types(id, name) values (2, 'saugspannung_60cm');
 insert into public.sensor_types(id, name) values (3, 'saugspannung_90cm');
-insert into public.sensor_types(id, name) values (4, 'saugspannung_stamm');
+insert into public.sensor_types(id, name) values (4, 'saugspannung_mittel');
+insert into public.sensor_types(id, name) values (5, 'saugspannung_stamm');
 
 INSERT INTO "public"."issue_types" ( "title", "description", "image_url") VALUES
 ( 'Missnutzung der Baumscheibe', 'Die Baumscheibe (nicht versiegelte Fläche) am Standort eines Baums wir oft durch falsch parkende Autos, illegalen Müll-Entsorgungen, wie bspw.: alte Waschmaschinen oder Bauschutt, missbraucht. Melde uns bitte, wenn die Baumscheibe seit längerem zugestellt ist.', '/images/issues/missnutzung-baumscheibe.jpg'),
@@ -267,9 +267,10 @@ CREATE TABLE private.tree_devices (
     PRIMARY KEY(tree_id, customer_id, device_id)
 );
 
-CREATE TABLE private.vitality (
+CREATE TABLE private.tree_private (
     tree_id TEXT, -- ommited REFERENCES public.trees(id) as we allow trees that are not (yet) in trees table
     vitality_index REAL,
+    baumscheibe REAL,
     PRIMARY KEY(tree_id)
 );
 
