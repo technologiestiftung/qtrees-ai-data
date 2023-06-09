@@ -14,7 +14,7 @@ REVOKE USAGE ON SCHEMA public TO qtrees_user;
 
 */ 
 
-REVOKE CONNECT ON DATABASE qtrees TO qtrees_user;
+REVOKE CONNECT ON DATABASE qtrees FROM qtrees_user;
 
 /* 
 ALTER DEFAULT PRIVILEGES IN SCHEMA private
@@ -25,10 +25,10 @@ REVOKE ALL ON TABLES TO qtrees_admin;
 
 */ 
 
-REVOKE CONNECT ON DATABASE qtrees TO qtrees_admin;
+REVOKE CONNECT ON DATABASE qtrees FROM qtrees_admin;
 
-revoke execute on function public.login(text,text) to web_anon;
-revoke execute on function public.login(text,text) to authenticator;
+revoke execute on function public.login(text,text) FROM web_anon;
+revoke execute on function public.login(text,text) FROM authenticator;
 
 REVOKE all ON SCHEMA public FROM ui_user; 
 REVOKE ui_user FROM authenticator; 
