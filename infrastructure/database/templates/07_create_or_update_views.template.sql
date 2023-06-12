@@ -87,7 +87,7 @@ ORDER BY tree_id, nowcast_date DESC;
 CREATE OR REPLACE VIEW private.forecast_training_data_dev AS
 SELECT sensor_measurements.tree_id, sensor_measurements.type_id, sensor_measurements.timestamp as nowcast_date, 
 		shading.winter as shading_winter, shading.spring as shading_spring, shading.summer as shading_summer, shading.fall as shading_fall,
-		trees.gattung_deutsch as tree_gattung, trees.standalter as tree_standalter, trees.baumscheibe as tree_baumscheibe, vitality_index,
+		trees.gattung_deutsch as tree_gattung, trees.standalter as tree_standalter, trees_private.baumscheibe_m2 as tree_baumscheibe, trees_private.vitality_index as tree_vitality_index,
 		weather_solaranywhere_14d_agg.rainfall_mm_14d_sum as weather_rainfall_mm_14d_sum, 
 		weather_solaranywhere_14d_agg.temp_avg_c_14d_avg as weather_temp_avg_c_14d_avg,
 		sensor_measurements_agg.median_value as sensor_group_median,
@@ -99,7 +99,7 @@ SELECT sensor_measurements.tree_id, sensor_measurements.type_id, sensor_measurem
 FROM private.sensor_measurements
 LEFT JOIN public.shading ON public.shading.tree_id = sensor_measurements.tree_id
 LEFT JOIN public.trees ON trees.id = sensor_measurements.tree_id
-LEFT JOIN private.vitality on vitality.tree_id = sensor_measurements.tree_id
+LEFT JOIN private.trees_private on trees_private.tree_id = sensor_measurements.tree_id
 LEFT JOIN private.weather_solaranywhere_14d_agg ON date(sensor_measurements.timestamp) = weather_solaranywhere_14d_agg.date
 LEFT JOIN (SELECT * FROM private.weather_tile_measurement WHERE tile_id = 2) as solar_anywhere ON date(sensor_measurements.timestamp) = solar_anywhere.date
 LEFT JOIN private.watering_gdk ON (date(sensor_measurements.timestamp) = watering_gdk.date AND sensor_measurements.tree_id = watering_gdk.tree_id)

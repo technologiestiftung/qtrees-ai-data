@@ -242,7 +242,7 @@ ON forecast(tree_id);
 insert into public.sensor_types(id, name) values (1, 'saugspannung_30cm');
 insert into public.sensor_types(id, name) values (2, 'saugspannung_60cm');
 insert into public.sensor_types(id, name) values (3, 'saugspannung_90cm');
-insert into public.sensor_types(id, name) values (4, 'saugspannung_mittel');
+insert into public.sensor_types(id, name) values (4, 'saugspannung_mittelwert');
 insert into public.sensor_types(id, name) values (5, 'saugspannung_stamm');
 
 INSERT INTO "public"."issue_types" ( "title", "description", "image_url") VALUES
@@ -267,10 +267,11 @@ CREATE TABLE private.tree_devices (
     PRIMARY KEY(tree_id, customer_id, device_id)
 );
 
-CREATE TABLE private.tree_private (
+CREATE TABLE private.trees_private (
     tree_id TEXT, -- ommited REFERENCES public.trees(id) as we allow trees that are not (yet) in trees table
     vitality_index REAL,
-    baumscheibe REAL,
+    baumscheibe_m2 REAL,
+    baumscheibe_surface TEXT,
     PRIMARY KEY(tree_id)
 );
 

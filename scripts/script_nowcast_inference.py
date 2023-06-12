@@ -39,9 +39,10 @@ def main():
 
     # TODO something smarter here?
     with engine.connect() as con:
-        con.execute("TRUNCATE public.forecast")
+        con.execute("TRUNCATE public.nowcast")
 
     logger.info("Start prediction for each depth.")
+    created_at = datetime.datetime.now(pytz.timezone('UTC'))
     for type_id in [1, 2, 3]:
         model = pickle.load(open(f'./models/simplemodel/model_{type_id}.m', 'rb'))
         for input_chunk in pd.read_sql("SELECT * FROM nowcast_inference_input(%s, %s)", engine, params=(nowcast_date, type_id),
@@ -55,8 +56,9 @@ def main():
             y_hat.columns = ["tree_id", "value"]
             y_hat["type_id"] = type_id
             y_hat["timestamp"] = nowcast_date
-            y_hat["created_at"] = datetime.datetime.now(pytz.timezone('UTC'))
+            y_hat["created_at"] = created_at
             y_hat["model_id"] = "Random Forest (simple)" # TODO id from file?
+
             try:
                 y_hat.to_sql("nowcast", engine, if_exists="append", schema="public", index=False, method=None)
             except:
@@ -64,6 +66,13 @@ def main():
 
     logger.info("Made all predictions all models.")
 
+    logger.info("Calculating Mean Prediction.")
+    with engine.connect() as con:
+        con.execute("INSERT INTO public.nowcast SELECT nextval('nowcast_id_seq'), tree_id, 4 as type_id, timestamp, avg(value), created_at, model_id " + \
+                    "FROM public.nowcast " + \
+                    "WHERE created_at = %(created)s GROUP BY tree_id, timestamp, created_at, model_id;", created=created_at)
+        
+    logger.info("Updating materialized views.")
     with engine.connect() as con:
         con.execute('REFRESH MATERIALIZED VIEW public.expert_dashboard')
     logger.info(f"Updated materialized view public.expert_dashboard.")
