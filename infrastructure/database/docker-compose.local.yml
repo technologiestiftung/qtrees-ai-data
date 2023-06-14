@@ -28,3 +28,4 @@ services:
       - "./pgdata:/var/lib/postgresql/data"
     expose:
       - "5432"
+    shm_size: '1gb'
