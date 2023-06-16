@@ -121,6 +121,14 @@ FROM (public.trees
 	  ON trees.id = shading.tree_id)
 WHERE (public.trees.street_tree = true) AND (nowcast.timestamp = (SELECT MAX(timestamp) from nowcast));
 
+CREATE MATERIALIZED VIEW public.expert_dashboard_large AS
+SELECT CAST(nowcast.value as int) as nowcast_value, nowcast.type_id as nowcast_type_id, nowcast.timestamp as nowcast_timestamp, CAST(forecast.value as int) as forecast_value, forecast.timestamp as forecast_timestamp, forecast.type_id as forecast_type_id, trees.id, trees.kennzeich, trees.standortnr, trees.lat, trees.lng, trees.bezirk, trees.art_dtsch, trees.standalter, trees.strname, trees.hausnr, trees.art_bot
+FROM public.trees
+left join public.nowcast on trees.id = nowcast.tree_id
+left join public.forecast on trees.id = forecast.tree_id
+WHERE ((public.trees.bezirk = 'Mitte') OR (public.trees.bezirk = 'Neukölln')) AND (public.trees.street_tree = true) AND (nowcast.timestamp = (SELECT MAX(timestamp) from nowcast));
+
+
 CREATE MATERIALIZED VIEW public.vector_tiles AS
 SELECT
 	trees.id AS trees_id,
