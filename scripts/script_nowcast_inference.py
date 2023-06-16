@@ -45,9 +45,7 @@ def main():
     created_at = datetime.datetime.now(pytz.timezone('UTC'))
     for type_id in [1, 2, 3]:
         model = pickle.load(open(f'./models/simplemodel/model_{type_id}.m', 'rb'))
-        for input_chunk in pd.read_sql("SELECT * FROM nowcast_inference_input(%s, %s)", engine, params=(nowcast_date, type_id),
-                                       chunksize=batch_size, parse_dates=["nowcast_date"]):
-            
+        for input_chunk in pd.read_sql("SELECT * FROM nowcast_inference_input(%s, %s)", engine, params=(nowcast_date, type_id), chunksize=batch_size, parse_dates=["nowcast_date"]):
             X = input_chunk[NOWCAST_FEATURES+["tree_id"]].set_index("tree_id").dropna()
 
             # TODO read model config from yaml?

@@ -147,7 +147,7 @@ SELECT
 	trees.created_at AS trees_created_at,
 	trees.updated_at AS trees_updated_at,
 	trees.street_tree AS trees_street_tree,
-	trees.baumscheibe AS trees_baumscheibe,
+	trees_private.baumscheibe_m2 AS trees_baumscheibe,
 	_nowcast.tree_id AS nowcast_tree_id,
 	_nowcast.nowcast_type_30cm AS nowcast_type_30cm,
 	_nowcast.nowcast_type_60cm AS nowcast_type_60cm,
@@ -212,7 +212,8 @@ FROM
 				f.name,
 				n.timestamp DESC) distinct_nowcast
 		GROUP BY
-			nowcast_tree_id) AS _nowcast ON trees.id = _nowcast.tree_id;
+			nowcast_tree_id) AS _nowcast ON trees.id = _nowcast.tree_id
+	LEFT JOIN private.trees_private AS trees_private ON trees.id = trees_private.tree_id;
 
 CREATE MATERIALIZED VIEW public.watering AS
 SELECT tree_id, sum(amount_liters), "date"
