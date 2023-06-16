@@ -1,3 +1,5 @@
+CREATE extension tablefunc;
+
 -- views
 CREATE MATERIALIZED VIEW public.weather_14d_agg AS
 select date,
