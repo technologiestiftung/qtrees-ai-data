@@ -208,7 +208,7 @@ The placeholder `<ip-adress>` has to be set to the ip-adresse of the
 
 
 
-### 2.1. Run playbook
+### 2.2 Run playbook
 There are two playbooks available. Run
 - `playbooks/setup-ubuntu.yml` after a fresh terraform run
 - `playbooks/update-ubuntu.yml` if you want to update the database and the code base only.
@@ -233,7 +233,7 @@ Note:
 - Use `-v` to `-vvv` options to receive additional debug information.
 - Set `ANSIBLE_STDOUT_CALLBACK=yaml` to get human readable output.
 
-### 2.2 SSH into provisioned EC2 machine:
+### 2.3 SSH into provisioned EC2 machine:
 Run
 ```
 ssh -i ~/.ssh/id_rsa_qtrees ubuntu@$TF_VAR_ELASTIC_IP_EC2
