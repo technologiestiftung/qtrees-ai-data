@@ -64,7 +64,7 @@ ssh-keygen -t rsa```.
 `infrastucture/terraform/set_variables.sh` and adjust variabes.
 
 
-### 1.3 Terraform file
+### 1.2 Terraform file
 The main `terraform`-file is 
 `infrastructure/terraform/main.tf`
 
@@ -84,7 +84,7 @@ Therefore, go from the project root directory to the terraform directory :
 ```
 cd infrastructre/terraform
 ```
-### 1.4 Possible adjustments
+### 1.3 Possible adjustments
 **Subnets**
 
 Currently, we are using only a single `public_subnet`.
