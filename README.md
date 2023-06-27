@@ -444,10 +444,10 @@ Of course, adapt `email`, `pass` and `role` as needed
 Currently, we have 2 roles: `ai_user` and `ui_user`.
 
 ## Shading Calculation
-1) Compute solar exposure maps with using qtrees/scripting_test_qgis.py. This script needs to be run in the Python Console of QGIS. The necessary elevation map tiles could be downloaded from Berlin Open Data Portal. 
-2) Smoothen the calculated solar exposure maps with qtrees/map_filtering.py. This script applies a box filter to the given files. The default kernel size is 5.
-3) Calculate shading indices with the script qtrees/shading_index.py. This script takes as input the solar exposure maps and tree dataset and calculates 4 seasonal shading indices for each tree inthe dataset.
-4) Comparison as well as calvulation of different interpolation methods between seasonal values could be done with qtrees/shadow_index.ipynb in order to obtain 12 monthly values for each tree.
+1) Compute solar exposure maps with using `qtrees/scripting_test_qgis.py`. This script needs to be run in the Python Console of QGIS. The necessary elevation map tiles could be downloaded from Berlin Open Data Portal. 
+2) Smoothen the calculated solar exposure maps with `qtrees/map_filtering.py`. This script applies a box filter to the given files. The default kernel size is 5.
+3) Calculate shading indices with the script `qtrees/shading_index.py`. This script takes as input the solar exposure maps and tree dataset and calculates 4 seasonal shading indices for each tree in the dataset.
+5) Comparison as well as calvulation of different interpolation methods between seasonal values could be done with `qtrees/shadow_index`.ipynb in order to obtain 12 monthly values for each tree.
    
 
 ## Open issues
