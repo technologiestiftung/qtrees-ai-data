@@ -54,7 +54,7 @@ resource "aws_db_subnet_group" "qtrees" {
 
 resource "aws_db_instance" "qtrees" {
   identifier        = "${var.project_name}-iac-rds"
-  instance_class    = "db.t3.micro"
+  instance_class    = "db.t3.medium"
   allocated_storage = 20
   max_allocated_storage = 100
   engine            = "postgres"
@@ -158,7 +158,7 @@ resource "aws_instance" "qtrees" {
   instance_type = "t2.medium"
 
   root_block_device {
-    volume_size = 20
+    volume_size = 40
   }
 
   # public ip needed to ssh into this instance
