@@ -4,7 +4,7 @@
 
 This repository is related to **Quantified Trees** – a project funded by the Federal Ministry for the Environment, Nature Conservation and Nuclear Safety of Germany
 
-The main is goal (in short) is to compute daily sensor nowcasts and forecast for all street trees in Berlin.
+The main goal (in short) is to compute daily sensor nowcasts and forecast for all street trees in Berlin. For more information on the project or if you want to reach out to us for general inquiries about the project, see the projects' [landing page](https://qtrees.ai/). 
 
 The structure of this repository is as follows:
 ```
@@ -32,20 +32,20 @@ The following chapters are organized as follows:,
 ## 1. Provision of infrastructure with terraform
 
 The aim of the setup is to create a:
-- a **postGIS** DB as a AWS RDS-service
+- a **postGIS** database as an AWS RDS-service
 - **postgREST**-Server as a RESTful wrapper around the DB.
 
 In the following, we assume that we are using two AWS environments:
 - `dev`-environment with `set_variables.dev.sh`
 - `prod`-environment with `set_variables.prod.sh`
 
-**Note: in current qtrees setup, these files are shared in 1password.**
+**Note: in the current qtrees setup, these files are shared in 1password.**
 
 The set_variables-Skript sets all environment variables needed for using
 - `terraform` for creating the infrastructure
 - `ansible` for setting up the ec2-instance
 
-**Note: skip the chapter (1), if infrastructure already exists.**
+**Note: skip chapter (1), if infrastructure already exists.**
 
 
 Local requirements are:
@@ -55,13 +55,13 @@ Local requirements are:
 ### 1.1 Place config files
 For (1password-)shared config files
 - Place the shared `set_variables.dev.sh` and `set_variables.prod.sh` in your local `infrastructure/terraform`-directory.
-- Place a (1password)-shared a `id_rsa_qtrees` into your local `~/.ssh`-directory.
+- Place a (1password)-shared `id_rsa_qtrees` into your local `~/.ssh`-directory.
 
 Or, if creating from scratch, 
-- Create a new public-private keypair (used to establish connection between Ansible and EC2 instance) by ```
+- Create a new public-private keypair (used to establish a connection between Ansible and EC2 instance) by ```
 ssh-keygen -t rsa```. 
 - Insert your credentials into 
-`infrastucture/terraform/set_variables.sh` and adjust variabes.
+`infrastucture/terraform/set_variables.sh` and adjust variables.
 
 
 ### 1.2 Terraform file
@@ -231,7 +231,7 @@ And adjust setup if needed.
 
 Note:
 - Use `-v` to `-vvv` options to receive additional debug information.
-- Set `ANSIBLE_STDOUT_CALLBACK=yaml` to get human readable output.
+- Set `ANSIBLE_STDOUT_CALLBACK=yaml` to get human-readable output.
 
 ### 2.3 SSH into provisioned EC2 machine:
 Run
@@ -272,7 +272,7 @@ For local setup, you need the files:
 Install requirements:
 - install `psql`
   - `brew install libpq`
-  - probabbly, you have to run `brew link --force libpq` as well
+  - probably, you have to run `brew link --force libpq` as well
 - install `docker`
   - follow instructions [here](https://docs.docker.com/desktop/mac/install/)
 - install `docker-compose`
@@ -295,7 +295,7 @@ Note:
   - `postgrest` at port `3000`
   - `postgis` at port `5432`
 - The database is not yet configured, so you cannot interact with it yet
-- Tgnore the error messages of postgREST as it cannot connect to the db before configuration
+- Ignore the error messages of postgREST as it cannot connect to the db before configuration
 
 ### 3.3 Configure database
 Run:
@@ -338,7 +338,7 @@ Note:
 - Make sure the database is running and configured as described above
 - Activate conda environment with `conda activate qtrees`. See also chapter **Mini-conda** above.
 - Go to project root directory and run `export PYTHONPATH=$(PWD)` to make module `qtrees` available.
-- Run python scripts accordant to `infrastructure/terraform/ansible/playbooks/setup-ubuntu.yml`
+- Run Python scripts accordant to `infrastructure/terraform/ansible/playbooks/setup-ubuntu.yml`
     - step `fill database (static data)`
     - step `fill database (dynamic data)`
 - Optional:
@@ -367,7 +367,7 @@ Instead of loading data into the db from scratch, you can also dump data into a 
 
 By default, the data is stored into `data/db/<qtrees_version>`. If you run it locally, `qtrees_version` is set as `local`.
 
-If you want to store somewhere else, just provide the destination folder, e.g.
+If you want to store it somewhere else, just provide the destination folder, e.g.
 ```
 . scripts/script_backup_db_data.sh data/foo
 ```
@@ -404,8 +404,8 @@ There are 2 tools for insights / administration:
 You can run them for remote use via:
 `docker-compose -f docker-compose.tools.yml up -d`
 
-### 4.4 Get data in python
-To connect to the database, run the following lines in python:
+### 4.4 Get data in Python
+To connect to the database, run the following lines in Python:
 
 ```
 from sqlalchemy import create_engine  
@@ -420,7 +420,7 @@ soil_gdf = geopandas.GeoDataFrame.from_postgis(sql, con, geom_col="geometry")
 ```
 You have of course to adapt the parameter `<your_password>` and `<host_db>`. 
 
-### 4.5 Write data from python
+### 4.5 Write data from Python
 One can also write data into the database, like:
 ```
 db_connection_url = "postgresql://postgres:<your_password>@<host_db>:5432/qtrees"
@@ -510,7 +510,7 @@ grant select on api.user_info to ai_user;
 
 **Note: tables not exposed to anonymous user `web_anon` will not be visible in postgREST**
 
-### 4.7 PostgRest user managment
+### 4.7 PostgRest user management
 
 To add a postgREST user, connect to db and run:
 ```
@@ -519,16 +519,16 @@ insert into basic_auth.users (email, pass, role) values ('ai@qtrees.ai', 'qweasd
 Of course, adapt `email`, `pass` and `role` as needed
 Currently, we have 2 roles: `ai_user` and `ui_user`.
 
-## 5. Open issues and additional reosurce
+## 5. Open issues and additional resources
 
 ### jwt_secret in db config
-In documentation, the `jwt_secret` is set via:
+In the documentation, the `jwt_secret` is set via:
 `ALTER DATABASE qtrees SET "app.jwt_secret" TO 'veryveryveryverysafesafesafesafe';`
 
 That doesn't work on RDS.
 
 ### rds_superuser
-RDS uses `rds_superuser` instread of `superuser`.
+RDS uses `rds_superuser` instead of `superuser`.
 Therefore, the installation of postgis differs a bit:
 
 `GRANT rds_superuser TO gis_admin;` vs `ALTER ROLE gis_admin SUPERUSER;`
@@ -546,7 +546,7 @@ The setup of JWT in postgres is taken from:
 
 
 ### Mini-conda
-We use mini-conda for providing the needed python packages.
+We use mini-conda for providing the needed Python packages.
 To install conda, follow these steps
 - Download conda via: `wget https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-Linux-x86_64.sh`
 - Run installation via: `sh Miniconda3-py39_4.12.0-Linux-x86_64.sh`
@@ -569,6 +569,6 @@ Run `conda update --all --yes` to update packages.
 **If conda is stucked, install the conda environment manually by creating empty env.**
 
 Therefore, create environment `conda create -n qtrees python==3.10.6`.
-Install packes from `requirements.yaml` individually.
+Install packages from `requirements.yaml` individually.
 
 
