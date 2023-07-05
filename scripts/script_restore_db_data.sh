@@ -12,7 +12,7 @@ if [ -n "$QTREES_VERSION" ]; then
     # no dump file found
     echo "Error: No suitable file found in $data_dir"
   else
-    # get newest dump-file
+    # get newest dump-filesc
     filename=$(ls -t $data_dir/*.psql | head -1)
     # dump data before truncating
     filename_safe="$data_dir/safe.dump"
@@ -22,7 +22,7 @@ if [ -n "$QTREES_VERSION" ]; then
     PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -c "DROP DATABASE qtrees WITH (FORCE);"
     echo "Initialize db ..." 
     PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -c "CREATE DATABASE qtrees OWNER postgres;"    
-    PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 --username=postgres --dbname=qtrees -a -f scripts/init_db_for_dump.sql
+    PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 --username=postgres --dbname=qtrees -a -f scripts/script_init_db_for_dump.sql
     echo "Loading data into DB from \"$filename\""
     {echo "SET session_replication_role = replica;"; gunzip < $filename; } | PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -d qtrees
   fi

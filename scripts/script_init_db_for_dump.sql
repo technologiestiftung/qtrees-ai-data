@@ -12,3 +12,7 @@ CREATE SCHEMA IF NOT EXISTS private;
 GRANT ALL ON SCHEMA private TO postgres;
 
 CREATE SCHEMA IF NOT EXISTS basic_auth;
+
+CREATE TYPE basic_auth.jwt_token AS (
+  token text
+);
