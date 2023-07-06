@@ -57,10 +57,11 @@ resource "aws_db_instance" "qtrees" {
   instance_class    = "db.t3.medium"
   allocated_storage = 20
   max_allocated_storage = 100
+  storage_type      = "gp3"
   engine            = "postgres"
   name              = var.project_name
   username          = "postgres"
-  password            = var.POSTGRES_PASSWD
+  password          = var.POSTGRES_PASSWD
   skip_final_snapshot = true
 
   # is this needed?
