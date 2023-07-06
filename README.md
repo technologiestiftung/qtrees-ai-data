@@ -12,7 +12,7 @@ qtrees-ai-data/
 ├── qtrees/             Python packages for data retrieval and computing sensor now- and forecasts
 ├── scripts/            Python and shell scripts for regular tasks and initials setup 
 ├── data/               Placeholder for downloaded and processed data
-├── data/               Unit and integration tests
+├── test/               Unit and integration tests
 └── infrastucture/
     ├── database/       SQL database setup
     ├── scheduling/     Crontabs for scheduling of regular tasks
