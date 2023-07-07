@@ -47,7 +47,9 @@
   - name: s3 sync
     become_user: ubuntu
     shell: |
-      aws s3 sync s3://qtrees-data ~/qtrees-ai-data/data --no-progress --exclude 'img/*' --exclude '.*'
+      aws s3 sync s3://qtrees-data/models ~/qtrees-ai-data/data/models --no-progress --exclude '.*'
+      aws s3 sync s3://qtrees-data/shading ~/qtrees-ai-data/data/shading --no-progress --exclude '.*'
+      aws s3 sync s3://qtrees-data/trees ~/qtrees-ai-data/data/trees --no-progress --exclude '.*'
 #  - name: restore database
 #    become_user: ubuntu
 #    shell: |
