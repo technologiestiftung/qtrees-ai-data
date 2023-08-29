@@ -82,7 +82,7 @@ def main():
                     start = start_date
 
                 logger.info("Inserting data from %s to %s.", start, yesterday)
-                weather_data  = get_weather(loc[1], loc[2], api_key, start=start, end=yesterday)
+                weather_data  = get_weather(loc[1], loc[2], api_key, start=start, end=yesterday+datetime.timedelta(days=1))
                 weather_data["tile_id"] = loc[0]
                 weather_data.to_sql("weather_tile_measurement", engine, if_exists="append", schema="private", index=False, method='multi')
                 
