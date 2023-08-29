@@ -2,11 +2,12 @@
 """
 Download solaranyhwere data and store into db.
 Usage:
-  script_store_solanywhere_weather_in_db.py [--db_qtrees=DB_QTREES] [--days=DAYS]
+  script_store_solanywhere_weather_in_db.py [--db_qtrees=DB_QTREES] [--days=DAYS] [--start_date=start_date]
   script_store_solanywhere_weather_in_db.py (-h | --help)
 Options:
   --db_qtrees=DB_QTREES                    Database name [default:]
   --days=DAYS                              Number of days to retrieve if no data in db [default: 14]
+  --start_date=<start_date>                     Start date in YYYY-MM-DD format. If provided, days will not be used.
 """
 import warnings
 
@@ -38,6 +39,11 @@ def main():
     # specific args
     days = int(args["--days"])
 
+    if args["--start_date"]:
+        start_date = datetime.datetime.strptime(args["--start_date"], '%Y-%m-%d')
+    else: 
+        start_date = None
+
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
@@ -68,8 +74,15 @@ def main():
             if last_date >= yesterday:
                 logger.info("Last available data from %s. No need to update!", last_date)
             else:
-                logger.info("Inserting data from %s to %s.", last_date, yesterday)
-                weather_data  = get_weather(loc[1], loc[2], api_key, start=last_date+datetime.timedelta(days=1), end=yesterday+datetime.timedelta(days=1))
+                if last_date is None and start_date is None:
+                    start = today_local - datetime.timedelta(days=days)
+                elif start_date is None and last_date:
+                    start = last_date.date()
+                else: 
+                    start = start_date
+
+                logger.info("Inserting data from %s to %s.", start, yesterday)
+                weather_data  = get_weather(loc[1], loc[2], api_key, start=start+datetime.timedelta(days=1), end=yesterday+datetime.timedelta(days=1))
                 weather_data["tile_id"] = loc[0]
                 weather_data.to_sql("weather_tile_measurement", engine, if_exists="append", schema="private", index=False, method='multi')
                 
