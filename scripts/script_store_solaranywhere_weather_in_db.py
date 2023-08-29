@@ -75,14 +75,14 @@ def main():
                 logger.info("Last available data from %s. No need to update!", last_date)
             else:
                 if last_date is None and start_date is None:
-                    start = today_local - datetime.timedelta(days=days)
+                    start = today_local - datetime.timedelta(days=days)+datetime.timedelta(days=1)
                 elif start_date is None and last_date:
                     start = last_date.date()
                 else: 
                     start = start_date
 
                 logger.info("Inserting data from %s to %s.", start, yesterday)
-                weather_data  = get_weather(loc[1], loc[2], api_key, start=start+datetime.timedelta(days=1), end=yesterday+datetime.timedelta(days=1))
+                weather_data  = get_weather(loc[1], loc[2], api_key, start=start, end=yesterday)
                 weather_data["tile_id"] = loc[0]
                 weather_data.to_sql("weather_tile_measurement", engine, if_exists="append", schema="private", index=False, method='multi')
                 
