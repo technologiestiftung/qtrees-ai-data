@@ -77,7 +77,7 @@ def main():
                 if last_date is None and start_date is None:
                     start = today_local - datetime.timedelta(days=days)+datetime.timedelta(days=1)
                 elif start_date is None and last_date:
-                    start = last_date.date()
+                    start = last_date
                 else: 
                     start = start_date
 
