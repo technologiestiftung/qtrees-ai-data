@@ -8,9 +8,10 @@ VARIABLE_MAP = {
     'DirectNormalIrradiance_WattsPerMeterSquared': 'dni',
     'DiffuseHorizontalIrradiance_WattsPerMeterSquared': 'dhi',
     'AmbientTemperature_DegreesC': 'temp',
-    'WindSpeed_MetersPerSecond': 'wind',
-    "LiquidPrecipitation_KilogramsPerMeterSquared": 'rainfall_mm'
+    'WindSpeed_MetersPerSecond': 'wind'
 }
+
+
 
 URL = 'https://service.solaranywhere.com/api/v2'
 
@@ -18,6 +19,9 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
     header = {'content-type': "application/json; charset=utf-8",
                'X-Api-Key': api_key,
                'Accept': "application/json"}
+    
+    if not hindcast:
+        VARIABLE_MAP["LiquidPrecipitation_KilogramsPerMeterSquared"] = 'rainfall_mm'
 
     payload = {
         "Sites": [{
@@ -34,10 +38,12 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
         }
     }
 
+    if hindcast:
+        payload['Options']["ForecastHorizon_Hours"] = 24 * 7
+
     if (start is not None) or (end is not None):
         payload['Options']["StartTime"] = pd.to_datetime(start).tz_localize('CET').isoformat()
         payload['Options']["EndTime"] = pd.to_datetime(end).tz_localize('CET').isoformat()
-        print(start.isoformat(), end.isoformat())
 
     payload = json.dumps(payload)
 

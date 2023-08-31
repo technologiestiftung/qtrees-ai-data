@@ -2,8 +2,8 @@
 """
 Download tree data and store into db.
 Usage:
-  script_nowcast_training.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES]
-  script_nowcast_training.py (-h | --help)
+  script_forecast_training.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES]
+  script_forecast_training.py (-h | --help)
 Options:
   --config_file=CONFIG_FILE           Directory for config file [default: models/model.yml]
   --db_qtrees=DB_QTREES               Database name [default:]
@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor
 import pickle
 from qtrees.helper import get_logger, init_db_args
 import os
-from qtrees.constants import NOWCAST_FEATURES
+from qtrees.constants import FORECAST_FEATURES
 
 logger = get_logger(__name__)
 
@@ -31,21 +31,23 @@ def main():
     )
 
     with engine.connect() as con:
-        train_data = pd.read_sql('select * from private.nowcast_training_data', con)
+        train_data = pd.read_sql('select * from private.forecast_training_data', con)
     train_data = train_data.dropna()
 
-    if not os.path.exists('./models/simplemodel/'):
-        os.makedirs('./models/simplemodel/')
+    # TODO put into some config where also the model is configured (YAML?)
+    
+    if not os.path.exists('./models/simplemodel_forecast/'):
+        os.makedirs('./models/simplemodel_forecast/')
 
     logger.info("Start model training for each depth.")
     for type in [1, 2, 3]:
-        X = train_data.loc[train_data.type_id == type, NOWCAST_FEATURES]
-        y = train_data.loc[train_data.type_id == type, "target"] # TODO filter valid
+        X = train_data.loc[train_data.type_id == type, FORECAST_FEATURES]
+        y = train_data.loc[train_data.type_id == type, "target"]
         model = RandomForestRegressor()
         model.fit(X, y)
 
         # TODO read path from config
-        pickle.dump(model, open(f'./models/simplemodel/model_{type}.m', 'wb'))
+        pickle.dump(model, open(f'./models/simplemodel_forecast/model_{type}.m', 'wb'))
     logger.info("Trained all models.")
 
 

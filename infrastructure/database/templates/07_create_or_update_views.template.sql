@@ -1,3 +1,5 @@
+CREATE extension tablefunc;
+
 -- views
 CREATE MATERIALIZED VIEW public.weather_14d_agg AS
 select date,
@@ -67,6 +69,49 @@ LEFT JOIN private.weather_solaranywhere_14d_agg ON date(sensor_measurements.time
 LEFT JOIN private.sensor_measurements_agg ON (date(sensor_measurements.timestamp) = date(sensor_measurements_agg.timestamp) AND sensor_measurements.type_id = sensor_measurements_agg.type_id)
 ORDER BY tree_id, nowcast_date DESC;
 
+CREATE OR REPLACE VIEW private.forecast_training_data AS
+SELECT sensor_measurements.tree_id, sensor_measurements.type_id, sensor_measurements.timestamp as nowcast_date, 
+		shading.winter as shading_winter, shading.spring as shading_spring, shading.summer as shading_summer, shading.fall as shading_fall,
+		trees.gattung_deutsch as tree_gattung, trees.standalter as tree_standalter,
+		weather_solaranywhere_14d_agg.rainfall_mm_14d_sum as weather_rainfall_mm_14d_sum, 
+		weather_solaranywhere_14d_agg.temp_avg_c_14d_avg as weather_temp_avg_c_14d_avg,
+		sensor_measurements_agg.median_value as sensor_group_median,
+		current_weather.temp_max_c, current_weather.rainfall_mm,
+		sensor_measurements.value as target
+FROM private.sensor_measurements
+LEFT JOIN public.shading ON public.shading.tree_id = sensor_measurements.tree_id
+LEFT JOIN public.trees ON trees.id = sensor_measurements.tree_id
+LEFT JOIN private.weather_solaranywhere_14d_agg ON date(sensor_measurements.timestamp) = weather_solaranywhere_14d_agg.date
+LEFT JOIN private.sensor_measurements_agg ON (date(sensor_measurements.timestamp) = date(sensor_measurements_agg.timestamp) AND sensor_measurements.type_id = sensor_measurements_agg.type_id)
+LEFT JOIN (SELECT DISTINCT ON (date) date, temp_max_c, rainfall_mm FROM private.weather_tile_forecast ORDER BY date, created_at DESC) AS current_weather ON date(sensor_measurements.timestamp) = current_weather.date
+ORDER BY tree_id, nowcast_date DESC;
+
+CREATE OR REPLACE VIEW private.forecast_training_data_dev AS
+SELECT sensor_measurements.tree_id, sensor_measurements.type_id, sensor_measurements.timestamp as nowcast_date, 
+		shading.winter as shading_winter, shading.spring as shading_spring, shading.summer as shading_summer, shading.fall as shading_fall,
+		trees.gattung_deutsch as tree_gattung, trees.standalter as tree_standalter, trees_private.baumscheibe_m2 as tree_baumscheibe, trees_private.vitality_index as tree_vitality_index,
+		weather_solaranywhere_14d_agg.rainfall_mm_14d_sum as weather_rainfall_mm_14d_sum, 
+		weather_solaranywhere_14d_agg.temp_avg_c_14d_avg as weather_temp_avg_c_14d_avg,
+		sensor_measurements_agg.median_value as sensor_group_median,
+		solar_anywhere.ghi_max_wm2, solar_anywhere.dni_max_wm2, solar_anywhere.dhi_max_wm2, solar_anywhere.ghi_sum_whm2, solar_anywhere.dni_sum_whm2, solar_anywhere.dhi_sum_whm2, 
+		solar_anywhere.wind_avg_ms, solar_anywhere.wind_max_ms, solar_anywhere.temp_avg_c, solar_anywhere.temp_max_c, solar_anywhere.rainfall_mm,
+		watering_gdk.amount_liters as gdk_amount_liters, watering_sga.amount_liters as sga_amount_liters, 
+		tree_radolan_tile.tile_id, radolan_14d_agg.rainfall_mm_14d_sum as radolan_mm_14d_sum,
+		sensor_measurements.value as target
+FROM private.sensor_measurements
+LEFT JOIN public.shading ON public.shading.tree_id = sensor_measurements.tree_id
+LEFT JOIN public.trees ON trees.id = sensor_measurements.tree_id
+LEFT JOIN private.trees_private on trees_private.tree_id = sensor_measurements.tree_id
+LEFT JOIN private.weather_solaranywhere_14d_agg ON date(sensor_measurements.timestamp) = weather_solaranywhere_14d_agg.date
+LEFT JOIN (SELECT * FROM private.weather_tile_measurement WHERE tile_id = 2) as solar_anywhere ON date(sensor_measurements.timestamp) = solar_anywhere.date
+LEFT JOIN private.watering_gdk ON (date(sensor_measurements.timestamp) = watering_gdk.date AND sensor_measurements.tree_id = watering_gdk.tree_id)
+LEFT JOIN private.watering_sga ON (date(sensor_measurements.timestamp) = watering_sga.date AND sensor_measurements.tree_id = watering_sga.tree_id)
+LEFT JOIN tree_radolan_tile ON sensor_measurements.tree_id = tree_radolan_tile.tree_id
+LEFT JOIN radolan_14d_agg ON radolan_14d_agg.tile_id = tree_radolan_tile.tile_id AND radolan_14d_agg.date = date(sensor_measurements.timestamp) 
+LEFT JOIN private.sensor_measurements_agg ON (date(sensor_measurements.timestamp) = date(sensor_measurements_agg.timestamp) AND sensor_measurements.type_id = sensor_measurements_agg.type_id)
+ORDER BY tree_id, nowcast_date DESC;
+
+
 CREATE MATERIALIZED VIEW public.expert_dashboard AS
 SELECT trees.id, CAST(value as int) as saugspannung, timestamp as datum, shading.spring as "Verschattung Frühling", shading.summer as "Verschattung Sommer", shading.fall as "Verschattung Herbst", shading.winter as "Verschattung Winter", art_dtsch, art_bot, bezirk, stammumfg, standalter, baumhoehe, type_id, model_id, kennzeich, standortnr, lat, lng, strname, hausnr
 FROM (public.trees
@@ -75,6 +120,7 @@ FROM (public.trees
 	LEFT JOIN public.shading
 	  ON trees.id = shading.tree_id)
 WHERE (public.trees.street_tree = true) AND (nowcast.timestamp = (SELECT MAX(timestamp) from nowcast));
+
 
 CREATE MATERIALIZED VIEW public.vector_tiles AS
 SELECT
@@ -102,7 +148,7 @@ SELECT
 	trees.created_at AS trees_created_at,
 	trees.updated_at AS trees_updated_at,
 	trees.street_tree AS trees_street_tree,
-	trees.baumscheibe AS trees_baumscheibe,
+	trees_private.baumscheibe_m2 AS trees_baumscheibe,
 	_nowcast.tree_id AS nowcast_tree_id,
 	_nowcast.nowcast_type_30cm AS nowcast_type_30cm,
 	_nowcast.nowcast_type_60cm AS nowcast_type_60cm,
@@ -167,7 +213,8 @@ FROM
 				f.name,
 				n.timestamp DESC) distinct_nowcast
 		GROUP BY
-			nowcast_tree_id) AS _nowcast ON trees.id = _nowcast.tree_id;
+			nowcast_tree_id) AS _nowcast ON trees.id = _nowcast.tree_id
+	LEFT JOIN private.trees_private AS trees_private ON trees.id = trees_private.tree_id;
 
 CREATE MATERIALIZED VIEW public.watering AS
 SELECT tree_id, sum(amount_liters), "date"

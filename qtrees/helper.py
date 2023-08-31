@@ -1,6 +1,8 @@
 import logging
 import os
 
+
+
 _db_lookup_env = {
     "qtrees": {"db": "DB_QTREES", "passwd": "POSTGRES_PASSWD"},
     "gdk": {"db": "DB_GDK", "passwd": "GDK_PASSWD"},

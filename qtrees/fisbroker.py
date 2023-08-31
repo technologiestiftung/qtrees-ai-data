@@ -15,7 +15,6 @@ def _prepare_tree_data(gdf, street_tree):
     gdf = gdf.to_crs(4326)
 
     gdf['street_tree'] = street_tree
-    gdf['baumscheibe'] = ""
 
     gdf['lat'] = gdf.geometry.y
     gdf['lng'] = gdf.geometry.x
