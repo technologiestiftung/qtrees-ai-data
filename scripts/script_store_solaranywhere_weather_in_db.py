@@ -75,10 +75,10 @@ def main():
                 logger.info("Last available data from %s. No need to update!", last_date)
             else:
                 if last_date is None and start_date is None:
-                    start = today_local - datetime.timedelta(days=days)+datetime.timedelta(days=1)
+                    start = today_local - datetime.timedelta(days=days) + datetime.timedelta(days=1)
                 elif start_date is None and last_date:
-                    start = last_date
-                else: 
+                    start = last_date + datetime.timedelta(days=1)
+                else:
                     start = start_date
 
                 logger.info("Inserting data from %s to %s.", start, yesterday)
