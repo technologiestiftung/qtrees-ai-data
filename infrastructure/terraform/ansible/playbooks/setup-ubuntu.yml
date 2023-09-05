@@ -93,21 +93,27 @@
 #      export QTREES_BACKUP_DIR=/home/ubuntu/qtrees-ai-data/data/db
 #      . /home/ubuntu/qtrees-ai-data/scripts/script_restore_db_data.sh
 #    ignore_errors: true
-  - name: fill database
+  - name: fill database (static data)
     become_user: ubuntu
     shell: |
       . /home/ubuntu/setup_environment.sh
       cd qtrees-ai-data
       export PYTHONPATH=/home/ubuntu/qtrees-ai-data
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_trees_in_db.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_wheather_observations.py >> /home/ubuntu/download-cron.log 2>&1
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_soil_in_db.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_radolan_in_db.py >> /home/ubuntu/download-cron.log 2>&1
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_shading_index_in_db.py --shadow_index_file=data/shading/berlin_shadow_box_220323.csv >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_gdk_watering_in_db.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python /home/ubuntu/qtrees-ai-data/scripts/script_store_solaranywhere_weather_in_db.py --days=450 >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python /home/ubuntu/qtrees-ai-data/scripts/script_store_solaranywhere_forecast_in_db.py >> /home/ubuntu/download-cron.log 2>&1
     # python logs can be found on host at 'tail -fn +1 qtrees/qtrees_log'
+  - name: fill database (dynamic data)
+    become_user: ubuntu
+    shell: |
+      . /home/ubuntu/setup_environment.sh
+      cd qtrees-ai-data
+      export PYTHONPATH=/home/ubuntu/qtrees-ai-data
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_wheather_observations.py >> /home/ubuntu/download-cron.log 2>&1
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_radolan_in_db.py >> /home/ubuntu/download-cron.log 2>&1
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_gdk_watering_in_db.py >> /home/ubuntu/download-cron.log 2>&1
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_solaranywhere_weather_in_db.py --start_date=2021-06-01 >> /home/ubuntu/download-cron.log 2>&1
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_solaranywhere_forecast_in_db.py --start_date=2021-06-01 >> /home/ubuntu/download-cron.log 2>&1
   - name: Backup database
     become_user: ubuntu
     shell: |
