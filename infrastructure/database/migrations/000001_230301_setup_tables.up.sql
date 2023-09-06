@@ -26,8 +26,8 @@ CREATE TABLE public.trees (
     geometry geometry(POINT,4326),
     lat FLOAT(53),
     lng FLOAT(53),
-    created_at DATE,
-    updated_at DATE,
+    created_at timestamptz,
+    updated_at timestamptz,
     street_tree BOOLEAN, 
     baumscheibe REAL
 );
@@ -85,27 +85,28 @@ CREATE TABLE public.soil (
      torf_ub         TEXT,
      torf_ub_bez     TEXT,
      geometry        geometry(MultiPolygon,4326),
-     created_at      DATE,
-     updated_at      DATE
+     created_at      timestamptz,
+     updated_at      timestamptz
 );
 
 
-CREATE TABLE "public"."issue_types" (
-	"id" serial,
-	"title" text NOT NULL,
-	"description" text NOT NULL,
-	"image_url" text,
-	PRIMARY KEY ("id")
+CREATE TABLE public.issue_types (
+	id serial,
+	title text NOT NULL,
+	description text NOT NULL,
+	image_url text,
+	PRIMARY KEY (id)
 );
 
 
-CREATE TABLE "public"."issues" (
-	"id" serial,
-	"issue_type_id" INTEGER NOT NULL REFERENCES public.issue_types (id),
-	"created_at" timestamptz NOT NULL DEFAULT now(),
-	"tree_id" text NOT NULL REFERENCES public.trees (id),
-	PRIMARY KEY ("id")
+CREATE TABLE public.issues (
+	id serial,
+	issue_type_id INTEGER NOT NULL REFERENCES public.issue_types (id),
+	created_at timestamptz NOT NULL DEFAULT now(),
+	tree_id text NOT NULL REFERENCES public.trees (id),
+	PRIMARY KEY (id)
 );
+
 
 CREATE TABLE public.weather_stations (
     id   BIGINT PRIMARY KEY,
@@ -172,9 +173,9 @@ CREATE TABLE public.forecast (
 	id SERIAL PRIMARY KEY,
 	tree_id TEXT REFERENCES public.trees(id),
 	type_id INTEGER REFERENCES public.sensor_types(id),
-	timestamp timestamp,
+	timestamp timestamptz,
 	value REAL,
-	created_at timestamp,
+	created_at timestamptz NOT NULL DEFAULT now(),
 	model_id text
 );
 
@@ -182,9 +183,9 @@ CREATE TABLE public.nowcast (
 	id SERIAL PRIMARY KEY,
 	tree_id TEXT REFERENCES public.trees(id),
 	type_id INTEGER REFERENCES public.sensor_types(id),
-	timestamp timestamp,
+	timestamp timestamptz,
 	value REAL,
-	created_at timestamp,
+	created_at timestamptz NOT NULL DEFAULT now(),
 	model_id text
 );
 
@@ -220,9 +221,11 @@ CREATE TABLE private.tree_devices (
     PRIMARY KEY(tree_id, customer_id, device_id)
 );
 
-CREATE TABLE private.vitality (
-    tree_id TEXT REFERENCES public.trees(id),
+CREATE TABLE private.trees_private (
+    tree_id TEXT, -- ommited REFERENCES public.trees(id) as we allow trees that are not (yet) in trees table
     vitality_index REAL,
+    baumscheibe_m2 REAL,
+    baumscheibe_surface TEXT,
     PRIMARY KEY(tree_id)
 );
 
@@ -230,7 +233,7 @@ CREATE TABLE private.sensor_measurements (
 	tree_id TEXT REFERENCES public.trees(id),
     type_id INTEGER REFERENCES public.sensor_types(id),
 	sensor_id INTEGER,
-	timestamp timestamp,
+	timestamp timestamptz,
 	value REAL,
     PRIMARY KEY(tree_id, type_id, timestamp)
 );
@@ -243,7 +246,7 @@ CREATE TABLE private.watering_gdk (
 );
 
 CREATE TABLE private.watering_sga (
-    tree_id TEXT REFERENCES public.trees(id),
+    tree_id TEXT, -- ommited REFERENCES public.trees(id) as we allow trees that are not (yet) in trees table
     amount_liters REAL,
     date DATE,
     PRIMARY KEY(tree_id, date)
@@ -280,7 +283,7 @@ CREATE TABLE private.weather_tile_measurement (
 CREATE TABLE private.weather_tile_forecast (
     tile_id  BIGINT REFERENCES private.weather_tiles (id),
     date DATE NOT NULL,
-    created_at timestamp NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
     ghi_max_wm2 REAL,
     dni_max_wm2 REAL,
     dhi_max_wm2 REAL,
