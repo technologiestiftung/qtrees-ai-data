@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.shading_monthly CASCADE;
