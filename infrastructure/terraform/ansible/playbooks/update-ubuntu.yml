@@ -42,8 +42,7 @@
     shell: |
       . /home/ubuntu/setup_environment.sh
       cd qtrees-ai-data/infrastructure/database
-      . /home/ubuntu/qtrees-ai-data/infrastructure/database/create_sql_files.sh
-      . /home/ubuntu/qtrees-ai-data/infrastructure/database/setup_database.sh
+      . /home/ubuntu/qtrees-ai-data/infrastructure/database/init_db.sh
   - name: s3 sync
     become_user: ubuntu
     shell: |
