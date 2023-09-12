@@ -60,6 +60,10 @@ resource "aws_db_instance" "qtrees" {
   storage_type      = "gp3"
   engine            = "postgres"
   name              = var.project_name
+  
+  # Added because of error InvalidParameterCombination: 
+  # You can't specify IOPS or storage throughput for engine postgres and a storage size less than 400.
+  iops              = 3000
   username          = "postgres"
   password          = var.POSTGRES_PASSWD
   skip_final_snapshot = true

@@ -80,8 +80,9 @@
     become_user: ubuntu
     shell: |
       . /home/ubuntu/setup_environment.sh
-      cd qtrees-ai-data
+      cd qtrees-ai-data      
       . /home/ubuntu/qtrees-ai-data/scripts/script_backup_db_data.sh /home/ubuntu/qtrees-ai-data/data/db
+    # Update with db-change management
     ignore_errors: true
   - name: launch postgrest docker
     become_user: ubuntu
