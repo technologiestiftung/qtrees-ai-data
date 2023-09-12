@@ -24,4 +24,6 @@ PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 \
     --username=postgres --dbname=qtrees -a -f sql_scripts/04_add_jwt.sql
 echo "${RED}############ Run golang migrations ${NC}"
 sleep 3 
-migrate -database ${PGRST_DB_URI} -path migrations up 
+echo "${PGRST_DB_URI}" 
+echo "migrate -database ${PGRST_DB_URI}?sslmode=disable  -path migrations up "
+migrate -database ${PGRST_DB_URI}?sslmode=disable -path migrations up 
