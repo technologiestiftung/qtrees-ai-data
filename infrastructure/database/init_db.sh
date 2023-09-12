@@ -25,5 +25,5 @@ PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 \
 echo "${RED}############ Run golang migrations ${NC}"
 sleep 3 
 echo "${PGRST_DB_URI}" 
-echo "migrate -database ${PGRST_DB_URI}?sslmode=disable  -path migrations up "
-migrate -database ${PGRST_DB_URI}?sslmode=disable -path migrations up 
+echo "migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable  -path migrations up "
+migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable -path migrations up 
