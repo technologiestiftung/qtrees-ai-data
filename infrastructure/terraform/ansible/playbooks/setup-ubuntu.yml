@@ -15,6 +15,9 @@
     - name: install necessary libs
       shell: |
         apt install postgresql awscli moreutils -y
+        curl -s https://packagecloud.io/install/repositories/golang-migrate/migrate/script.deb.sh | sudo bash
+        sudo apt-get update
+        sudo apt-get install migrate
     - name: check if qtrees-ai-data already cloned
       # besser löschen und neu clonen?
       stat:
