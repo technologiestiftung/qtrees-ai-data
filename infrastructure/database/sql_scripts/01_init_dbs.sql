@@ -3,8 +3,8 @@
 CREATE ROLE gis_admin LOGIN PASSWORD :'GIS_PASSWD';
 
 -- :CMD_GIS_ADMIN 
--- GRANT rds_superuser TO gis_admin;
-ALTER ROLE gis_admin SUPERUSER;
+GRANT rds_superuser TO gis_admin;
+--ALTER ROLE gis_admin SUPERUSER;
 
 -- Create databases 
 CREATE DATABASE lab_gis;

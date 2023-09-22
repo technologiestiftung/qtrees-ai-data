@@ -2,17 +2,12 @@
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${RED}############ Setting up GIS, Qtrees and Users ${NC}" 
-PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 \
-    --username=postgres \
-    -c 'CREATE ROLE gis_admin LOGIN PASSWORD :${GIS_PASSWD}; ${CMD_GIS_ADMIN}'
 
 sleep 3 
 PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 \
     --username=postgres -a -f sql_scripts/01_init_dbs.sql \
-    -v GIS_PASSWD=${GIS_PASSWD} -v CMD_GIS_ADMIN=${CMD_GIS_ADMIN} \
-    -v AUTH_PASSWD=${AUTH_PASSWD} -v DB_ADMIN_PASSWD=${DB_ADMIN_PASSWD} \
-    -v DB_USER_PASSWD=${DB_USER_PASSWD}
+    -v GIS_PASSWD=${GIS_PASSWD}  -v DB_USER_PASSWD=${DB_USER_PASSWD} \
+    -v AUTH_PASSWD=${AUTH_PASSWD} -v DB_ADMIN_PASSWD=${DB_ADMIN_PASSWD} 
 echo -e "${RED}############ Load GIS extension and grant user privileges ${NC}" 
 sleep 3 
 PGPASSWORD=${GIS_PASSWD} psql --host=$DB_QTREES --port=5432 \
