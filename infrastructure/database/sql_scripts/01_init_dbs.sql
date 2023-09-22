@@ -6,6 +6,9 @@ CREATE ROLE gis_admin LOGIN PASSWORD :'GIS_PASSWD';
 -- Create databases 
 CREATE DATABASE lab_gis;
 GRANT ALL PRIVILEGES ON DATABASE lab_gis TO gis_admin;
+
+-- Drop and recreate qtrees if database exists 
+DROP DATABASE IF EXISTS qtrees; 
 CREATE DATABASE qtrees OWNER postgres; 
 
 ALTER ROLE gis_admin SUPERUSER;
