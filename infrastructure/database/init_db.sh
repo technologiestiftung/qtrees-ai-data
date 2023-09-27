@@ -7,7 +7,8 @@ sleep 3
 PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 \
     --username=postgres -a -f sql_scripts/01_init_dbs.sql \
     -v GIS_PASSWD=${GIS_PASSWD}  -v DB_USER_PASSWD=${DB_USER_PASSWD} \
-    -v AUTH_PASSWD=${AUTH_PASSWD} -v DB_ADMIN_PASSWD=${DB_ADMIN_PASSWD} 
+    -v AUTH_PASSWD=${AUTH_PASSWD} -v DB_ADMIN_PASSWD=${DB_ADMIN_PASSWD} \
+    -v CMD_GIS_ADMIN="${CMD_GIS_ADMIN}"
 echo -e "${RED}############ Load GIS extension and grant user privileges ${NC}" 
 sleep 3 
 PGPASSWORD=${GIS_PASSWD} psql --host=$DB_QTREES --port=5432 \

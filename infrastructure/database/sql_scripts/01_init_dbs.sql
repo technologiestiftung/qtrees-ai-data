@@ -2,7 +2,8 @@
 -- Create gis_admin role 
 CREATE ROLE gis_admin LOGIN PASSWORD :'GIS_PASSWD';
 
--- :CMD_GIS_ADMIN 
+:CMD_GIS_ADMIN 
+
 GRANT rds_superuser TO gis_admin;
 --ALTER ROLE gis_admin SUPERUSER;
 
