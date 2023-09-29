@@ -21,7 +21,7 @@ if [ -n "$QTREES_VERSION" ]; then
     echo "Truncating data in DB"
     PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -d qtrees -c "SELECT * from private.truncate_tables()"
     echo "Loading data into DB from \"$filename\""
-    PGPASSWORD=${POSTGRES_PASSWD} pg_restore --host $DB_QTREES --port 5432 --username postgres --dbname=qtrees --clean --verbose < $filename
+    PGPASSWORD=${POSTGRES_PASSWD} pg_restore --host $DB_QTREES --port 5432 --username postgres --dbname=qtrees --clean < $filename
   fi
 else
   echo "Error: Variable QTREES_VERSION is not set"
