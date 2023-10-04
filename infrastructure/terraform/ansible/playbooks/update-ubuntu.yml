@@ -64,7 +64,7 @@
       export PYTHONPATH=/home/ubuntu/qtrees-ai-data
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_trees_in_db.py >> /home/ubuntu/download-cron.log 2>&1
       /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_soil_in_db.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_shading_index_in_db.py --shadow_index_file=data/shading/berlin_shadow_box_220323.csv >> /home/ubuntu/download-cron.log 2>&1
+      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_shading_index_in_db.py --shadow_index_file=data/shading/berlin_shadow_box_220323.csv --shadow_index_file_interpolated=data/shading/berlin_shadow_index_interpolated.csv >> /home/ubuntu/download-cron.log 2>&1
     # python logs can be found on host at 'tail -fn +1 qtrees/qtrees_log'
   - name: fill database (dynamic data)
     become_user: ubuntu
