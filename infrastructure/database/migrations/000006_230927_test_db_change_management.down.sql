@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS public.db_change_management CASCADE; 
