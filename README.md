@@ -4,152 +4,370 @@
 
 This repository is related to **Quantified Trees** – a project funded by the Federal Ministry for the Environment, Nature Conservation and Nuclear Safety of Germany
 
-## Requirements
-You need two things on the mac:
-1. Install docker-desktop:
-https://docs.docker.com/desktop/mac/install/
-1. psql: `brew install libpq`. Propably, you have to run `brew link --force libpq` as well.
+The main goal (in short) is to compute daily sensor nowcasts and forecast for all street trees in Berlin. For more information on the project or if you want to reach out to us for general inquiries about the project, see the projects' [landing page](https://qtrees.ai/). 
 
-## Remote setup
-
-The aim of the setup is to run:
-- a postGIS DB as a AWS RDS-service
-- postgREST as a RESTful wrapper around the DB.
-
-We assume, that 
-- the postgres-db is already installed as a RDS-service and available
-via `<db-qtrees.rds>`.
-- a EC2-machine is provided and available via the static ip `<ec2>`.
-
-Please exchange the placeholder `<*>` accordantly.
-
-Check, if connecting to database work by running:
+The structure of this repository is as follows:
 ```
-PGPASSWORD=<your_postgres_password> psql --host=<db-qtrees.rds> --port=5432 --username=postgis --dbname=postgis
+qtrees-ai-data/
+├── qtrees/             Python packages for data retrieval and computing sensor now- and forecasts
+├── scripts/            Python and shell scripts for regular tasks and initials setup 
+├── data/               Placeholder for downloaded and processed data
+├── test/               Unit and integration tests
+└── infrastucture/
+    ├── database/       SQL database setup
+    ├── scheduling/     Crontabs for scheduling of regular tasks
+    └── terraform/      Terraform files for provision of required infrastructure
+        └── ansible/    Ansible files for providing data and starting services on ec2
 ```
 
-### Connect to EC2
-For the setup, connect to ec2 via `ssh -i "qtrees_aws_birds.pem" ubuntu@<ec2>`.
-
-The accordant PEM-file is stored in qtrees-1password-vault and must be locally stored in `~/.aws`.
-
-Ensure that 2 files are available on the ec2-machine:
-1. `docker-compose.yml` to run postgREST
-1. `set_environment.sh` to set up environment variables.
-
-You can either check them out via git (see Setup git) and adapt the required files.
-Or copy the required files from remote.
-
-### Docker
-First, install docker on the ec2 machine by following the instructions in:
-https://docs.docker.com/engine/install/ubuntu/
-
-Second, install docker-compose:
-`sudo apt install docker-compose`
-
-Allow user to run docker:
-https://docs.docker.com/engine/install/linux-postinstall/
-
-### Git
-Using git, you have to access to qtrees-repo.
-
-**Note: git setup is not necessary to run postgREST on the ec2**
-- create ssh key locally: `ssh-keygen -t rsa -b 4096 -C "ubuntu@<ec2>"`
-- add public key as deploy key to github
-- checkout code
-
-### Mini-conda
-We use mini-conda for providing the needed python packages.
-To install conda, follow these steps
-- Download conda via: `wget https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-Linux-x86_64.sh`
-- Run installation via: `sh Miniconda3-py39_4.12.0-Linux-x86_64.sh`
-- Remove download: `rm Miniconda3-py39_4.12.0-Linux-x86_64.sh`
-- To use conda, re-login or run `source .bashrc`
+The following chapters are organized as follows:, 
+1. Use of **Terraform** to provide infrastructure on **AWS**
+2. Use **Ansible** to setup services on **AWS** EC2
+3. Run a **local** setup (**without AWS**)
+4. **Everyday use**
+5. **Open issues** and **additional resources**
 
 
-Create environment via `conda env create --file=requirements.yaml`
 
-If conda is slow, try this:
+## 1. Provision of infrastructure with terraform
+
+The aim of the setup is to create a:
+- a **postGIS** database as an AWS RDS-service
+- **postgREST**-Server as a RESTful wrapper around the DB.
+
+In the following, we assume that we are using two AWS environments:
+- `dev`-environment with `set_variables.dev.sh`
+- `prod`-environment with `set_variables.prod.sh`
+
+**Note: in the current qtrees setup, these files are shared in 1password.**
+
+The set_variables-Skript sets all environment variables needed for using
+- `terraform` for creating the infrastructure
+- `ansible` for setting up the ec2-instance
+
+**Note: skip chapter (1), if infrastructure already exists.**
+
+
+Local requirements are:
+- [terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+- [ansible-playbook](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+
+### 1.1 Place config files
+For (1password-)shared config files
+- Place the shared `set_variables.dev.sh` and `set_variables.prod.sh` in your local `infrastructure/terraform`-directory.
+- Place a (1password)-shared `id_rsa_qtrees` into your local `~/.ssh`-directory.
+
+Or, if creating from scratch, 
+- Create a new public-private keypair (used to establish a connection between Ansible and EC2 instance) by ```
+ssh-keygen -t rsa```. 
+- Insert your credentials into 
+`infrastucture/terraform/set_variables.sh` and adjust variables.
+
+
+### 1.2 Terraform file
+The main `terraform`-file is 
+`infrastructure/terraform/main.tf`
+
+It contains the component
 ```
-conda update -n base conda
-conda install -n base conda-libmamba-solver
-conda config --set experimental_solver libmamba
+backend "s3" {
+    bucket = "qtrees-terraform"
+    key    = "tfstate"
+    region = "eu-central-1"
+}
+```
+which makes terraform store the state in a s3-bucket.
+Adjust this part if using a different s3 bucket or remove this part, if you want to store the state locally.
+
+In the following, we are using the terminal and are running all commands from the `terraform` directory.
+Therefore, go from the project root directory to the terraform directory :
+```
+cd infrastructre/terraform
+```
+### 1.3 Possible adjustments
+**Subnets**
+
+Currently, we are using only a single `public_subnet`.
+
+You can add the following line
+```
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
+```
+to get an additional private subnet and assign e.g. the RDS-instance to it.
+
+**Elastic IPs**
+
+Currently, we using a static IPs for dev- and prod-environment by using
+```
+# re-use existing elastic ip (if set)
+data "aws_eip" "qtrees" {
+  public_ip = "${var.ELASTIC_IP_EC2}"
+}
 ```
 
-Alternatively, try to set `conda config --set channel_priority false`.
-Run `conda update --all --yes` to update packages.
-
-**If conda is stucked, install the conda environment manually by creating empty env.**
-
-Therefore, create environment `conda create -n qtrees python==3.10.6`.
-Install packes from `requirements.yaml` individually.
-
-
-### Database structure
-You can setup the database structure from your local machine - as long as the database is opened to the public.
-
-Therefore:
-1. Adapt variables in `set_environment.sh`.
-2. Run `source set_environment.sh`
-2. Run `source create_sql_files.sh` to create sql files with set environment variables.
-3. Run script `source setup_database.sh` to setup postgis and init db.
-Check for error message.
-
-For running it on RDS, you need to ensure this line in `set_environment.sh`
+If you want to use dynamic IPs, use the following lines instead:
 ```
-export CMD_GIS_ADMIN="GRANT rds_superuser TO gis_admin;" # with rds
+resource "aws_eip" "qtrees" {
+  instance = aws_instance.qtrees.id
+
+  tags = {
+    Name = "${var.project_name}-iac-${var.qtrees_version}"
+  }
+}
 ```
 
-You can try to login to the new `qtrees` database by:
+Then,
+- To receive the public IPv4 DNS run
+```terraform output -raw dns_name```
+- for ec2-adress
+```terraform output -raw eip_public_dns```
+
+
+
+### 1.4 Running it for the first time
+
+If using it for the first time, create workspace for `dev` and `prod` first:
 ```
-PGPASSWORD="${POSTGRES_PASSWD}" psql --host=$DB_QTREES --port=5432 --username=postgres --dbname=qtrees
+terraform workspace new dev
+terraform init 
+```
+Adjust for `prod` accordantly.
+
+**Note: in the current qtrees setup: dev is called staging and prod is called production**
+
+You can list and switch workspaces by
+```
+terraform workspace list
+terraform workspace select staging
 ```
 
-**Note: On the existing ec2-machine, there is already a `set_environment.sh` with all variables set. You can use it as a blueprint.**
+### 1.5 Run it (again)
 
-The postgis-setup is inspired from https://postgis.net/install/.
+To set up the dev-environment, 
+- run `terraform workspace select dev` to select the proper workspace
+- run ``set_variables.dev.sh`` to set up the accordant environment file (here: dev-environment).
 
-The setup of postgREST is based on:
-- https://postgrest.org/en/stable/auth.html
-- https://postgrest.org/en/stable/tutorials/tut1.html
 
-The setup of JWT in postgres is taken from:
- https://github.com/michelp/pgjwt.
+Run
+```
+terraform plan
+```
+If okay, run
+```
+terraform apply [-auto-approve]
+```
+and follow the instructions to apply the `main.tf` script.
 
-### Get intial data into database
-First, run `source set_environment.sh`.
+### 1.6 Destroy
 
-In the same shell run:
-- activate conda environment with `conda activate qtrees`. See also chapter **Mini-conda**.
-- go to project root directory and run `export PYTHONPATH=$(PWD)` to make module `qtrees` available.
-- run `python scripts/script_store_trees_in_db.py` to get tree data into db (once)
-- run `python scripts/script_store_soil_in_db.py` to get soil data into db (once)
-- run `python scripts/script_store_wheather_observations.py` to store latest data from weather stations
-- run `python scripts/script_store_solaranywhere_weather_in_db.py` to store latest data from solaranywhere
-- run `python scripts/script_store_solaranywhere_forecast_in_db.py` to store latest forecast from solaranywhere
-- run `python scripts/script_store_radolan_in_db.py` to store latest radolan data
-- run `python scripts/script_store_shading_index_in_db.py` to store the shading index
-- run `python script/script_store_gdk_watering_in_db.py` to store GdK watering data
+To rollback provisioned services if not needed anymore, run
+```
+terraform destroy
+```
 
-**Note: Die RDS-Instanz ist gerade sehr klein was Ressourcen angeht (aber dafür günstig).
-Deswegen kann das Schreiben in die DB recht lange dauern.
-Z.B. das Bäume schreiben kann schon mal 30-45 Minuten dauern.**
 
-Do want to get new data into the db?
 
-It is really simple, if the data is provided in `geopandas`:
-- Just write to the db (see chapter "Write data from python")
-- connect to db and check via `\d api.<table>`, how the generated table looks like.
-- add new table definition to `infrastructure/database/03_setup_table.template.sql`
+## 2. Software setup with ansible
 
-### Database backups
+### 2.1 Prepare environment on local machine
+
+**Set environment variables**
+
+If you want to deploy on **DEV**, set accordant variables by running in a **local** terminal: 
+```
+. infrastructure/set_variables_private.dev.sh
+```
+
+Or, for **PROD**, run 
+```
+. infrastructure/set_variables_private.prod.sh
+```
+
+Note: Make sure that the correct branch is defined by `GIT_BRANCH` within the script.
+
+
+**Host-file**
+
+After a fresh terraform run, the file
+```
+infrastructure/terraform/ansible/hosts
+``` 
+is automatically generated.
+
+If not available, place the file manually with the following lines:
+```
+[qtrees_server:vars]
+ansible_ssh_private_key_file=~/.ssh/id_rsa_qtrees
+[qtrees_server]
+<ip-adress>
+```
+The placeholder `<ip-adress>` has to be set to the ip-adresse of the
+**DEV**- or **PROD**-machine.
+
+
+
+
+
+### 2.2 Run playbook
+There are two playbooks available. Run
+- `playbooks/setup-ubuntu.yml` after a fresh terraform run
+- `playbooks/update-ubuntu.yml` if you want to update the database and the code base only.
+
+In the following, we are using the `setup-ubuntu.yml`. Adjust the commands accordantly, if using the update-playbook.
+
+
+Run
+```
+ANSIBLE_STDOUT_CALLBACK=yaml ansible-playbook -vv -i ansible/hosts ansible/playbooks/setup-ubuntu.yml
+```
+in your local terminal from the `infrastructure`-directory and make yourself a coffee.
+
+Check
+```
+infrastructure/ansible/playbooks/setup-ubuntu.yml
+```
+for the entire deployment procedure.
+And adjust setup if needed.
+
+Note:
+- Use `-v` to `-vvv` options to receive additional debug information.
+- Set `ANSIBLE_STDOUT_CALLBACK=yaml` to get human-readable output.
+
+### 2.3 SSH into provisioned EC2 machine:
+Run
+```
+ssh -i ~/.ssh/id_rsa_qtrees ubuntu@$TF_VAR_ELASTIC_IP_EC2
+```
+You can also set the IP directly instead of using `TF_VAR_ELASTIC_IP_EC2`.
+
+
+Before, you need to
+- source the proper environment file
+- properly place `id_rsa_qtrees`
+
+
+
+## 3. Run it locally
+
+The main aim of the setup is to run:
+- a postGIS DB as a docker service
+- a postgREST docker as a RESTfull wrapper around the DB
+
+Additionally, you might run a
+- swagger-ui docker to inspect postgREST
+- pgAdmin docker for database administration
+
+Everything is a pre-defined, ready-to-use docker image :)
+
+**Note: Local setup is helpful for debugging but not used for deployment.**
+
+For local setup, you need the files:
+1. `set_environment.local.sh`
+2. `docker-compose.local.yml`
+
+**Note: Instead of using a RDS database, the local setup run a postgres-db as a local docker service.**
+
+### 3.1 Requirements
+
+Install requirements:
+- install `psql`
+  - `brew install libpq`
+  - probably, you have to run `brew link --force libpq` as well
+- install `docker`
+  - follow instructions [here](https://docs.docker.com/desktop/mac/install/)
+- install `docker-compose`
+  - `brew install docker-compose`
+  
+Check config files:
+- Adjust `set_environment.local.sh` or place shared file (from 1password).
+  
+  
+### 3.2 Start `docker` containers for database
+From the project root directory, execute the following steps in the **same shell**, since the scripts depend on environment variables.
+```
+cd infrastructure/database
+source set_environment.local.sh
+docker-compose -f docker-compose.local.yml up -d
+```
+
+Note:
+- Running `docker container ls`, you should see now two running containers:
+  - `postgrest` at port `3000`
+  - `postgis` at port `5432`
+- The database is not yet configured, so you cannot interact with it yet
+- Ignore the error messages of postgREST as it cannot connect to the db before configuration
+
+### 3.3 Configure database
+Run:
+```
+source set_environment.local.sh
+source create_sql_files.sh
+source setup_database.sh
+docker-compose -f docker-compose.local.yml restart
+```
+
+Note:
+- `docker-compose restart` is needed to make changes visible
+- you should now be able to access the database hosted in the `docker` container with:
+    - `PGPASSWORD=${POSTGRES_PASSWD} psql -p 5432 -h localhost -U postgres`
+    - type `\q` to exit the `psql` interactive shell
+- in your browser, you should see some `swagger` output generated by `PostgREST` when accessing the address `localhost:3000`
+
+### 3.4 Start `swagger` and `pgadmin`
+Run:
+```
+source set_environment.local.sh
+docker-compose -f docker-compose.tools.yml up -d
+```
+
+Note:
+- Running `docker container ls`, you should see now four running containers:
+  - `postgrest` at port `3000`
+  - `postgis` at port `5432`
+  - `swagger-ui` at port `8080`
+  - `pgadmin4` at port `5050`
+- Access `swagger-ui` via browser at address `localhost:8080`
+  - on top of the `swagger-ui` landing page, change address to `localhost:3000` and click "Explore"
+  - you should be able to issue REST requests to the database
+  - the database does not yet contain any data at the beginning
+- Access `pgadmin` via browser at address `localhost:5050`
+  - login with user `admin@admin.com`
+  - password is `root`
+
+### 3.5. Fill the local db with data
+- Make sure the database is running and configured as described above
+- Activate conda environment with `conda activate qtrees`. See also chapter **Mini-conda** above.
+- Go to project root directory and run `export PYTHONPATH=$(PWD)` to make module `qtrees` available.
+- Run Python scripts accordant to `infrastructure/terraform/ansible/playbooks/setup-ubuntu.yml`
+    - step `fill database (static data)`
+    - step `fill database (dynamic data)`
+- Optional:
+    - Load private data into db (extra repo)
+    - Run training
+    - Run inference
+- Restart docker to make changes available to other services via `docker-compose -f docker-compose.local.yml restart`
+
+**Note:**
+- **Setup might take up to a few hours!**
+- **The ansible playbook `infrastructure/terraform/ansible/playbooks/setup-ubuntu.yml` is the current single point of truth 
+w.r.t filling the database with content.**
+- **You might also consider the step `s3 sync` in the playbook as a first step to get shared data.**
+
+
+
+
+
+## 4. Everyday use
+
+
+### 4.1 Database backups
 Instead of loading data into the db from scratch, you can also dump data into a file and restore from file.
 - Run `. scripts/script_backup_db_data.sh` to dump data into a file. The DB structure is not part of the backup.
 - Run `. scripts/script_restore_db_data.sh` to restore data from that file.
 
 By default, the data is stored into `data/db/<qtrees_version>`. If you run it locally, `qtrees_version` is set as `local`.
 
-If you want to store somewhere else, just provide the destination folder, e.g.
+If you want to store it somewhere else, just provide the destination folder, e.g.
 ```
 . scripts/script_backup_db_data.sh data/foo
 ```
@@ -158,7 +376,8 @@ Note:
 - The postfix `<qtrees_version>` is automatically appended to the data directory.
 - If you get the message `pg_dump: error: aborting because of server version mismatch`, deactivating the conda env might be a quick fix.
 
-### Clean up database
+### 4.2 Clean up database
+
 Just getting rid of the data but not the structure is quite simple.
 Run:
 ```
@@ -172,12 +391,12 @@ You can drop all qtrees databases and roles via:
 PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -c "DROP DATABASE qtrees WITH (FORCE);" -c "DROP DATABASE lab_gis;" -c "DROP ROLE gis_admin, ui_user, ai_user, authenticator, web_anon;"
 ```
 
-### Run postgREST
-First, run `source set_environment.sh` again.
+For **local** setup, there is also a simpler way:
+- shut down docker container
+- delete local directories `pgadmin` and `pgdata`
+- start docker container again.
 
-Run `docker-compose -f docker-compose.yml up -d` to start the postgREST service.
-
-### Insights and administration
+### 4.3 Insights and administration
 There are 2 tools for insights / administration:
 - swagger-ui: visualizes `swagger.json` generated by postgREST-API.
 - pgadmin: allows to visualize and adapt db
@@ -185,142 +404,8 @@ There are 2 tools for insights / administration:
 You can run them for remote use via:
 `docker-compose -f docker-compose.tools.yml up -d`
 
-Running the local version, the tools are already provided and don't have to be started separatly.
-
-**Note: For local use, you have to provide pgAdmin with `host.docker.internal` instead of `localhost`.**
-
-## Local setup
-
-The aim of the setup is to run:
-- a postGIS DB as a docker service
-- a postgREST docker as a RESTfull wrapper around the DB
-- swagger-ui docker to inspect postgREST
-- pgAdmin docker for database administration
-
-The corresponding local infrastructure will look like this:
-
-[![](https://mermaid.ink/img/pako:eNp9U01P4zAQ_Ssjc0mlVo22IKFsFam0BQqs1KVFHNo9OPEktUjiYDuUFeK_rx0noZTdzcHyfL15z5N5I7FgSAKSSlruYD3bFmC-SRAETMRPKJ09PbLnR_blkT3xvHEUlillOS_GwygcRzIc83CPEVw9LCAREpZC6VTi6ufdeMhdguUS8pymCKw057BFMMFSSA1n_pnf6zU9YDAYwMVmKoqEp5Wkmovil4tdmFg4rUnUbWwX2HO9c0jGwxXgq8ZCmaKO4EH_Jukrg9PRN8vA9Zk5neo5OxA5vfu_wEzENANeKE0zU1f7WlEzJ6rFn39IuJ-v1v8kKlHpjuLI9_0D2GZCNdJqT9MU5WS5-BuUclFa8mFzHVS8gz33z7_CNjRr1jebpRQvnCFYrrAoNMqExtjM5MbOBK49r47yNmrxJ3GMSoEWYOfEIut74dThSHyujDzVPtF1jTN1xpXnPSiUcN8k2cpEihweMer1alq3nmcMuJTCtCzYB_dbGzaMuieq0xebtQGCzyQbCQvoCpwjzqhSM0zA_fyQ8CwLThgmfaWleMLgZBS398GeM70LTsvX76RPcpQ55cxs3puF2hK9wxy3JDBXU0-rTG_Jtng3qVXJqMY541pIEiQ0U9gntNJi9buISaBlhW3SjFOzyHmXhXXRD7fi9aa__wGC3EBQ)](https://mermaid.live/edit#pako:eNp9U01P4zAQ_Ssjc0mlVo22IKFsFam0BQqs1KVFHNo9OPEktUjiYDuUFeK_rx0noZTdzcHyfL15z5N5I7FgSAKSSlruYD3bFmC-SRAETMRPKJ09PbLnR_blkT3xvHEUlillOS_GwygcRzIc83CPEVw9LCAREpZC6VTi6ufdeMhdguUS8pymCKw057BFMMFSSA1n_pnf6zU9YDAYwMVmKoqEp5Wkmovil4tdmFg4rUnUbWwX2HO9c0jGwxXgq8ZCmaKO4EH_Jukrg9PRN8vA9Zk5neo5OxA5vfu_wEzENANeKE0zU1f7WlEzJ6rFn39IuJ-v1v8kKlHpjuLI9_0D2GZCNdJqT9MU5WS5-BuUclFa8mFzHVS8gz33z7_CNjRr1jebpRQvnCFYrrAoNMqExtjM5MbOBK49r47yNmrxJ3GMSoEWYOfEIut74dThSHyujDzVPtF1jTN1xpXnPSiUcN8k2cpEihweMer1alq3nmcMuJTCtCzYB_dbGzaMuieq0xebtQGCzyQbCQvoCpwjzqhSM0zA_fyQ8CwLThgmfaWleMLgZBS398GeM70LTsvX76RPcpQ55cxs3puF2hK9wxy3JDBXU0-rTG_Jtng3qVXJqMY541pIEiQ0U9gntNJi9buISaBlhW3SjFOzyHmXhXXRD7fi9aa__wGC3EBQ)
-
-Everything is a pre-defined, ready-to-use docker image :)
-
-This is helpful for debugging but not used for deployment.
-
-For local setup, you need the files:
-1. `set_environment.local.sh`
-2. `docker-compose.local.yml`
-
-**Note: Instead of using a RDS database, the local setup run a postgres-db as a local docker service.**
-
-### Step-by-Step guide
-
-From the project root directory, execute the following steps in the **same shell**, since the scripts depend on environment variables.
-
-#### Install dependencies
-- install `psql`
-  - `brew install libpq`
-  - propably, you have to run `brew link --force libpq` as well
-- install `docker`
-  - follow instructions [here](https://docs.docker.com/desktop/mac/install/)
-- install `docker-compose`
-  - `brew install docker-compose`
-- install `Golang-Migrate` 
-- `brew install golang-migrate` 
-
-#### Start `docker` containers for database
-- `cd infrastructure/database`
-- `source set_environment.local.sh`
-- `docker-compose -f docker-compose.local.yml up -d`
-- `docker container ls`
-- you should see now two running containers:
-  - `postgrest` at port `3000`
-  - `postgis` at port `5432`
-- the database is not yet configured, so you cannot interact with it yet
-- ignore the error message of postgREST as it cannot connect to the db before configuration
-
-#### Configure database
-- `source set_environment.local.sh`
-- `source init_db.local.sh`
-- `docker-compose -f docker-compose.local.yml restart` to make changes visible
-- read the database password from environment variables with this command:
-- `echo $POSTGRES_PASSWD`
-- you should now be able to access the database hosted in the `docker` container like so:
-- `psql -p 5432 -h localhost -U postgres`
-- use the password obtained above to log in
-- type `\q` to exit the `psql` interactive shell
-- in your browser, you should see some `swagger` output generated by `PostgREST` when accessing the address `localhost:3000`
-
-#### Start `swagger` and `pgadmin`
-- `source set_environment.local.sh`
-- `docker-compose -f docker-compose.tools.yml up -d`
-- `docker container ls`
-- you should see now four running containers:
-  - `postgrest` at port `3000`
-  - `postgis` at port `5432`
-  - `swagger-ui` at port `8080`
-  - `pgadmin4` at port `5050`
-- access `swagger` via browser at address `localhost:8080`
-  - on top of the `swagger` landing page, change address to `localhost:3000` and click "Explore"
-  - you should be able to issue REST requests to the database
-  - the database does not yet contain any data
-- access `pgadmin` via browser at address `localhost:5050`
-  - login with user `admin@admin.com`
-  - password is `root`
-
-#### Fill the local db with data (**this might take up to a few hours**)
-- make sure the database is running and configured as described above
-- activate conda environment with `conda activate qtrees`. See also chapter **Mini-conda** above.
-- go to project root directory and run `export PYTHONPATH=$(PWD)` to make module `qtrees` available.
-- run `python scripts/script_store_trees_in_db.py` to get tree data into db (once)
-- run `python scripts/script_store_soil_in_db.py` to get soil data into db (once)
-- run `python scripts/script_store_wheather_observations.py` to store latest data from weather stations
-- run `python scripts/script_store_radolan_in_db.py` to store latest radolan data
-- run `python scripts/script_store_shading_index_in_db.py` to store the shading index
-- run `python scripts/script_store_gdk_watering_in_db.py` to store the watering data of GdK
-- restart docker to make changes available to other services via `docker-compose -f docker-compose.local.yml restart`
-
-
-#### Resetting local db
-If you are not happy with your database setup and want to delete the db:
-- shut down docker container
-- delete directories `pgadmin` and `pgdata`
-- start docker container again.
-
-For running it locally, ensure the following line in `set_environment.local.sh`:
-```
-export CMD_GIS_ADMIN="ALTER ROLE gis_admin SUPERUSER;" # local use
-```
-
-
-## Run
-
-You can always run the services via: 
-```
-source set_environment.sh
-docker-compose -f docker-compose.yml up -d
-```
-
-To turn it down, run:
-`docker-compose -f docker-compose.yml down`
-
-**Note: if you run it locally, you have of course to use `docker-compose.local.yml` and `set_environment.local.sh`.**
-
-
-#### Use DB change management migrate 
-All the database migration steps are found in the infrastructure/database/migrations folder. To add a change to the database structure, go to the `infrastructure/database` folder and run: 
-- `source set_environment.local.sh`
-- `migrate create -ext sql -dir  ${MIGRATIONS} -seq XXXXXX_informative_name_of_migration`
-
-where XXXXXX is the current date on the form YYMMDD. 
-This will create two files in the `infrastructure/database/migrations` folder, one "up.sql" file, and one "down.sql" file. Implement the change in the "up" file and reverse it in the "down" file. 
-To run the change: 
-- `migrate -database ${PGRST_DB_URI} -path ${MIGRATIONS} up 1`
-
-For more information on how to use Golang Migrate see: 
-https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md
-
-
-### Get data in python
-To connect to the database, run the following lines in python:
+### 4.4 Get data in Python
+To connect to the database, run the following lines in Python:
 
 ```
 from sqlalchemy import create_engine  
@@ -333,9 +418,9 @@ con = create_engine(db_connection_url)
 sql = "SELECT * FROM api.soil"
 soil_gdf = geopandas.GeoDataFrame.from_postgis(sql, con, geom_col="geometry") 
 ```
-You have of course to adapt the parameter `<your_password>` and `host_db`. 
+You have of course to adapt the parameter `<your_password>` and `<host_db>`. 
 
-### Write data from python
+### 4.5 Write data from Python
 One can also write data into the database, like:
 ```
 db_connection_url = "postgresql://postgres:<your_password>@<host_db>:5432/qtrees"
@@ -344,7 +429,7 @@ soil_gdf.to_postgis("soil", engine, if_exists="append", schema="api")
 ```
 assuming that `soil_gdf` is a geopandas dataframe.
 
-### use postgREST 
+### 4.6 Use postgREST 
 
 (1) Login via
 ```
@@ -390,8 +475,6 @@ curl -X 'POST'   'http://0.0.0.0:3000/trees'   -H 'accept: application/json'   -
 You can test and validate the jwt token via:
 https://jwt.io/
 
-This is quite usefull for debugging.
-
 JWT token consists of a header:
 ```
 {
@@ -403,13 +486,13 @@ and a payload, e.g.
 ```
 {
   "role": "ai_user",
-  "email": "nico@birdsonmars.com",
+  "email": "ai@qtrees.ai",
   "exp": 1655049037
 }
 ```
 
 If you add new tables,
-also think of adding/updating permissions to user roles.
+also think of adding / updating permissions to user roles.
 For example:
 
 ```sql
@@ -427,49 +510,63 @@ grant select on api.user_info to ai_user;
 
 **Note: tables not exposed to anonymous user `web_anon` will not be visible in postgREST**
 
-## User managment
-### Create db user
-Create "admin"-user
-```sql
-CREATE USER <user_name> WITH PASSWORD '<password>';
-GRANT CONNECT ON DATABASE qtrees TO <user_name>;
-GRANT USAGE ON SCHEMA api TO <user_name>;
-GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA api TO <user_name>;
--- to grant access to the new table in the future automatically:
-ALTER DEFAULT PRIVILEGES IN SCHEMA api
-GRANT SELECT, INSERT, UPDATE ON TABLES TO <user_name>;
-```
+### 4.7 PostgRest user management
 
-Create "read-only yser"
-```sql
-CREATE USER <user_name> WITH PASSWORD '<password>';
-GRANT CONNECT ON DATABASE qtrees TO <user_name>;
-GRANT USAGE ON SCHEMA api TO <user_name>;
-GRANT SELECT ON ALL TABLES IN SCHEMA api TO <user_name>;
--- to grant access to the new table in the future automatically:
-ALTER DEFAULT PRIVILEGES IN SCHEMA api
-GRANT SELECT ON TABLES TO <user_name>;
+To add a postgREST user, connect to db and run:
 ```
-
-### Create postgREST user
-To add a postgREST, connect to db and run:
-```
-insert into basic_auth.users (email, pass, role) values ('nico@birdsonmars.com', 'qweasd', 'ai_user');
+insert into basic_auth.users (email, pass, role) values ('ai@qtrees.ai', 'qweasd', 'ai_user');
 ```
 Of course, adapt `email`, `pass` and `role` as needed
 Currently, we have 2 roles: `ai_user` and `ui_user`.
 
-## Open issues
+## 5. Open issues and additional resources
 
 ### jwt_secret in db config
-In documentation, the `jwt_secret` is set via:
+In the documentation, the `jwt_secret` is set via:
 `ALTER DATABASE qtrees SET "app.jwt_secret" TO 'veryveryveryverysafesafesafesafe';`
 
 That doesn't work on RDS.
 
 ### rds_superuser
-RDS uses `rds_superuser` instread of `superuser`.
+RDS uses `rds_superuser` instead of `superuser`.
 Therefore, the installation of postgis differs a bit:
 
 `GRANT rds_superuser TO gis_admin;` vs `ALTER ROLE gis_admin SUPERUSER;`
 
+### Additional resources
+
+The postgis-setup is inspired from https://postgis.net/install/.
+
+The setup of postgREST is based on:
+- https://postgrest.org/en/stable/auth.html
+- https://postgrest.org/en/stable/tutorials/tut1.html
+
+The setup of JWT in postgres is taken from:
+ https://github.com/michelp/pgjwt.
+
+
+### Mini-conda
+We use mini-conda for providing the needed Python packages.
+To install conda, follow these steps
+- Download conda via: `wget https://repo.anaconda.com/miniconda/Miniconda3-py39_4.12.0-Linux-x86_64.sh`
+- Run installation via: `sh Miniconda3-py39_4.12.0-Linux-x86_64.sh`
+- Remove download: `rm Miniconda3-py39_4.12.0-Linux-x86_64.sh`
+- To use conda, re-login or run `source .bashrc`
+
+
+Create environment via `conda env create --file=requirements.yaml`
+
+If conda is slow, try this:
+```
+conda update -n base conda
+conda install -n base conda-libmamba-solver
+conda config --set experimental_solver libmamba
+```
+
+Alternatively, try to set `conda config --set channel_priority false`.
+Run `conda update --all --yes` to update packages.
+
+**If conda is stucked, install the conda environment manually by creating empty env.**
+
+Therefore, create environment `conda create -n qtrees python==3.10.6`.
+Install packages from `requirements.yaml` individually.
