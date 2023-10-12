@@ -355,9 +355,13 @@ w.r.t filling the database with content.**
 - **You might also consider the step `s3 sync` in the playbook as a first step to get shared data.**
 
 #### 3.6 Golang Migrate - Database change management
-Golang migrate is used to take care and track of database changes. 
-https://github.com/golang-migrate/migrate
-The current migrations steps can be found in folder `infrastructure/database/migrations`. In the database, there is a table called `schema_migrations`, which tells which db version we currently have. This version corresponds to the first number of the migration .sql files. For example `000002_230301_setup_users.up` is would be db version 2, created 1st of March. 
+
+Info: https://github.com/golang-migrate/migrate
+
+Golang migrate is used to take care and track of database changes. The current migrations steps can be found in folder `infrastructure/database/migrations`. In the database, there is a table called `schema_migrations`, which tells which database version we currently have.
+
+
+ This version corresponds to the first number of the migration .sql files. For example, `000002_230301_setup_users.up` is would be database version 2, created 1st of March. 
 
 To add a change to the database structure, go to the `infrastructure/database` folder and run: 
 - `source set_environment.local.sh`
@@ -379,6 +383,8 @@ Dirty database means that something went wrong with either the 'up' or 'down' mi
 When your new up and down migration files work without bugs on the local machine, you can push them to Github as usual. The changes will be implemented with the `playbooks/update-ubuntu.yml` call, which implemented all the migrations starting from the current db version.
 
 For more information on how to use Golang Migrate see: 
+
+
 https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md
 
 
