@@ -370,6 +370,8 @@ To add a change to the database structure, go to the `infrastructure/database` f
 where XXXXXX is the current date on the form YYMMDD. This will create two files in the `infrastructure/database/migrations` folder, one "up.sql" file, and one "down.sql" file. Implement the change in the "up" file and reverse it in the "down" file. 
 To implement the change, run: 
 - `migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable -path migrations up 1`
+
+
 To reverse the step run: 
 - `migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable -path migrations down 1`
 
