@@ -35,7 +35,6 @@
       . /home/ubuntu/setup_environment.sh
       cd qtrees-ai-data/infrastructure/database
       migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees\?sslmode=disable -path migrations up 
-    ignore_errors: false
   - name: Backup database
     become_user: ubuntu
     shell: |
