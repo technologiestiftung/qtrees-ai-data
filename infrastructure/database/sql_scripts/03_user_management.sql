@@ -128,7 +128,7 @@ begin
   end if;
 
   select sign(
-        row_to_json(r), current_setting('app.settings.jwt_secret')
+        row_to_json(r), current_setting('jwt_secret')
     ) as token
     from (
       select _role as role, login.username as username,
