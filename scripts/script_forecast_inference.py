@@ -86,7 +86,6 @@ def main():
 
     with engine.connect() as con:
         con.execute('REFRESH MATERIALIZED VIEW public.expert_dashboard')
-        con.execute('REFRESH MATERIALIZED VIEW public.expert_dashboard_large')
         con.execute("REFRESH MATERIALIZED VIEW public.vector_tiles;")
 
     logger.info(f"Updated materialized view public.expert_dashboard.")
