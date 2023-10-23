@@ -77,6 +77,12 @@
       . /home/ubuntu/setup_environment.sh
       cd qtrees-ai-data/infrastructure/database
       . /home/ubuntu/qtrees-ai-data/infrastructure/database/init_db.sh
+  - name: migrate database
+    become_user: ubuntu
+    shell: |
+      . /home/ubuntu/setup_environment.sh
+      cd qtrees-ai-data/infrastructure/database
+      migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable -path migrations up
   - name: s3 setup
     become_user: ubuntu
     shell: |
