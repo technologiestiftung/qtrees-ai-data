@@ -59,6 +59,7 @@ resource "aws_db_instance" "qtrees" {
   max_allocated_storage           = 100
   storage_type                    = "gp3"
   engine                          = "postgres"
+  engine_version                  = "14.7"
   name                            = var.project_name
 
   # Added because of error InvalidParameterCombination:
