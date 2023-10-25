@@ -14,7 +14,7 @@
       state: latest
   - name: install necessary libs
     shell: |
-      apt install postgresql awscli moreutils -y
+      apt install postgresql-14 awscli moreutils -y
       curl -s https://packagecloud.io/install/repositories/golang-migrate/migrate/script.deb.sh | sudo bash
       sudo apt-get update
       sudo apt-get install migrate
