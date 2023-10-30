@@ -17,7 +17,7 @@ echo "${RED}############ Setting up qtrees user management ${NC}"
 sleep 3 
 PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 \
     --username=postgres --dbname=qtrees -a -f sql_scripts/03_user_management.sql \
-    -v UI_USER_PASSWD=${UI_USER_PASSWD}
+    -v UI_USER_PASSWD=${UI_USER_PASSWD} -v JWT_SECRET=${JWT_SECRET}
 echo "${RED}############ Adding JWT support ${NC}"
 sleep 3
 PGPASSWORD=${POSTGRES_PASSWD} psql --host=$DB_QTREES --port=5432 \
