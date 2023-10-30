@@ -10,6 +10,14 @@ basic_auth.users (
   role     name not null check (length(role) < 512)
 );
 
+CREATE TABLE IF NOT EXISTS basic_auth.secrets(
+  name TEXT NOT NULL,
+  value TEXT NOT NULL
+);
+
+insert into basic_auth.secrets (name, value)
+VALUES ('jwt_secret',  :'JWT_SECRET');
+
 -- We would like the role to be a foreign key to actual database roles,
 -- however PostgreSQL does not support these constraints against the
 -- pg_roles table. We’ll use a trigger to manually enforce it.
@@ -115,39 +123,43 @@ CREATE TYPE jwt_token AS (
 --$$ LANGUAGE sql;
 
 -- login should be on your exposed schema
+
 create or replace function
 public.login(username text, pass text) returns basic_auth.jwt_token as $$
 declare
-  _role name;
-  result basic_auth.jwt_token;
-begin
-  -- check username and password
-  select basic_auth.user_role(username, pass) into _role;
-  if _role is null then
-    raise invalid_password using message = 'invalid user or password';
-  end if;
+    _role name;
+    result basic_auth.jwt_token;
+    _jwt_secret text;
+  begin
+    -- check username and password 
 
-  select sign(
-        row_to_json(r), current_setting('jwt_secret')
-    ) as token
-    from (
-      select _role as role, login.username as username,
-         extract(epoch from now())::integer + 60*60 as exp
-    ) r
-    into result;
-  return result;
-end;
-$$ language plpgsql security definer;
+    select basic_auth.user_role(username, pass) into _role;
+
+    select value 
+    from basic_auth.secrets 
+    where name='jwt_secret' 
+    into _jwt_secret;
+
+    if _role is null then
+      raise invalid_password using message = 'invalid user or password';
+    end if;
+
+    select sign(
+          row_to_json(r), _jwt_secret --- current_setting('jwt_secret')
+      ) as token
+      from 
+      (
+        select _role as role, login.username as username,
+          extract(epoch from now())::integer + 60*60 as exp
+      ) r
+      into result;
+    return result;
+  end;
+  $$ language plpgsql security definer;
+
 
 -- remove rights to write to public
 REVOKE ALL ON SCHEMA public FROM public;
 
 -- create postgREST frontend user
 insert into basic_auth.users (username, pass, role) values ('qtrees_frontend', :'UI_USER_PASSWD', 'ui_user');
-
-
-
-
-
-
-
