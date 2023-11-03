@@ -73,8 +73,8 @@ def main():
                 try: 
                     #y_hat.to_sql("forecast", engine, if_exists="append", schema="public", index=False, method='multi')
                     y_hat.to_sql("forecast", engine, if_exists="append", schema="public", index=False, method=None)
-                except:
-                    logger.error(f"Forecast failed for chunk. Trying to continue for next chunk.")
+                except Exception as e:
+                    logger.error(f"Forecast failed for chunk. Trying to continue for next chunk. Error: %s", e)
 
     logger.info("Made all predictions all models.")
 
