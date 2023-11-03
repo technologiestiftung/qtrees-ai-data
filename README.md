@@ -304,6 +304,7 @@ Run:
 ```
 source set_environment.local.sh
 source init_db.sh
+migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable -path migrations up
 docker-compose -f docker-compose.local.yml restart
 ```
 
@@ -361,14 +362,15 @@ Info: https://github.com/golang-migrate/migrate
 Golang migrate is used to take care and track of database changes. The current migrations steps can be found in folder `infrastructure/database/migrations`. In the database, there is a table called `schema_migrations`, which tells which database version we currently have.
 
 
- This version corresponds to the first number of the migration .sql files. For example, `000002_230301_setup_users.up` is would be database version 2, created 1st of March. 
+This version corresponds to the first number of the migration .sql files. For example, `000002_230301_setup_users.up` is would be database version 2, created 1st of March. 
 
 To add a change to the database structure, go to the `infrastructure/database` folder and run: 
 - `source set_environment.local.sh`
 - `migrate create -ext sql -dir migrations -seq XXXXXX_informative_name_of_migration`
 
 where XXXXXX is the current date on the form YYMMDD. This will create two files in the `infrastructure/database/migrations` folder, one "up.sql" file, and one "down.sql" file. Implement the change in the "up" file and reverse it in the "down" file. 
-To implement the change, run: 
+
+To implement the change, run: (If you work on AWS, you have to remove the `?sslmode=disable` to connect to the database)
 - `migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable -path migrations up 1`
 
 
