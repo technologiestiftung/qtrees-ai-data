@@ -20,7 +20,7 @@ from qtrees.forecast_util import check_last_data
 import datetime
 import pytz
 from qtrees.constants import NOWCAST_FEATURES
-from qtrees.data_processor import Data_loader, Preprocessor_Nowcast
+from qtrees.data_processor import Data_loader
 
 logger = get_logger(__name__)
 

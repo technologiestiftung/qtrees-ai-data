@@ -28,8 +28,7 @@ def main():
     db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
 
     engine = create_engine(
-        #f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
-        f"postgresql://qtrees_user:{postgres_passwd}@{db_qtrees}:5432/qtrees"
+        f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
     enc = Data_loader(engine) #Downloads data
@@ -43,8 +42,8 @@ def main():
     train_data = train_data.drop(columns="site_id")
     train_data = train_data.dropna()
 
-    if not os.path.exists('./models/fullmodel/'):
-        os.makedirs('./models/fullmodel/')
+    if not os.path.exists('./models/fullmodel_nowcast/'):
+        os.makedirs('./models/fullmodel_nowcast/')
 
     logger.info("Start model training for each depth.")
     for type in [1, 2, 3]:
@@ -54,8 +53,8 @@ def main():
         model.fit(X, y)
 
         # TODO read path from config
-        pickle.dump(model, open(f'./models/fullmodel/nowcast_model_{type}.m', 'wb'))
-    pickle.dump(prep_nowcast, open('./models/fullmodel/preprocessor_nowcast.pkl', 'wb'))
+        pickle.dump(model, open(f'./models/fullmodel_nowcast/nowcast_model_{type}.m', 'wb'))
+    pickle.dump(prep_nowcast, open('./models/fullmodel_nowcast/preprocessor_nowcast.pkl', 'wb'))
     logger.info("Trained all models.")
 
 if __name__ == "__main__":

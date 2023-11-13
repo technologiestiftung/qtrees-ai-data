@@ -32,7 +32,6 @@ class Data_loader:
         self.batch_size = batch_size
         self.batch_num = batch_num
         data = self._download_data(with_sensors=False)
-        data = data.merge(self._get_weather_forecast(), how="left", left_on="timestamp", right_index=True)
         return data
     
     def download_nowcast_training_data(self, public_run: bool = False):
@@ -121,9 +120,7 @@ class Data_loader:
                 dates = dates[dates.month.isin(range(4, 11))].to_series(name="timestamp")
                 trees = trees.merge(dates, how="cross")
             else:
-                dates = pd.date_range(self.date, self.date + pd.Timedelta(days=FORECAST_HORIZON if self.forecast else 0), tz="UTC")
-                dates = dates.to_series(name="timestamp")
-                trees = trees.merge(dates, how="cross")
+                trees = trees.assign(timestamp=self.date)
                 trees = trees.astype({"timestamp": 'datetime64[ns, UTC]'})
             trees = trees.assign(month=trees.timestamp.dt.month)
         relevant_trees = tuple(trees.tree_id.unique())
@@ -199,13 +196,13 @@ class Preprocessor_Nowcast:
 
     def transform_inference(self, X):
         all_cols = self.index_cols + self.cat_columns + self.num_columns
-        all_cols = [x for x in all_cols if x not in ["site_id","value","type_id"]]
+        all_cols = [x for x in all_cols if x not in ["site_id", "value", "type_id"]]
         X = X[all_cols]
         X = self._transform_features(X)
         X.loc[:,self.cat_columns] = self.ordinal_encoder.transform(X[self.cat_columns])
         # X = X.merge(self.mean_yesterday, left_on=["timestamp", "type_id"], right_index=True)
         return X.set_index(["tree_id", "timestamp"])
-
+    
     def _fill_gaps(self, X):
         resampled_data = None
         X.set_index(["type_id", "tree_id", "timestamp"], inplace=True)
@@ -228,7 +225,7 @@ class Preprocessor_Nowcast:
     def _transform_features(self, X):
         for col in ["baumscheibe_m2", "baumscheibe_surface", "water_sga", "water_gdk"]:
             if col in X:
-                X.loc[:, col] = X[col].fillna(X[col].mode())
+                X.loc[:, col] = X[col].fillna(X[col].mode()[0])
         if "value" in X.columns:
             temp = X.groupby(["timestamp", "type_id"])["value"].mean().groupby("type_id").shift(1).rename("mean_yesterday")
             X = X.merge(temp, left_on=["timestamp", "type_id"], right_index=True)
@@ -264,26 +261,22 @@ class Preprocessor_Forecast:
 
     def transform_inference(self, X):
         all_cols = self.index_cols + self.cat_columns + self.num_columns
-        all_cols.remove("site_id")
-        all_cols.remove("value")
-        if "type_id" not in X.columns:
-            depth = pd.DataFrame({"type_id": [1, 2, 3]})
-            X = X.merge(depth, how="cross")
+        all_cols = [x for x in all_cols if x not in self.weather_features + ["site_id", "value", "type_id"]]
         X = X[all_cols]
         X = self._transform_features(X)
         X[self.cat_columns] = self.ordinal_encoder.transform(X[self.cat_columns])
-        # X = X.merge(self.mean_yesterday, left_on=["timestamp", "type_id"], right_index=True)
+        #X = X.merge(self.mean_yesterday, left_on=["timestamp", "type_id"], right_index=True)
         return X.set_index(["tree_id", "timestamp"])
 
     def _add_autoregressive_features(self, X):
-        X.set_index(["tree_id","type_id","timestamp"],inplace=True)
+        X.set_index(["tree_id", "type_id", "timestamp"], inplace=True)
         X.sort_index(inplace=True)
         for i in range(1, AUTOREGRESSIVE_LAG+1):
             X.insert(0, f"shift_{i}", 0)
             for tree_id in X.index.get_level_values(0).unique():
-                for type_id in [1,2,3]:
+                for type_id in [1, 2, 3]:
                     try:
-                        X.loc[(tree_id, type_id, slice(None)),f"shift_{i}"] = X.loc[(tree_id, type_id, slice(None)), "value"].shift(i)
+                        X.loc[(tree_id, type_id, slice(None)), f"shift_{i}"] = X.loc[(tree_id, type_id, slice(None)), "value"].shift(i)
                     except:
                         continue
         X.reset_index(inplace=True)
@@ -311,7 +304,7 @@ class Preprocessor_Forecast:
     def _transform_features(self, X):
         for col in ["baumscheibe_m2", "baumscheibe_surface", "water_sga", "water_gdk"]:
             if col in X:
-                X[col] = X[col].fillna(X[col].mode())
+                X.loc[:, col] = X[col].fillna(X[col].mode()[0])
         if "value" in X.columns:
             temp = X.groupby(["timestamp", "type_id"])["value"].mean().groupby("type_id").shift(1).rename("mean_yesterday")
             X = X.merge(temp, left_on=["timestamp", "type_id"], right_index=True)

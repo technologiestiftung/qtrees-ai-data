@@ -16,7 +16,8 @@ from sklearn.ensemble import RandomForestRegressor
 import pickle
 from qtrees.helper import get_logger, init_db_args
 import os
-from qtrees.constants import FORECAST_FEATURES
+from qtrees.constants import FORECAST_FEATURES, HYPER_PARAMETERS
+from qtrees.data_processor import Data_loader, Preprocessor_Forecast
 
 logger = get_logger(__name__)
 
@@ -30,27 +31,39 @@ def main():
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
-    with engine.connect() as con:
-        train_data = pd.read_sql('select * from private.forecast_training_data', con)
+    loader = Data_loader(engine)
+    train_fc = loader.download_forecast_training_data()
+    preprocessor_forecast = Preprocessor_Forecast()
+    preprocessor_forecast.fit(train_fc)
+    logger.info("Transform forecast training data")
+    train_data = preprocessor_forecast.transform_train(train_fc)
+    train_data = train_data.drop(columns="site_id")
     train_data = train_data.dropna()
-
     # TODO put into some config where also the model is configured (YAML?)
-    
-    if not os.path.exists('./models/simplemodel_forecast/'):
-        os.makedirs('./models/simplemodel_forecast/')
+    if not os.path.exists('./models/fullmodel_forecast/'):
+        os.makedirs('./models/fullmodel_forecast/')
+    pickle.dump(preprocessor_forecast, open('./models/fullmodel_forecast/preprocessor_forecast.pkl', 'wb'))
 
     logger.info("Start model training for each depth.")
-    for type in [1, 2, 3]:
-        X = train_data.loc[train_data.type_id == type, FORECAST_FEATURES]
-        y = train_data.loc[train_data.type_id == type, "target"]
-        model = RandomForestRegressor()
+    for type_id in [1, 2, 3]:
+        X = train_data.loc[train_data.type_id == type_id, FORECAST_FEATURES + ["shift_1", "shift_2", "shift_3"]]
+        y = train_data.loc[train_data.type_id == type_id, "target"]
+        model = RandomForestRegressor(**HYPER_PARAMETERS)
         model.fit(X, y)
 
         # TODO read path from config
-        pickle.dump(model, open(f'./models/simplemodel_forecast/model_{type}.m', 'wb'))
-    logger.info("Trained all models.")
+        pickle.dump(model, open(f'./models/fullmodel_forecast/forecast_model_{type_id}.m', 'wb'))
+    logger.info("Trained forecast models.")
 
-
+    logger.info("Start model training for auxiliary nowcast model.")
+    for type_id in [1, 2, 3]:
+        X = train_data.loc[train_data.type_id == type_id, FORECAST_FEATURES]
+        y = train_data.loc[train_data.type_id == type_id, "target"] # TODO filter valid
+        model_nc = RandomForestRegressor(**HYPER_PARAMETERS)
+        model_nc.fit(X, y)
+        # TODO read path from config
+        pickle.dump(model_nc, open(f'./models/fullmodel_forecast/auxiliary_model_{type_id}.m', 'wb'))
+    logger.info("Trained all models")
 if __name__ == "__main__":
     try:
         main()
