@@ -29,54 +29,12 @@
     shell: |
       . /home/ubuntu/setup_environment.sh
       docker-compose -f qtrees-ai-data/infrastructure/database/docker-compose.yml down
-  - name: delete database
-    become_user: ubuntu
-    shell: |
-      . /home/ubuntu/setup_environment.sh
-      PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -c "DROP DATABASE qtrees WITH (FORCE);"
-      PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -c "DROP DATABASE lab_gis;"
-      PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -c "DROP ROLE gis_admin, ui_user, ai_user, authenticator, web_anon, qtrees_admin, qtrees_user;"
-    ignore_errors: true
-  - name: setup database
+  - name: migrate-update
     become_user: ubuntu
     shell: |
       . /home/ubuntu/setup_environment.sh
       cd qtrees-ai-data/infrastructure/database
-      . /home/ubuntu/qtrees-ai-data/infrastructure/database/create_sql_files.sh
-      . /home/ubuntu/qtrees-ai-data/infrastructure/database/setup_database.sh
-  - name: s3 sync
-    become_user: ubuntu
-    shell: |
-      aws s3 sync s3://qtrees-data ~/qtrees-ai-data/data --no-progress --exclude 'img/*' --exclude '.*'
-#  - name: restore database
-#    become_user: ubuntu
-#    shell: |
-#      . /home/ubuntu/setup_environment.sh
-#      cd qtrees-ai-data
-#      export QTREES_BACKUP_DIR=/home/ubuntu/qtrees-ai-data/data/db
-#      . /home/ubuntu/qtrees-ai-data/data/db
-#    ignore_errors: true
-  - name: fill database (static data)
-    become_user: ubuntu
-    shell: |
-      . /home/ubuntu/setup_environment.sh
-      cd qtrees-ai-data
-      export PYTHONPATH=/home/ubuntu/qtrees-ai-data
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_trees_in_db.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_soil_in_db.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_shading_index_in_db.py --shadow_index_file=data/shading/berlin_shadow_box_220323.csv --shadow_index_file_interpolated=data/shading/berlin_shadow_index_interpolated.csv >> /home/ubuntu/download-cron.log 2>&1
-    # python logs can be found on host at 'tail -fn +1 qtrees/qtrees_log'
-  - name: fill database (dynamic data)
-    become_user: ubuntu
-    shell: |
-      . /home/ubuntu/setup_environment.sh
-      cd qtrees-ai-data
-      export PYTHONPATH=/home/ubuntu/qtrees-ai-data
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_wheather_observations.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_radolan_in_db.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_gdk_watering_in_db.py >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_solaranywhere_weather_in_db.py --days=450 >> /home/ubuntu/download-cron.log 2>&1
-      /home/ubuntu/miniconda3/envs/qtrees-ai-data/bin/python scripts/script_store_solaranywhere_forecast_in_db.py >> /home/ubuntu/download-cron.log 2>&1
+      migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees -path migrations up 
   - name: Backup database
     become_user: ubuntu
     shell: |
