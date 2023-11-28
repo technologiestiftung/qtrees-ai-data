@@ -122,22 +122,22 @@ CREATE TABLE public.weather_stations (
 CREATE TABLE public.weather (
     stations_id  BIGINT REFERENCES public.weather_stations (id),
     date   DATE NOT NULL,
-    QN_3         BIGINT,
+    quality_wind BIGINT,
     wind_max_ms  REAL,
     wind_avg_ms REAL,
-    QN_4         BIGINT,
+    quality      BIGINT,
     rainfall_mm  REAL,
-    RSKF         BIGINT,
-    SDK          REAL,
-    SHK_TAG      BIGINT,
-    NM           BIGINT,
-    VPM          REAL,
-    PM           REAL,
+    precipation_form    BIGINT,
+    sunshine_hours      REAL,
+    snow_cm      BIGINT,
+    cloudcover_mean         BIGINT,
+    vaporpressure_hpa       REAL,
+    airpressure_hps         REAL,
     temp_avg_c   REAL,
-    UPM          REAL,
+    humidity_avg_percent   REAL,
     temp_max_c   REAL,
-    TNK          REAL,
-    TGK          REAL,
+    temp_min_c   REAL,
+    groundtemp_min_c  REAL,
     PRIMARY KEY(stations_id, date)
 );
 
@@ -324,8 +324,10 @@ CREATE TABLE private.weather_tile_measurement (
     temp_avg_c   REAL,
     temp_max_c   REAL,
     rainfall_mm  REAL,
+    humidity_avg_percent   REAL,
     PRIMARY KEY(tile_id, date)
 );
+
 
 CREATE TABLE private.weather_tile_forecast (
     tile_id  BIGINT REFERENCES private.weather_tiles (id),
@@ -342,6 +344,7 @@ CREATE TABLE private.weather_tile_forecast (
     temp_avg_c   REAL,
     temp_max_c   REAL,
     rainfall_mm  REAL,
+    humidity_avg_percent   REAL,
     PRIMARY KEY(tile_id, date, created_at)
 );
 

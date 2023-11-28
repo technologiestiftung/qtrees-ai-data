@@ -93,11 +93,11 @@ def get_radolan_data(nowcast_date=None, aggregation="hourly", mask=None, xmin=0,
         return gpd.sjoin(grid_gdf, mask), meta_data
 
 
-def get_weather_stations(station_ids, measurement):
-    """ Gets the weatherstations TODO
+def get_weather_stations(station_ids):
+    """ Gets the weatherstations 
     """
     url_stations = f"https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/" \
-                   f"{measurement}/KL_Tageswerte_Beschreibung_Stationen.txt"
+                   "recent/KL_Tageswerte_Beschreibung_Stationen.txt"
     stations = pd.read_fwf(url_stations, encoding="ISO-8859-1", skiprows=2, header=None,
                            names=["Stations_id", "von_datum", "bis_datum", "Stationshoehe", "geoBreite",
                                   "geoLaenge", "Stationsname", "Bundesland"]

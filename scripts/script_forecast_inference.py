@@ -54,6 +54,7 @@ def main():
 
                 logger.info(f"Start prediction for {forecast_date} for type {type_id}.")
                 
+                # TODO tile?
                 current_weather = pd.read_sql("SELECT DISTINCT ON (date) date, temp_max_c, rainfall_mm FROM private.weather_tile_forecast WHERE date = %s ORDER BY date, created_at DESC", 
                                             engine, params=(forecast_date, ))
 

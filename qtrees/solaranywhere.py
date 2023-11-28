@@ -8,7 +8,8 @@ VARIABLE_MAP = {
     'DirectNormalIrradiance_WattsPerMeterSquared': 'dni',
     'DiffuseHorizontalIrradiance_WattsPerMeterSquared': 'dhi',
     'AmbientTemperature_DegreesC': 'temp',
-    'WindSpeed_MetersPerSecond': 'wind'
+    'WindSpeed_MetersPerSecond': 'wind',
+    'RelativeHumidity_Percent': "humidity"
 }
 
 
@@ -75,6 +76,6 @@ def get_weather(latitude, longitude, api_key, start=None, end=None, hindcast=Fal
     daily_frames = []
     daily_frames.append(data.groupby(data.index.date).max().rename(columns={"ghi": "ghi_max_wm2", "dni": "dni_max_wm2", "dhi": "dhi_max_wm2", "temp": "temp_max_c", "wind": "wind_max_ms"}))
     daily_frames.append(data[["ghi", "dni", "dhi", "rainfall_mm"]].groupby(data.index.date).sum().rename(columns={"ghi": "ghi_sum_whm2", "dni": "dni_sum_whm2", "dhi": "dhi_sum_whm2"}))
-    daily_frames.append(data[["temp", "wind"]].groupby(data.index.date).mean().rename(columns={"temp": "temp_avg_c", "wind": "wind_avg_ms"}))
+    daily_frames.append(data[["temp", "wind", "humidity"]].groupby(data.index.date).mean().rename(columns={"temp": "temp_avg_c", "wind": "wind_avg_ms", "humidity": "humidity_avg_percent"}))
     data_daily = pd.concat(daily_frames, axis=1).reset_index().rename(columns={"index": "date"})
     return data_daily
