@@ -358,8 +358,12 @@ w.r.t filling the database with content.**
 #### 3.6 Golang Migrate - Database change management
 
 Info: https://github.com/golang-migrate/migrate
+If you want to run the tool locally, you need to install Golang Migrate first. On Linux and Mac OS this is simply done by using brew:
+`brew install golang-migrate`
 
-Golang migrate is used to take care and track of database changes. The current migrations steps can be found in folder `infrastructure/database/migrations`. In the database, there is a table called `schema_migrations`, which tells which database version we currently have.
+Or go here to download the binaries and add them to your `PATH`: https://github.com/golang-migrate/migrate/releases
+
+Golang migrate is used to take care and track of database changes. The current migrations steps can be found in folder `infrastructure/database/migrations`. In the database, there is a table called `public.schema_migrations`, which tells which database version we currently have.
 
 
 This version corresponds to the first number of the migration .sql files. For example, `000002_230301_setup_users.up` is would be database version 2, created 1st of March. 
