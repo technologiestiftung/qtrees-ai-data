@@ -35,8 +35,6 @@ def main():
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
     num_trees = pd.read_sql("SELECT COUNT(*) FROM public.trees WHERE street_tree = true", con=engine.connect()).iloc[0, 0]
-    # TODO: Update nowcast_date to use the columns we are actually interested in
-    #nowcast_date = check_last_data(engine)
     nowcast_date = pd.read_sql("SELECT MAX(date) FROM public.weather", con=engine.connect()).astype('datetime64[ns, UTC]').iloc[0, 0]
     loader = Data_loader(engine)
     preprocessor = pickle.load(open("./models/fullmodel/preprocessor_nowcast.pkl", 'rb'))
@@ -81,7 +79,7 @@ def main():
     with engine.connect() as con:
         con.execute('REFRESH MATERIALIZED VIEW public.expert_dashboard')
         con.execute("REFRESH MATERIALIZED VIEW public.vector_tiles;")
-    logger.info(f"Updated materialized view public.expert_dashboard.")
+    logger.info("Updated materialized view public.expert_dashboard.")
 
 if __name__ == "__main__":
     try:
