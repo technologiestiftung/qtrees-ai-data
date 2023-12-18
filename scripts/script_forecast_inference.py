@@ -19,7 +19,7 @@ from qtrees.forecast_util import check_last_data
 import datetime
 import pytz
 from qtrees.constants import FORECAST_FEATURES
-from qtrees.data_processor import Data_loader
+from qtrees.data_processor import DataLoader
 import numpy as np
 
 logger = get_logger(__name__)
@@ -47,7 +47,7 @@ def main():
 
     created_at = datetime.datetime.now(pytz.timezone('UTC'))
     weather_cols = [x for x in ["wind_avg_ms", "wind_max_ms", "temp_avg_c", "temp_max_c", "rainfall_mm", "ghi_sum_whm2"] if x in FORECAST_FEATURES]
-    loader = Data_loader(engine)
+    loader = DataLoader(engine)
     preprocessor = pickle.load(open("./models/fullmodel_forecast/preprocessor_forecast.pkl", 'rb'))
 
     logger.info("Start prediction for each depth")

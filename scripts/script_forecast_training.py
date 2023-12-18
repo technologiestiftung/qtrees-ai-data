@@ -17,7 +17,7 @@ import pickle
 from qtrees.helper import get_logger, init_db_args
 import os
 from qtrees.constants import FORECAST_FEATURES, HYPER_PARAMETERS_FC, HYPER_PARAMETERS_NC
-from qtrees.data_processor import Data_loader, Preprocessor_Forecast
+from qtrees.data_processor import DataLoader, Preprocessor_Forecast
 
 logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ def main():
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
-    loader = Data_loader(engine)
+    loader = DataLoader(engine)
     train_fc = loader.download_forecast_training_data()
     preprocessor_forecast = Preprocessor_Forecast()
     preprocessor_forecast.fit(train_fc)

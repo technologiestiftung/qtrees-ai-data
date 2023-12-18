@@ -17,7 +17,7 @@ import pickle
 from qtrees.helper import get_logger, init_db_args
 import os
 from qtrees.constants import NOWCAST_FEATURES, HYPER_PARAMETERS_NC
-from qtrees.data_processor import Preprocessor_Nowcast, Data_loader
+from qtrees.data_processor import Preprocessor_Nowcast, DataLoader
 
 logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ def main():
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
-    enc = Data_loader(engine) #Downloads data
+    enc = DataLoader(engine) #Downloads data
     logger.info("Generate nowcast training data")
     train_data = enc.download_nowcast_training_data()
     train_data = train_data[NOWCAST_FEATURES + ["type_id", "site_id", "tree_id", "timestamp", "value"]]

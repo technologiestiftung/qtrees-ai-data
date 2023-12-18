@@ -7,3 +7,5 @@ NOWCAST_FEATURES = ['month', 'gattung', 'standalter', 'water_sga', 'water_gdk', 
 HYPER_PARAMETERS_NC = dict(max_features="sqrt", n_estimators=1000, max_depth=5, bootstrap=True)
 
 HYPER_PARAMETERS_FC = dict(max_features="sqrt", n_estimators=1000, max_depth=10, bootstrap=True)
+
+PREPROCESSING_HYPERPARAMS = dict(rolling_window=7, fc_horizon=14, autoreg_lag=3)

@@ -20,7 +20,7 @@ from qtrees.forecast_util import check_last_data
 import datetime
 import pytz
 from qtrees.constants import NOWCAST_FEATURES
-from qtrees.data_processor import Data_loader
+from qtrees.data_processor import DataLoader
 
 logger = get_logger(__name__)
 
@@ -36,7 +36,7 @@ def main():
     )
     num_trees = pd.read_sql("SELECT COUNT(*) FROM public.trees WHERE street_tree = true", con=engine.connect()).iloc[0, 0]
     nowcast_date = pd.read_sql("SELECT MAX(date) FROM public.weather", con=engine.connect()).astype('datetime64[ns, UTC]').iloc[0, 0]
-    loader = Data_loader(engine)
+    loader = DataLoader(engine)
     preprocessor = pickle.load(open("./models/fullmodel/preprocessor_nowcast.pkl", 'rb'))
     # TODO something smarter here?
     with engine.connect() as con:

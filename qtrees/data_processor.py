@@ -2,14 +2,11 @@ import pandas as pd
 import numpy as np
 from functools import reduce
 import datetime as dt
-from typing import Union, Optional
+from typing import Optional
 from sklearn.preprocessing import OrdinalEncoder
+from qtrees.constants import PREPROCESSING_HYPERPARAMS, NOWCAST_FEATURES, FORECAST_FEATURES
 
-ROLLING_WINDOW = 7
-FORECAST_HORIZON = 14
-AUTOREGRESSIVE_LAG = 3
-
-class Data_loader:
+class DataLoader:
     def __init__(self, engine):
         self.engine = engine
 
@@ -85,10 +82,10 @@ class Data_loader:
             # Only get last 8 days if we don't take the sensors
             if self.date is None:
                 dates = pd.date_range("2021-06-01", pd.Timestamp("today"), tz="UTC")
-                dates = dates[dates.month.isin(range(4,11))]
+                dates = dates[dates.month.isin(range(4, 11))]
                 water = pd.DataFrame({"timestamp": dates})
             else:
-                water = pd.DataFrame({"timestamp": pd.date_range(self.date - dt.timedelta(days=ROLLING_WINDOW + 1), self.date, tz="UTC")})
+                water = pd.DataFrame({"timestamp": pd.date_range(self.date - dt.timedelta(days=PREPROCESSING_HYPERPARAMS['rolling_window'] + 1), self.date, tz="UTC")})
             water = water.merge(watered_trees, "cross").assign(temp=0)
             for source, name in zip([water_sga, water_gdk], ["water_sga", "water_gdk"]):
                 source["date"] = source["date"].astype('datetime64[ns, UTC]')
@@ -97,7 +94,8 @@ class Data_loader:
                                                         how='left'), [water, water_sga, water_gdk])
             water = water.drop(columns="temp")
             water = water.fillna(0)
-            water = water.groupby(["tree_id", "timestamp"]).rolling(window=ROLLING_WINDOW, min_periods=1).sum()
+            grpd = water.groupby(["tree_id"])
+            water[["water_sga", "water_gdk"]] = grpd[["water_sga", "water_gdk"]].transform(lambda x: x.rolling(PREPROCESSING_HYPERPARAMS['rolling_window'], min_periods=1).sum())
             return water
 
         def get_shading_index(relevant_trees):
@@ -116,7 +114,7 @@ class Data_loader:
         else:
             trees = subset
             if self.date is None:
-                dates = pd.date_range("2021-06-01", pd.Timestamp("today") + pd.Timedelta(days=FORECAST_HORIZON if self.forecast else 0), tz="UTC")
+                dates = pd.date_range("2021-06-01", pd.Timestamp("today") + pd.Timedelta(days=PREPROCESSING_HYPERPARAMS['fc_horizon'] if self.forecast else 0), tz="UTC")
                 dates = dates[dates.month.isin(range(4, 11))].to_series(name="timestamp")
                 trees = trees.merge(dates, how="cross")
             else:
@@ -152,19 +150,19 @@ class Data_loader:
             source.interpolate(limit=7)
         if not self.public_run:
             weather_station = weather_station.merge(weather_solar.groupby(level=0).mean()["ghi_sum_whm2"], how="left", left_index=True, right_index=True)
-        weather_station["rainfall_mm"] = weather_station["rainfall_mm"].rolling(window=ROLLING_WINDOW, min_periods=1).sum()
+        weather_station["rainfall_mm"] = weather_station["rainfall_mm"].rolling(window=PREPROCESSING_HYPERPARAMS['rolling_window'], min_periods=1).sum()
         for col in [x for x in weather_station.columns if x not in ["date", "rainfall_mm"]]:
-            weather_station[col] = weather_station[col].rolling(window=ROLLING_WINDOW, min_periods=1).mean()
+            weather_station[col] = weather_station[col].rolling(window=PREPROCESSING_HYPERPARAMS['rolling_window'], min_periods=1).mean()
         return weather_station
 
     def _get_weather_forecast(self):
-        '''For forecast training and inference we take the weather forecast from solar anywhere instead of the station weather. However we do not have upm for the forecast'''
+        '''For forecast training and inference we take the weather forecast from solar anywhere instead of the station weather. However we do not have humidity for the forecast'''
         weather_solar = pd.read_sql(f"SELECT tile_id, date, ghi_sum_whm2, wind_max_ms, wind_avg_ms, temp_max_c, temp_avg_c, rainfall_mm FROM private.weather_tile_forecast WHERE DATE(created_at) = '{self.date.strftime('%Y-%m-%d')}';", con=self.engine.connect())
         weather_solar["date"] = weather_solar["date"].astype('datetime64[ns, UTC]')
         weather_solar = weather_solar.groupby(["date"]).mean()
-        weather_solar["rainfall_mm"] = weather_solar["rainfall_mm"].rolling(window=ROLLING_WINDOW, min_periods=1).sum()
+        weather_solar["rainfall_mm"] = weather_solar["rainfall_mm"].rolling(window=PREPROCESSING_HYPERPARAMS['rolling_window'], min_periods=1).sum()
         for col in [x for x in weather_solar.columns if x not in ["date", "rainfall_mm"]]:
-            weather_solar[col] = weather_solar[col].rolling(window=ROLLING_WINDOW, min_periods=1).mean()
+            weather_solar[col] = weather_solar[col].rolling(window=PREPROCESSING_HYPERPARAMS['rolling_window'], min_periods=1).mean()
         return weather_solar.drop(columns="tile_id")
 
 
@@ -199,7 +197,7 @@ class Preprocessor_Nowcast:
         all_cols = [x for x in all_cols if x not in ["site_id", "value", "type_id"]]
         X = X[all_cols]
         X = self._transform_features(X)
-        X.loc[:,self.cat_columns] = self.ordinal_encoder.transform(X[self.cat_columns])
+        X.loc[:, self.cat_columns] = self.ordinal_encoder.transform(X[self.cat_columns])
         # X = X.merge(self.mean_yesterday, left_on=["timestamp", "type_id"], right_index=True)
         return X.set_index(["tree_id", "timestamp"])
     
@@ -271,7 +269,7 @@ class Preprocessor_Forecast:
     def _add_autoregressive_features(self, X):
         X.set_index(["tree_id", "type_id", "timestamp"], inplace=True)
         X.sort_index(inplace=True)
-        for i in range(1, AUTOREGRESSIVE_LAG+1):
+        for i in range(1, PREPROCESSING_HYPERPARAMS['autoreg_lag']+1):
             X.insert(0, f"shift_{i}", 0)
             for tree_id in X.index.get_level_values(0).unique():
                 for type_id in [1, 2, 3]:
@@ -289,7 +287,7 @@ class Preprocessor_Forecast:
             for idx in X.index.get_level_values(1).unique():
                 try:
                     temp = X.loc[depth, idx, :].resample("D").ffill(limit=7)
-                    temp = temp[temp.index.month.isin(range(4, 10))]
+                    temp = temp[temp.index.month.isin(range(4, 11))]
                     temp["type_id"] = depth
                     temp["tree_id"] = idx
                 except AttributeError:
