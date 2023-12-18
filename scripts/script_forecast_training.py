@@ -17,7 +17,7 @@ import pickle
 from qtrees.helper import get_logger, init_db_args
 import os
 from qtrees.constants import FORECAST_FEATURES, HYPER_PARAMETERS_FC, HYPER_PARAMETERS_NC
-from qtrees.data_processor import DataLoader, Preprocessor_Forecast
+from qtrees.data_processor import DataLoader, PreprocessorForecast
 
 logger = get_logger(__name__)
 
@@ -33,7 +33,7 @@ def main():
 
     loader = DataLoader(engine, logger)
     train_fc = loader.download_training_data(forecast=True)
-    preprocessor_forecast = Preprocessor_Forecast()
+    preprocessor_forecast = PreprocessorForecast()
     preprocessor_forecast.fit(train_fc)
     logger.info("Transform forecast training data")
     train_data = preprocessor_forecast.transform_train(train_fc)

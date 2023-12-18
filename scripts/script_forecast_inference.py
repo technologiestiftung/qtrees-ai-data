@@ -9,18 +9,19 @@ Options:
   --db_qtrees=DB_QTREES               Database name [default:]
   --batch_size=BATCH_SiZE                      Batch size [default: 100000]
 """
-import pandas as pd
-from sqlalchemy import create_engine
 import sys
-from docopt import docopt, DocoptExit
 import pickle
-from qtrees.helper import get_logger, init_db_args
-from qtrees.forecast_util import check_last_data
 import datetime
 import pytz
+import pandas as pd
+import numpy as np
+from sqlalchemy import create_engine
+from docopt import docopt, DocoptExit
+
+from qtrees.helper import get_logger, init_db_args
 from qtrees.constants import FORECAST_FEATURES, PREPROCESSING_HYPERPARAMS
 from qtrees.data_processor import DataLoader
-import numpy as np
+
 
 logger = get_logger(__name__)
 
@@ -34,12 +35,8 @@ def main():
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
-
     last_date = pd.read_sql("SELECT MAX(date) FROM private.weather_tile_measurement", con=engine.connect()).astype('datetime64[ns, UTC]').iloc[0, 0]
     num_trees = pd.read_sql("SELECT COUNT(*) FROM public.trees WHERE street_tree = true", con=engine.connect()).iloc[0, 0]
-    FORECAST_HORIZON = 14
-    # batch_size = 100
-
     # TODO something smarter here?
     with engine.connect() as con:
         con.execute("TRUNCATE public.forecast")
@@ -77,7 +74,7 @@ def main():
                     autoreg_features.loc[:, f"shift_{i+1}"] = aux_model.predict(X)
 
             logger.info(f"Inference for depth {type_id}, batch {batch_number+1}/{int(np.ceil(num_trees/batch_size))}.")
-            for h in range(1, FORECAST_HORIZON+1):
+            for h in range(1, PREPROCESSING_HYPERPARAMS["fc_horizon"]+1):
                 forecast_date = last_date + pd.Timedelta(days=h)
                 current_weather = pd.read_sql("SELECT date, %s FROM private.weather_tile_forecast WHERE date = %s AND tile_id = %i ORDER BY date, created_at DESC", 
                                                 engine, params=(', '.join(weather_cols), forecast_date, PREPROCESSING_HYPERPARAMS['tile_id']))

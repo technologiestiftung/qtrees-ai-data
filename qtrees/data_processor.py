@@ -6,6 +6,9 @@ from typing import Optional
 from sklearn.preprocessing import OrdinalEncoder
 from qtrees.constants import PREPROCESSING_HYPERPARAMS, NOWCAST_FEATURES, FORECAST_FEATURES
 
+DATA_START_DATE = "2021-06-01"
+WEATHER_COLUMNS = ["date", "wind_max_ms", "wind_avg_ms", "rainfall_mm", "temp_max_c", "temp_avg_c"]
+
 class DataLoader:
     def __init__(self, engine, logger):
         self.engine = engine
@@ -82,7 +85,7 @@ class DataLoader:
             watered_trees = pd.Series(list(set(water_sga.tree_id).union(set(water_gdk.tree_id))), name="tree_id")
             # Only get last 8 days if we don't take the sensors
             if self.date is None:
-                dates = pd.date_range("2021-06-01", pd.Timestamp("today"), tz="UTC")
+                dates = pd.date_range(DATA_START_DATE, pd.Timestamp("today"), tz="UTC")
                 dates = dates[dates.month.isin(range(4, 11))]
                 water = pd.DataFrame({"timestamp": dates})
             else:
@@ -115,7 +118,7 @@ class DataLoader:
             else:
                 trees = subset
                 if self.date is None:
-                    dates = pd.date_range("2021-06-01", pd.Timestamp("today") + pd.Timedelta(days=PREPROCESSING_HYPERPARAMS['fc_horizon'] if self.forecast else 0), tz="UTC")
+                    dates = pd.date_range(DATA_START_DATE, pd.Timestamp("today") + pd.Timedelta(days=PREPROCESSING_HYPERPARAMS['fc_horizon'] if self.forecast else 0), tz="UTC")
                     dates = dates[dates.month.isin(range(4, 11))].to_series(name="timestamp")
                     trees = trees.merge(dates, how="cross")
                 else:
@@ -124,7 +127,7 @@ class DataLoader:
                 trees = trees.assign(month=trees.timestamp.dt.month)
             relevant_trees = tuple(trees.tree_id.unique())
             if not self.public_run:
-                trees_private = pd.read_sql("SELECT tree_id,baumscheibe_m2,baumscheibe_surface FROM private.trees_private", self.engine.connect())
+                trees_private = pd.read_sql("SELECT tree_id, baumscheibe_m2, baumscheibe_surface FROM private.trees_private", self.engine.connect())
                 trees_private["baumscheibe_m2"] = pd.cut(trees_private["baumscheibe_m2"], bins=[0, 5, 100], labels=["klein", "groß"])
                 trees = trees.merge(trees_private, how="left", on="tree_id")
                 if not self.forecast:
@@ -141,10 +144,10 @@ class DataLoader:
         '''Get station data and solar if not public run and merge them. Generate weekly avg or sum depending on column.'''
         try:
             if self.forecast and not self.public_run:
-                weather_station = pd.read_sql("SELECT tile_id, date, wind_max_ms, wind_avg_ms, temp_max_c, temp_avg_c, rainfall_mm FROM private.weather_tile_measurement", con=self.engine.connect())
+                weather_station = pd.read_sql_table("weather_tile_measurement", schema="private", con=self.engine.connect(), columns=['tile_id']+WEATHER_COLUMNS)
                 weather_station = weather_station.groupby("date").mean().drop(columns="tile_id").reset_index()
             else:
-                weather_station = pd.read_sql("SELECT date, wind_max_ms, wind_avg_ms, rainfall_mm, temp_max_c, temp_avg_c, upm FROM public.weather", con=self.engine.connect())
+                weather_station = pd.read_sql_table("weather", schema="public", con=self.engine.connect(), columns=WEATHER_COLUMNS)
             weather_list = [weather_station]
             if not self.public_run:
                 weather_solar = pd.read_sql("SELECT tile_id, date, ghi_sum_whm2 FROM private.weather_tile_measurement", con=self.engine.connect())
@@ -163,23 +166,7 @@ class DataLoader:
             self.logger.error("Failed to get weather data from DB: %s", e)
             exit(121)
 
-    def _get_weather_forecast(self):
-        '''For forecast training and inference we take the weather forecast from solar anywhere instead of the station weather. However we do not have humidity for the forecast'''
-        try:
-            weather_solar = pd.read_sql("SELECT tile_id, date, ghi_sum_whm2, wind_max_ms, wind_avg_ms, temp_max_c, temp_avg_c, \
-                                        rainfall_mm FROM private.weather_tile_forecast WHERE DATE(created_at) = %s",
-                                        con=self.engine.connect(), params=(self.date.strftime('%Y-%m-%d')))
-            weather_solar["date"] = weather_solar["date"].astype('datetime64[ns, UTC]')
-            weather_solar = weather_solar.groupby(["date"]).mean()
-            weather_solar["rainfall_mm"] = weather_solar["rainfall_mm"].rolling(window=PREPROCESSING_HYPERPARAMS['rolling_window'], min_periods=1).sum()
-            for col in [x for x in weather_solar.columns if x not in ["date", "rainfall_mm"]]:
-                weather_solar[col] = weather_solar[col].rolling(window=PREPROCESSING_HYPERPARAMS['rolling_window'], min_periods=1).mean()
-            return weather_solar.drop(columns="tile_id")
-        except Exception as e:
-            self.logger.error("Failed to get weather forecast from DB: %s", e)
-            exit(121)
-
-class Preprocessor_Nowcast:
+class PreprocessorNowcast:
     def __init__(self,
                  weather_features=["wind_max_ms", "wind_avg_ms", "rainfall_mm", "temp_max_c", "temp_avg_c", "ghi_sum_whm2", "upm"]):
         self.weather_features = weather_features
@@ -243,7 +230,7 @@ class Preprocessor_Nowcast:
         return X
 
 
-class Preprocessor_Forecast:
+class PreprocessorForecast:
     def __init__(self,
                  weather_features=["wind_max_ms", "wind_avg_ms", "rainfall_mm", "temp_max_c", "temp_avg_c", "ghi_sum_whm2", "upm"]):
         self.weather_features = weather_features

@@ -17,7 +17,7 @@ import pickle
 from qtrees.helper import get_logger, init_db_args
 import os
 from qtrees.constants import NOWCAST_FEATURES, HYPER_PARAMETERS_NC
-from qtrees.data_processor import Preprocessor_Nowcast, DataLoader
+from qtrees.data_processor import PreprocessorNowcast, DataLoader
 
 logger = get_logger(__name__)
 
@@ -35,7 +35,7 @@ def main():
     logger.info("Generate nowcast training data")
     train_data = enc.download_training_data(forecast=False)
     train_data = train_data[NOWCAST_FEATURES + ["type_id", "site_id", "tree_id", "timestamp", "value"]]
-    prep_nowcast = Preprocessor_Nowcast()
+    prep_nowcast = PreprocessorNowcast()
     prep_nowcast.fit(train_data)
     logger.info("Transform nowcast training data")
     train_data = prep_nowcast.transform_train(train_data)
@@ -54,7 +54,7 @@ def main():
 
         # TODO read path from config
         pickle.dump(model, open(f'./models/fullmodel_nowcast/nowcast_model_{type}.m', 'wb'))
-    pickle.dump(prep_nowcast, open('./models/fullmodel_nowcast/preprocessor_nowcast.pkl', 'wb'))
+    pickle.dump(prep_nowcast, open('./models/fullmodel_nowcast/PreprocessorNowcast.pkl', 'wb'))
     logger.info("Trained all models.")
 
 if __name__ == "__main__":

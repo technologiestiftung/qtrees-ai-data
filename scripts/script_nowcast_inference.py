@@ -37,7 +37,7 @@ def main():
     num_trees = pd.read_sql("SELECT COUNT(*) FROM public.trees WHERE street_tree = true", con=engine.connect()).iloc[0, 0]
     nowcast_date = pd.read_sql("SELECT MAX(date) FROM public.weather", con=engine.connect()).astype('datetime64[ns, UTC]').iloc[0, 0]
     loader = DataLoader(engine, logger)
-    preprocessor = pickle.load(open("./models/fullmodel/preprocessor_nowcast.pkl", 'rb'))
+    preprocessor = pickle.load(open("./models/fullmodel/PreprocessorNowcast.pkl", 'rb'))
     # TODO something smarter here?
     with engine.connect() as con:
         con.execute("TRUNCATE public.nowcast")
