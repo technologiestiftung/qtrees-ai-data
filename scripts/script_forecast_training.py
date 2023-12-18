@@ -31,7 +31,7 @@ def main():
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
-    loader = DataLoader(engine)
+    loader = DataLoader(engine, logger)
     train_fc = loader.download_forecast_training_data()
     preprocessor_forecast = Preprocessor_Forecast()
     preprocessor_forecast.fit(train_fc)

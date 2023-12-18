@@ -31,7 +31,7 @@ def main():
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
 
-    enc = DataLoader(engine) #Downloads data
+    enc = DataLoader(engine, logger) #Downloads data
     logger.info("Generate nowcast training data")
     train_data = enc.download_nowcast_training_data()
     train_data = train_data[NOWCAST_FEATURES + ["type_id", "site_id", "tree_id", "timestamp", "value"]]

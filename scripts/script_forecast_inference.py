@@ -47,7 +47,7 @@ def main():
 
     created_at = datetime.datetime.now(pytz.timezone('UTC'))
     weather_cols = [x for x in ["wind_avg_ms", "wind_max_ms", "temp_avg_c", "temp_max_c", "rainfall_mm", "ghi_sum_whm2"] if x in FORECAST_FEATURES]
-    loader = DataLoader(engine)
+    loader = DataLoader(engine, logger)
     preprocessor = pickle.load(open("./models/fullmodel_forecast/preprocessor_forecast.pkl", 'rb'))
 
     logger.info("Start prediction for each depth")
