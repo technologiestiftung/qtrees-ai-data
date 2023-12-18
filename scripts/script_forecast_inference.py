@@ -23,6 +23,7 @@ from qtrees.data_processor import Data_loader
 import numpy as np
 
 logger = get_logger(__name__)
+TILE_ID = 2
 
 def main():
     logger.info("Args: %s", sys.argv[1:])
@@ -66,8 +67,8 @@ def main():
             for i in range(3):
                 X = base_X.copy()
                 hist_date = last_date - pd.Timedelta(days=i)
-                current_weather = pd.read_sql(f"SELECT DISTINCT ON (date) date, {', '.join(weather_cols)} FROM private.weather_tile_measurement WHERE date = %s ORDER BY date DESC", 
-                                              engine, params=(hist_date, ))
+                current_weather = pd.read_sql("SELECT date, %s FROM private.weather_tile_measurement WHERE date = %s AND tile_id = %i ORDER BY date DESC", 
+                                              engine, params=(', '.join(weather_cols), hist_date, TILE_ID))
                 for col in weather_cols:
                     X.loc[:, col] = current_weather.loc[:, col].values[0]
                 if autoreg_features is None:
@@ -79,8 +80,8 @@ def main():
             logger.info(f"Inference for depth {type_id}, batch {batch_number+1}/{int(np.ceil(num_trees/batch_size))}.")
             for h in range(1, FORECAST_HORIZON+1):
                 forecast_date = last_date + pd.Timedelta(days=h)
-                current_weather = pd.read_sql(f"SELECT DISTINCT ON (date) date, {', '.join(weather_cols)} FROM private.weather_tile_forecast WHERE date = %s ORDER BY date, created_at DESC", 
-                                                engine, params=(forecast_date, ))
+                current_weather = pd.read_sql("SELECT date, %s FROM private.weather_tile_forecast WHERE date = %s AND tile_id = %i ORDER BY date, created_at DESC", 
+                                                engine, params=(', '.join(weather_cols), forecast_date, TILE_ID))
 
                 X = base_X.copy()
                 X = X.merge(autoreg_features, how="left", left_index=True, right_index=True)
