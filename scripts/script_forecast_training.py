@@ -32,7 +32,7 @@ def main():
     )
 
     loader = DataLoader(engine, logger)
-    train_fc = loader.download_forecast_training_data()
+    train_fc = loader.download_training_data(forecast=True)
     preprocessor_forecast = Preprocessor_Forecast()
     preprocessor_forecast.fit(train_fc)
     logger.info("Transform forecast training data")

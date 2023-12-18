@@ -18,12 +18,11 @@ from qtrees.helper import get_logger, init_db_args
 from qtrees.forecast_util import check_last_data
 import datetime
 import pytz
-from qtrees.constants import FORECAST_FEATURES
+from qtrees.constants import FORECAST_FEATURES, PREPROCESSING_HYPERPARAMS
 from qtrees.data_processor import DataLoader
 import numpy as np
 
 logger = get_logger(__name__)
-TILE_ID = 2
 
 def main():
     logger.info("Args: %s", sys.argv[1:])
@@ -68,7 +67,7 @@ def main():
                 X = base_X.copy()
                 hist_date = last_date - pd.Timedelta(days=i)
                 current_weather = pd.read_sql("SELECT date, %s FROM private.weather_tile_measurement WHERE date = %s AND tile_id = %i ORDER BY date DESC", 
-                                              engine, params=(', '.join(weather_cols), hist_date, TILE_ID))
+                                              engine, params=(', '.join(weather_cols), hist_date, PREPROCESSING_HYPERPARAMS['tile_id']))
                 for col in weather_cols:
                     X.loc[:, col] = current_weather.loc[:, col].values[0]
                 if autoreg_features is None:
@@ -81,7 +80,7 @@ def main():
             for h in range(1, FORECAST_HORIZON+1):
                 forecast_date = last_date + pd.Timedelta(days=h)
                 current_weather = pd.read_sql("SELECT date, %s FROM private.weather_tile_forecast WHERE date = %s AND tile_id = %i ORDER BY date, created_at DESC", 
-                                                engine, params=(', '.join(weather_cols), forecast_date, TILE_ID))
+                                                engine, params=(', '.join(weather_cols), forecast_date, PREPROCESSING_HYPERPARAMS['tile_id']))
 
                 X = base_X.copy()
                 X = X.merge(autoreg_features, how="left", left_index=True, right_index=True)

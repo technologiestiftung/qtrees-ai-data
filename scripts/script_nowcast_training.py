@@ -33,7 +33,7 @@ def main():
 
     enc = DataLoader(engine, logger) #Downloads data
     logger.info("Generate nowcast training data")
-    train_data = enc.download_nowcast_training_data()
+    train_data = enc.download_training_data(forecast=False)
     train_data = train_data[NOWCAST_FEATURES + ["type_id", "site_id", "tree_id", "timestamp", "value"]]
     prep_nowcast = Preprocessor_Nowcast()
     prep_nowcast.fit(train_data)

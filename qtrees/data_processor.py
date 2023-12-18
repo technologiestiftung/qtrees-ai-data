@@ -31,17 +31,9 @@ class DataLoader:
         self.batch_num = batch_num
         data = self._download_data(with_sensors=False)
         return data
-    
-    def download_nowcast_training_data(self, public_run: bool = False):
-        self.forecast = False
-        self.public_run = public_run
-        self.batch_size = None
-        data = self._download_data(with_sensors=True)
-        data = data.merge(self._get_weather_measurements(), how="left", left_on="timestamp", right_index=True)
-        return data
-    
-    def download_forecast_training_data(self, public_run: bool = False):
-        self.forecast = True
+
+    def download_training_data(self, forecast, public_run: bool = False):
+        self.forecast = forecast
         self.public_run = public_run
         self.batch_size = None
         data = self._download_data(with_sensors=True)
