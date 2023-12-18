@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor
 import pickle
 from qtrees.helper import get_logger, init_db_args
 import os
-from qtrees.constants import NOWCAST_FEATURES, HYPER_PARAMETERS
+from qtrees.constants import NOWCAST_FEATURES, HYPER_PARAMETERS_NC
 from qtrees.data_processor import Preprocessor_Nowcast, Data_loader
 
 logger = get_logger(__name__)
@@ -49,7 +49,7 @@ def main():
     for type in [1, 2, 3]:
         X = train_data.loc[train_data.type_id == type, NOWCAST_FEATURES]
         y = train_data.loc[train_data.type_id == type, "target"] # TODO filter valid
-        model = RandomForestRegressor(**HYPER_PARAMETERS)
+        model = RandomForestRegressor(**HYPER_PARAMETERS_NC)
         model.fit(X, y)
 
         # TODO read path from config
