@@ -57,7 +57,8 @@ class DataLoader:
         if self.batch_size is None:
             trees = pd.read_sql("SELECT id,gattung,standalter FROM public.trees WHERE street_tree = true", self.engine.connect())
         else:
-            trees = pd.read_sql(f"SELECT id,gattung,standalter FROM public.trees WHERE street_tree = true ORDER BY id LIMIT {self.batch_size} OFFSET {self.batch_size*self.batch_num}", self.engine.connect())
+            trees = pd.read_sql("SELECT id,gattung,standalter FROM public.trees WHERE street_tree = true ORDER BY id LIMIT %s OFFSET %s", 
+                                self.engine.connect(), params=(self.batch_size, self.batch_size*self.batch_num))
             if trees.shape[0] == 0:
                 return None
         trees.rename(columns={"id": "tree_id"}, inplace=True)
@@ -67,8 +68,10 @@ class DataLoader:
 
     def _add_tree_data(self, subset):
         def get_sensors(trees):
-            data = pd.read_sql(f"SELECT tree_id, type_id, timestamp, value FROM private.sensor_measurements WHERE tree_id in {tuple(subset.tree_id.unique())}", self.engine.connect())
-            tree_devices = pd.read_sql(f"SELECT tree_id, site_id FROM private.tree_devices WHERE tree_id in {tuple(subset.tree_id.unique())}", self.engine.connect())
+            data = pd.concat([pd.read_sql("SELECT tree_id, type_id, timestamp, value FROM private.sensor_measurements WHERE tree_id = %s", 
+                                          self.engine.connect().connect(), params=(x,)) for x in subset.tree_id.unique()])
+            tree_devices = pd.concat([pd.read_sql("SELECT tree_id, site_id FROM private.tree_devices WHERE tree_id = %s", 
+                                                  self.engine.connect(), params=(x,)) for x in subset.tree_id.unique()])
             if not data.empty:
                 data = data.assign(month=data.timestamp.dt.month)
                 data = reduce(lambda left, right: pd.merge(left, right, on="tree_id",
@@ -76,8 +79,8 @@ class DataLoader:
             return data
         
         def get_watering(relevant_trees):
-            water_sga = pd.read_sql(f"SELECT * from private.watering_sga WHERE tree_id in {relevant_trees}", self.engine.connect())
-            water_gdk = pd.read_sql(f"SELECT * FROM private.watering_gdk WHERE tree_id in {relevant_trees}", self.engine.connect())
+            water_sga = pd.concat([pd.read_sql("SELECT * from private.watering_sga WHERE tree_id = %s", self.engine.connect(), params=(x,)) for x in relevant_trees])
+            water_gdk = pd.concat([pd.read_sql("SELECT * from private.watering_gdk WHERE tree_id = %s", self.engine.connect(), params=(x,)) for x in relevant_trees])
             watered_trees = pd.Series(list(set(water_sga.tree_id).union(set(water_gdk.tree_id))), name="tree_id")
             # Only get last 8 days if we don't take the sensors
             if self.date is None:
@@ -99,7 +102,7 @@ class DataLoader:
             return water
 
         def get_shading_index(relevant_trees):
-            monthly_shading = pd.read_sql(f"SELECT * FROM public.shading_monthly WHERE tree_id in {relevant_trees}", self.engine.connect())
+            monthly_shading = pd.concat([pd.read_sql("SELECT * FROM public.shading_monthly WHERE tree_id = %s", self.engine.connect(), params=(x,)) for x in relevant_trees])
             shading_long = pd.melt(monthly_shading, id_vars="tree_id")
             month_mapping = dict((v, k) for v, k in zip(shading_long.variable.unique(), range(1, 13)))
             shading_long = shading_long.assign(month=[month_mapping[el] for el in shading_long.variable])
@@ -157,7 +160,9 @@ class DataLoader:
 
     def _get_weather_forecast(self):
         '''For forecast training and inference we take the weather forecast from solar anywhere instead of the station weather. However we do not have humidity for the forecast'''
-        weather_solar = pd.read_sql(f"SELECT tile_id, date, ghi_sum_whm2, wind_max_ms, wind_avg_ms, temp_max_c, temp_avg_c, rainfall_mm FROM private.weather_tile_forecast WHERE DATE(created_at) = '{self.date.strftime('%Y-%m-%d')}';", con=self.engine.connect())
+        weather_solar = pd.read_sql("SELECT tile_id, date, ghi_sum_whm2, wind_max_ms, wind_avg_ms, temp_max_c, temp_avg_c, \
+                                    rainfall_mm FROM private.weather_tile_forecast WHERE DATE(created_at) = %s",
+                                    con=self.engine.connect(), params=(self.date.strftime('%Y-%m-%d')))
         weather_solar["date"] = weather_solar["date"].astype('datetime64[ns, UTC]')
         weather_solar = weather_solar.groupby(["date"]).mean()
         weather_solar["rainfall_mm"] = weather_solar["rainfall_mm"].rolling(window=PREPROCESSING_HYPERPARAMS['rolling_window'], min_periods=1).sum()
