@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor
 import pickle
 from qtrees.helper import get_logger, init_db_args
 import os
-from qtrees.constants import NOWCAST_FEATURES, HYPER_PARAMETERS_NC
+from qtrees.constants import NOWCAST_FEATURES, HYPER_PARAMETERS_NC, PATH_TO_MODELS, MODEL_PREFIX, MODEL_TYPE
 from qtrees.data_processor import PreprocessorNowcast, DataLoader
 
 logger = get_logger(__name__)
@@ -35,26 +35,30 @@ def main():
     logger.info("Generate nowcast training data")
     train_data = enc.download_training_data(forecast=False)
     train_data = train_data[NOWCAST_FEATURES + ["type_id", "site_id", "tree_id", "timestamp", "value"]]
+    logger.info("Transforming nowcast training data")
     prep_nowcast = PreprocessorNowcast()
     prep_nowcast.fit(train_data)
     logger.info("Transform nowcast training data")
     train_data = prep_nowcast.transform_train(train_data)
     train_data = train_data.drop(columns="site_id")
     train_data = train_data.dropna()
+    logger.info(train_data.shape)
 
-    if not os.path.exists('./models/fullmodel_nowcast/'):
-        os.makedirs('./models/fullmodel_nowcast/')
+    path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["nowcast"], "")
+    if not os.path.exists(path):
+        os.makedirs(path)
+    prep_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["preprocessor"], "")
+    if not os.path.exists(prep_path):
+        os.makedirs(prep_path)
 
     logger.info("Start model training for each depth.")
-    for type in [1, 2, 3]:
-        X = train_data.loc[train_data.type_id == type, NOWCAST_FEATURES]
-        y = train_data.loc[train_data.type_id == type, "target"] # TODO filter valid
+    for type_id in [1, 2, 3]:
+        X = train_data.loc[train_data.type_id == type_id, NOWCAST_FEATURES]
+        y = train_data.loc[train_data.type_id == type_id, "target"]
         model = RandomForestRegressor(**HYPER_PARAMETERS_NC)
         model.fit(X, y)
-
-        # TODO read path from config
-        pickle.dump(model, open(f'./models/fullmodel_nowcast/nowcast_model_{type}.m', 'wb'))
-    pickle.dump(prep_nowcast, open('./models/fullmodel_nowcast/PreprocessorNowcast.pkl', 'wb'))
+        pickle.dump(model, open(path + MODEL_PREFIX + f'model_{type_id}.m', 'wb'))
+    pickle.dump(prep_nowcast, open(prep_path + f"{MODEL_TYPE['preprocessor']}_{MODEL_TYPE['nowcast']}.pkl", 'wb'))
     logger.info("Trained all models.")
 
 if __name__ == "__main__":

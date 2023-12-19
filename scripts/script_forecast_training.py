@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor
 import pickle
 from qtrees.helper import get_logger, init_db_args
 import os
-from qtrees.constants import FORECAST_FEATURES, HYPER_PARAMETERS_FC, HYPER_PARAMETERS_NC
+from qtrees.constants import FORECAST_FEATURES, HYPER_PARAMETERS_FC, HYPER_PARAMETERS_NC, MODEL_PREFIX, MODEL_TYPE, PATH_TO_MODELS
 from qtrees.data_processor import DataLoader, PreprocessorForecast
 
 logger = get_logger(__name__)
@@ -39,10 +39,12 @@ def main():
     train_data = preprocessor_forecast.transform_train(train_fc)
     train_data = train_data.drop(columns="site_id")
     train_data = train_data.dropna()
-    # TODO put into some config where also the model is configured (YAML?)
-    if not os.path.exists('./models/fullmodel_forecast/'):
-        os.makedirs('./models/fullmodel_forecast/')
-    pickle.dump(preprocessor_forecast, open('./models/fullmodel_forecast/preprocessor_forecast.pkl', 'wb'))
+    model_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["forecast"], "")
+    prep_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["preprocessor"], "")
+    aux_path = aux_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["auxiliary"], "")
+    create_folders([model_path, prep_path, aux_path])
+
+    pickle.dump(preprocessor_forecast, open(prep_path + f"{MODEL_TYPE['preprocessor']}_{MODEL_TYPE['forecast']}.pkl", 'wb'))
 
     logger.info("Start model training for each depth.")
     for type_id in [1, 2, 3]:
@@ -50,20 +52,25 @@ def main():
         y = train_data.loc[train_data.type_id == type_id, "target"]
         model = RandomForestRegressor(**HYPER_PARAMETERS_FC)
         model.fit(X, y)
-
-        # TODO read path from config
-        pickle.dump(model, open(f'./models/fullmodel_forecast/forecast_model_{type_id}.m', 'wb'))
+        pickle.dump(model, open(model_path + MODEL_PREFIX + f"model_{type_id}.m", 'wb'))
     logger.info("Trained forecast models.")
 
     logger.info("Start model training for auxiliary nowcast model.")
     for type_id in [1, 2, 3]:
         X = train_data.loc[train_data.type_id == type_id, FORECAST_FEATURES]
-        y = train_data.loc[train_data.type_id == type_id, "target"] # TODO filter valid
+        y = train_data.loc[train_data.type_id == type_id, "target"]
         model_nc = RandomForestRegressor(**HYPER_PARAMETERS_NC)
         model_nc.fit(X, y)
-        # TODO read path from config
-        pickle.dump(model_nc, open(f'./models/fullmodel_forecast/auxiliary_model_{type_id}.m', 'wb'))
+        pickle.dump(model_nc, open(aux_path + MODEL_PREFIX + f"model_{type_id}.m", 'wb'))
     logger.info("Trained all models")
+
+
+def create_folders(path_list):
+    for path in path_list:
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+
 if __name__ == "__main__":
     try:
         main()

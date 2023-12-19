@@ -10,6 +10,7 @@ Options:
   --batch_size=BATCH_SiZE                      Batch size [default: 100000]
 """
 import sys
+import os
 import pickle
 import datetime
 import pytz
@@ -19,7 +20,7 @@ from sqlalchemy import create_engine
 from docopt import docopt, DocoptExit
 
 from qtrees.helper import get_logger, init_db_args
-from qtrees.constants import FORECAST_FEATURES, PREPROCESSING_HYPERPARAMS
+from qtrees.constants import FORECAST_FEATURES, PREPROCESSING_HYPERPARAMS, MODEL_PREFIX, MODEL_TYPE, PATH_TO_MODELS
 from qtrees.data_processor import DataLoader
 
 
@@ -44,27 +45,32 @@ def main():
     created_at = datetime.datetime.now(pytz.timezone('UTC'))
     weather_cols = [x for x in ["wind_avg_ms", "wind_max_ms", "temp_avg_c", "temp_max_c", "rainfall_mm", "ghi_sum_whm2"] if x in FORECAST_FEATURES]
     loader = DataLoader(engine, logger)
-    preprocessor = pickle.load(open("./models/fullmodel_forecast/preprocessor_forecast.pkl", 'rb'))
+    model_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["forecast"], "")
+    prep_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["preprocessor"], "")
+    aux_path = aux_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["auxiliary"], "")
+
+    preprocessor = pickle.load(open(prep_path + f"{MODEL_TYPE['preprocessor']}_{MODEL_TYPE['forecast']}.pkl", 'rb'))
 
     logger.info("Start prediction for each depth")
     for batch_number in range(int(np.ceil(num_trees/batch_size))):
         input_chunk = loader.download_forecast_inference_data(date=last_date, batch_size=batch_size, batch_num=batch_number)
         input_chunk = preprocessor.transform_inference(input_chunk)
-        base_X = input_chunk.reset_index(level=1, drop=True) #Drop date index (this is only one value anyway)
+        base_X = input_chunk.reset_index(level=1, drop=True)  # Drop date index (this is only one value anyway)
         base_X = base_X[[x for x in base_X.columns if x in FORECAST_FEATURES]]
         base_X = base_X.dropna()
         for type_id in [1, 2, 3]:
-            aux_model = pickle.load(open(f'./models/fullmodel_forecast/auxiliary_model_{type_id}.m', 'rb'))
-            model = pickle.load(open(f'./models/fullmodel_forecast/forecast_model_{type_id}.m', 'rb'))
-            #generate autoregressive features for the last 3 days
+            aux_model = pickle.load(open(aux_path + MODEL_PREFIX + f"model_{type_id}.m", 'rb'))
+            model = pickle.load(open(model_path + MODEL_PREFIX + f"model_{type_id}.m", 'rb'))
+            # generate autoregressive features for the last 3 days
             if base_X.shape[0] == 0:
                 continue
             autoreg_features = None
-            for i in range(3):
+            for i in range(PREPROCESSING_HYPERPARAMS["autoreg_lag"]):
                 X = base_X.copy()
                 hist_date = last_date - pd.Timedelta(days=i)
-                current_weather = pd.read_sql("SELECT date, %s FROM private.weather_tile_measurement WHERE date = %s AND tile_id = %i ORDER BY date DESC", 
-                                              engine, params=(', '.join(weather_cols), hist_date, PREPROCESSING_HYPERPARAMS['tile_id']))
+                current_weather = pd.read_sql("SELECT * FROM private.weather_tile_measurement WHERE date = %s AND tile_id = %s ORDER BY date DESC", 
+                                              engine, params=(hist_date, PREPROCESSING_HYPERPARAMS['tile_id']))
+                current_weather = current_weather[weather_cols]
                 for col in weather_cols:
                     X.loc[:, col] = current_weather.loc[:, col].values[0]
                 if autoreg_features is None:
@@ -76,16 +82,14 @@ def main():
             logger.info(f"Inference for depth {type_id}, batch {batch_number+1}/{int(np.ceil(num_trees/batch_size))}.")
             for h in range(1, PREPROCESSING_HYPERPARAMS["fc_horizon"]+1):
                 forecast_date = last_date + pd.Timedelta(days=h)
-                current_weather = pd.read_sql("SELECT date, %s FROM private.weather_tile_forecast WHERE date = %s AND tile_id = %i ORDER BY date, created_at DESC", 
-                                                engine, params=(', '.join(weather_cols), forecast_date, PREPROCESSING_HYPERPARAMS['tile_id']))
-
+                current_weather = pd.read_sql("SELECT * FROM private.weather_tile_forecast WHERE date = %s AND tile_id = %s ORDER BY date, created_at DESC", 
+                                              engine, params=(forecast_date, PREPROCESSING_HYPERPARAMS['tile_id']))
+                current_weather = current_weather[weather_cols]
                 X = base_X.copy()
                 X = X.merge(autoreg_features, how="left", left_index=True, right_index=True)
                 for col in weather_cols:
                     X.loc[:, col] = current_weather.loc[:, col].values[0]
-                # Reordering
                 X = X[FORECAST_FEATURES + ["shift_1", "shift_2", "shift_3"]]
-                # TODO read model config from yaml?
                 y_hat = pd.DataFrame(model.predict(X), index=X.index).reset_index()
                 y_hat.columns = ["tree_id", "value"]
                 y_hat["type_id"] = type_id
@@ -103,8 +107,8 @@ def main():
 
     logger.info("Calculating Mean Prediction.")
     with engine.connect() as con:
-        con.execute("INSERT INTO public.forecast SELECT nextval('forecast_id_seq'), tree_id, 4 as type_id, timestamp, avg(value), created_at, model_id " + \
-                    "FROM public.forecast " + \
+        con.execute("INSERT INTO public.forecast SELECT nextval('forecast_id_seq'), tree_id, 4 as type_id, timestamp, avg(value), created_at, model_id " +
+                    "FROM public.forecast " +
                     "WHERE created_at = %(created)s GROUP BY tree_id, timestamp, created_at, model_id;", created=created_at)
 
     with engine.connect() as con:
@@ -112,7 +116,8 @@ def main():
         con.execute('REFRESH MATERIALIZED VIEW public.expert_dashboard_large')
         con.execute("REFRESH MATERIALIZED VIEW public.vector_tiles;")
 
-    logger.info(f"Updated materialized view public.expert_dashboard.")
+    logger.info("Updated materialized view public.expert_dashboard.")
+
 
 if __name__ == "__main__":
     try:

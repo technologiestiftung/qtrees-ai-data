@@ -9,17 +9,19 @@ Options:
   --db_qtrees=DB_QTREES               Database name [default:]
   --batch_size=BATCH_SiZE                      Batch size [default: 100000]
 """
-import pandas as pd
-import numpy as np
-from sqlalchemy import create_engine
 import sys
-from docopt import docopt, DocoptExit
-import pickle
-from qtrees.helper import get_logger, init_db_args
-from qtrees.forecast_util import check_last_data
+import os
 import datetime
 import pytz
-from qtrees.constants import NOWCAST_FEATURES
+import pickle
+from docopt import docopt, DocoptExit
+from sqlalchemy import create_engine
+import pandas as pd
+import numpy as np
+
+from qtrees.helper import get_logger, init_db_args
+from qtrees.forecast_util import check_last_data
+from qtrees.constants import NOWCAST_FEATURES, PATH_TO_MODELS, MODEL_TYPE, MODEL_PREFIX
 from qtrees.data_processor import DataLoader
 
 logger = get_logger(__name__)
@@ -37,7 +39,8 @@ def main():
     num_trees = pd.read_sql("SELECT COUNT(*) FROM public.trees WHERE street_tree = true", con=engine.connect()).iloc[0, 0]
     nowcast_date = pd.read_sql("SELECT MAX(date) FROM public.weather", con=engine.connect()).astype('datetime64[ns, UTC]').iloc[0, 0]
     loader = DataLoader(engine, logger)
-    preprocessor = pickle.load(open("./models/fullmodel/PreprocessorNowcast.pkl", 'rb'))
+    prep_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["preprocessor"], f"{MODEL_TYPE['preprocessor']}_{MODEL_TYPE['nowcast']}.pkl")
+    preprocessor = pickle.load(open(prep_path, 'rb'))
     # TODO something smarter here?
     with engine.connect() as con:
         con.execute("TRUNCATE public.nowcast")
@@ -45,11 +48,12 @@ def main():
     logger.info("Start prediction for each depth.")
     created_at = datetime.datetime.now(pytz.timezone('UTC'))
     for type_id in [1, 2, 3]:
-        model = pickle.load(open(f'./models/fullmodel/nowcast_model_{type_id}.m', 'rb'))
+        model_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["nowcast"], MODEL_PREFIX + f"model_{type_id}.m")
+        model = pickle.load(open(model_path, 'rb'))
         for batch_number in range(int(np.ceil(num_trees/batch_size))):
             input_chunk = loader.download_nowcast_inference_data(date=nowcast_date, batch_size=batch_size, batch_num=batch_number)
             input_chunk = preprocessor.transform_inference(input_chunk)
-            X = input_chunk[NOWCAST_FEATURES].reset_index(level=1, drop=True) #Drop date index (this is only one value anyway)
+            X = input_chunk[NOWCAST_FEATURES].reset_index(level=1, drop=True)  #Drop date index (this is only one value anyway)
             X = X.dropna()
             # TODO read model config from yaml?
             # TODO filter valid targets
