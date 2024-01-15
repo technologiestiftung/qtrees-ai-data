@@ -99,7 +99,7 @@ def main():
                 
                 # logger.info(f"Updating materialized views...")
                 # with engine.connect() as con:
-                    # TODO add views if used. 
+                    # TODO add views if used.   
         except Exception as e:
             logger.error("Cannot write to db: %s", e)
             exit(121)
