@@ -189,10 +189,13 @@ class DataLoader:
     def _add_tree_data(self, subset):
         '''Adds sensor data, waterings and shading index to the metadata of each tree. Subsets the data such that only trees remain where there are sensors. Watering is split into Gieß-den-Kiez (gdk) and Grünflächenämter (sga)'''
         def get_sensors(trees):
-            data = pd.read_sql(f"SELECT tree_id, type_id, timestamp, value FROM private.sensor_measurements WHERE tree_id IN {tuple(subset.tree_id.unique())}",
-                               self.engine.connect())
-            tree_devices = pd.read_sql(f"SELECT tree_id, site_id FROM private.tree_devices WHERE tree_id IN {tuple(subset.tree_id.unique())}",
-                                       self.engine.connect())
+            tree_ids = tuple(subset.tree_id.unique())
+            placeholders = ', '.join(['%s'] * len(tree_ids))
+
+            data = pd.read_sql(f"SELECT tree_id, type_id, timestamp, value FROM private.sensor_measurements WHERE tree_id IN ({placeholders})",
+                               self.engine.connect(), params=tree_ids)
+            tree_devices = pd.read_sql(f"SELECT tree_id, site_id FROM private.tree_devices WHERE tree_id IN ({placeholders})",
+                                       self.engine.connect(), params=tree_ids)
             if not data.empty:
                 data = data.assign(month=data.timestamp.dt.month)
                 data = reduce(lambda left, right: pd.merge(left, right, on="tree_id",
