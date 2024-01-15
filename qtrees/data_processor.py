@@ -269,9 +269,9 @@ class DataLoader:
             else:  # For private runs we take the solar irradiance in addition to other weather data
                 if self.forecast: # For forecast we use solar anywhere data as this is the only one with available weather predictions
                     weather_station = pd.read_sql_table("weather_tile_measurement", schema="private", con=self.engine.connect(),
-                                                        index_col="date",columns=['tile_id']+WEATHER_COLUMNS+["ghi_sum_whm2"])
+                                                        index_col="date", columns=['tile_id']+WEATHER_COLUMNS+["ghi_sum_whm2"])
                     weather_station = weather_station.groupby(level=0).mean().drop(columns="tile_id")
-                else: # For nowcast we use 
+                else:  # For nowcast we use 
                     weather_station = pd.read_sql_table("weather", schema="public", con=self.engine.connect(),
                                                         index_col="date", columns=WEATHER_COLUMNS)
                     weather_solar = pd.read_sql_table("weather_tile_measurement", con=self.engine.connect(), schema="private",
