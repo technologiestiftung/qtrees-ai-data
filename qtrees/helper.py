@@ -1,6 +1,6 @@
 import logging
 import os
-
+import numpy as np
 
 
 _db_lookup_env = {
@@ -15,6 +15,7 @@ def init_db_args(db, db_type, logger):
         logger.error("No config found for %s. Available: %s", db_type, _db_lookup_env.keys())
         exit(2)
 
+    print(db_conf)
     db = db or os.getenv(db_conf["db"])
     passwd = os.getenv(db_conf["passwd"])
 
@@ -40,3 +41,9 @@ def get_logger(name, log_level=logging.DEBUG):
     consoleHandler.setFormatter(formatter)
     logger.addHandler(consoleHandler)
     return logger
+
+
+
+
+def log_plus_1(x):
+    return np.log(x + 1.0)

@@ -202,8 +202,9 @@ class DataLoader:
             return data
         
         def get_watering(relevant_trees):
-            water_sga = pd.read_sql(f"SELECT * FROM private.watering_sga WHERE tree_id IN {relevant_trees}", self.engine.connect())
-            water_gdk = pd.read_sql(f"SELECT * FROM private.watering_gdk WHERE tree_id IN {relevant_trees}", self.engine.connect())
+            placeholders = ', '.join(['%s'] * len(relevant_trees))
+            water_sga = pd.read_sql(f"SELECT * FROM private.watering_sga WHERE tree_id IN ({placeholders})", self.engine.connect(), params=relevant_trees)
+            water_gdk = pd.read_sql(f"SELECT * FROM private.watering_gdk WHERE tree_id IN ({placeholders})", self.engine.connect(), params=relevant_trees)
             watered_trees = pd.Series(list(set(water_sga.tree_id).union(set(water_gdk.tree_id))), name="tree_id")
             # Only get last 8 days if we don't take the sensors
             if self.date is None:
@@ -225,7 +226,8 @@ class DataLoader:
             return water
 
         def get_shading_index(relevant_trees):
-            monthly_shading = pd.read_sql(f"SELECT * FROM public.shading_monthly WHERE tree_id IN {relevant_trees}", self.engine.connect())
+            placeholders = ', '.join(['%s'] * len(relevant_trees))
+            monthly_shading = pd.read_sql(f"SELECT * FROM public.shading_monthly WHERE tree_id IN ({placeholders})", self.engine.connect(), params=relevant_trees)
             shading_long = pd.melt(monthly_shading, id_vars="tree_id")
             month_mapping = dict((v, k) for v, k in zip(shading_long.variable.unique(), range(1, 13)))
             shading_long = shading_long.assign(month=[month_mapping[el] for el in shading_long.variable])
@@ -271,9 +273,9 @@ class DataLoader:
             else:  # For private runs we take the solar irradiance in addition to other weather data
                 if self.forecast: # For forecast we use solar anywhere data as this is the only one with available weather predictions
                     weather_station = pd.read_sql_table("weather_tile_measurement", schema="private", con=self.engine.connect(),
-                                                        index_col="date",columns=['tile_id']+WEATHER_COLUMNS+["ghi_sum_whm2"])
+                                                        index_col="date", columns=['tile_id']+WEATHER_COLUMNS+["ghi_sum_whm2"])
                     weather_station = weather_station.groupby(level=0).mean().drop(columns="tile_id")
-                else: # For nowcast we use 
+                else:  # For nowcast we use 
                     weather_station = pd.read_sql_table("weather", schema="public", con=self.engine.connect(),
                                                         index_col="date", columns=WEATHER_COLUMNS)
                     weather_solar = pd.read_sql_table("weather_tile_measurement", con=self.engine.connect(), schema="private",

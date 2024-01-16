@@ -1,8 +1,8 @@
 FORECAST_FEATURES = ['month', 'gattung', 'standalter', 'shading_index',
-                     "wind_max_ms", "temp_avg_c", "rainfall_mm", "ghi_sum_whm2"]
+                     "wind_max_ms", "temp_avg_c", "rainfall_mm", "ghi_sum_whm2", 'mean_yesterday']
 
 NOWCAST_FEATURES = ['month', 'gattung', 'standalter', 'water_sga', 'water_gdk', 'shading_index', 'wind_max_ms',
-                    'rainfall_mm', 'temp_avg_c', 'ghi_sum_whm2']
+                    'rainfall_mm', 'temp_avg_c', 'ghi_sum_whm2', 'mean_yesterday']
 
 HYPER_PARAMETERS_NC = dict(max_features="sqrt", n_estimators=1000, max_depth=5, bootstrap=True)
 
