@@ -1,10 +1,9 @@
 import pandas as pd
-import numpy as np
 from functools import reduce
 import datetime as dt
 from typing import Optional
 from sklearn.preprocessing import OrdinalEncoder
-from qtrees.constants import PREPROCESSING_HYPERPARAMS, NOWCAST_FEATURES, FORECAST_FEATURES
+from qtrees.constants import PREPROCESSING_HYPERPARAMS
 from qtrees.helper import get_logger
 
 DATA_START_DATE = "2021-06-01"
@@ -63,7 +62,7 @@ class DataLoader:
         else:
             self.logger = logger
 
-    def download_nowcast_inference_data(self, date: dt.date = dt.date.today() - dt.timedelta(days=1), public_run: bool = False, batch_size: Optional[int] = None, batch_num: Optional[int] = None):
+    def download_nowcast_inference_data(self, date: dt.date = dt.date.today() - dt.timedelta(days=1), public_run: bool = False, batch_size: Optional[int] = None, batch_num: Optional[int] = None) -> pd.DataFrame:
         """
         Downloads nowcast data for inference
 
@@ -95,7 +94,7 @@ class DataLoader:
             data = data.merge(self._get_weather_measurements(), how="left", left_on="timestamp", right_index=True)
         return data
     
-    def download_forecast_inference_data(self, date: dt.date = dt.date.today(), public_run: bool = False, batch_size: Optional[int] = None, batch_num: Optional[int] = None):
+    def download_forecast_inference_data(self, date: dt.date = dt.date.today(), public_run: bool = False, batch_size: Optional[int] = None, batch_num: Optional[int] = None) -> pd.DataFrame:
         """
         Downloads forecast data for inference
 
@@ -125,7 +124,7 @@ class DataLoader:
         data = self._download_data(with_sensors=False)
         return data
 
-    def download_training_data(self, forecast, public_run: bool = False):
+    def download_training_data(self, forecast, public_run: bool = False) -> pd.DataFrame:
         """
         Downloads all available training data
 
