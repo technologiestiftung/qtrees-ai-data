@@ -2,11 +2,12 @@
 """
 Download tree data and store into db.
 Usage:
-  script_nowcast_training.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES]
+  script_nowcast_training.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES] [--model_name]
   script_nowcast_training.py (-h | --help)
 Options:
   --config_file=CONFIG_FILE           Directory for config file [default: models/model.yml]
   --db_qtrees=DB_QTREES               Database name [default:]
+  --model_name                        Decided which trained model to use
 """
 import pandas as pd
 from sqlalchemy import create_engine
@@ -30,7 +31,10 @@ def main():
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
-
+    if args["--model_name"] is not None:
+        prefix = args["--model_name"]
+    else:
+        prefix = MODEL_PREFIX
     enc = DataLoader(engine, logger) #Downloads data
     logger.info("Generate nowcast training data")
     train_data = enc.download_training_data(forecast=False)
@@ -57,7 +61,7 @@ def main():
         y = train_data.loc[train_data.type_id == type_id, "target"]
         model = RandomForestRegressor(**HYPER_PARAMETERS_NC)
         model.fit(X, y)
-        pickle.dump(model, open(path + MODEL_PREFIX + f'model_{type_id}.m', 'wb'))
+        pickle.dump(model, open(path + prefix + f'model_{type_id}.m', 'wb'))
     pickle.dump(prep_nowcast, open(prep_path + f"{MODEL_TYPE['preprocessor']}_{MODEL_TYPE['nowcast']}.pkl", 'wb'))
     logger.info("Trained all models.")
 

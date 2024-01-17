@@ -2,11 +2,12 @@
 """
 Download tree data and store into db.
 Usage:
-  script_forecast_training.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES]
+  script_forecast_training.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES] [--model_name]
   script_forecast_training.py (-h | --help)
 Options:
   --config_file=CONFIG_FILE           Directory for config file [default: models/model.yml]
   --db_qtrees=DB_QTREES               Database name [default:]
+  --model_name                        Decided which trained model to use
 """
 import pandas as pd
 from sqlalchemy import create_engine
@@ -30,7 +31,10 @@ def main():
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
-
+    if args["--model_name"] is not None:
+        prefix = args["--model_name"]
+    else:
+        prefix = MODEL_PREFIX
     loader = DataLoader(engine, logger)
     train_fc = loader.download_training_data(forecast=True)
     preprocessor_forecast = PreprocessorForecast()
@@ -52,7 +56,7 @@ def main():
         y = train_data.loc[train_data.type_id == type_id, "target"]
         model = RandomForestRegressor(**HYPER_PARAMETERS_FC)
         model.fit(X, y)
-        pickle.dump(model, open(model_path + MODEL_PREFIX + f"model_{type_id}.m", 'wb'))
+        pickle.dump(model, open(model_path + prefix + f"model_{type_id}.m", 'wb'))
     logger.info("Trained forecast models.")
 
     logger.info("Start model training for auxiliary nowcast model.")
@@ -61,7 +65,7 @@ def main():
         y = train_data.loc[train_data.type_id == type_id, "target"]
         model_nc = RandomForestRegressor(**HYPER_PARAMETERS_NC)
         model_nc.fit(X, y)
-        pickle.dump(model_nc, open(aux_path + MODEL_PREFIX + f"model_{type_id}.m", 'wb'))
+        pickle.dump(model_nc, open(aux_path + prefix + f"model_{type_id}.m", 'wb'))
     logger.info("Trained all models")
 
 

@@ -2,12 +2,13 @@
 """
 Download tree data and store into db.
 Usage:
-  script_nowcast_inference.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES] [--batch_size=BATCH_SIZE]
+  script_nowcast_inference.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES] [--batch_size=BATCH_SIZE] [--model_prefix=MODEL_PREFIX]
   script_nowcast_inference.py (-h | --help)
 Options:
   --config_file=CONFIG_FILE           Directory for config file [default: models/model.yml]
   --db_qtrees=DB_QTREES               Database name [default:]
-  --batch_size=BATCH_SiZE                      Batch size [default: 100000]
+  --batch_size=BATCH_SiZE             Batch size [default: 100000]
+  --model_name                        Decided which trained model to use
 """
 import sys
 import os
@@ -32,7 +33,10 @@ def main():
     args = docopt(__doc__)
     batch_size = int(args["--batch_size"])
     db_qtrees, postgres_passwd = init_db_args(db=args["--db_qtrees"], db_type="qtrees", logger=logger)
-
+    if args["--model_name"] is not None:
+        prefix = args["--model_name"]
+    else:
+        prefix = MODEL_PREFIX
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
@@ -48,7 +52,7 @@ def main():
     logger.info("Start prediction for each depth.")
     created_at = datetime.datetime.now(pytz.timezone('UTC'))
     for type_id in [1, 2, 3]:
-        model_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["nowcast"], MODEL_PREFIX + f"model_{type_id}.m")
+        model_path = os.path.join(PATH_TO_MODELS, MODEL_TYPE["nowcast"], prefix + f"model_{type_id}.m")
         model = pickle.load(open(model_path, 'rb'))
         for batch_number in range(int(np.ceil(num_trees/batch_size))):
             input_chunk = loader.download_nowcast_inference_data(date=nowcast_date, batch_size=batch_size, batch_num=batch_number)

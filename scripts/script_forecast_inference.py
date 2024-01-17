@@ -2,12 +2,13 @@
 """
 Download tree data and store into db.
 Usage:
-  script_forecast_inference.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES] [--batch_size=BATCH_SIZE]
+  script_forecast_inference.py [--config_file=CONFIG_FILE] [--db_qtrees=DB_QTREES] [--batch_size=BATCH_SIZE] [--model_name]
   script_forecast_inference.py (-h | --help)
 Options:
   --config_file=CONFIG_FILE           Directory for config file [default: models/model.yml]
   --db_qtrees=DB_QTREES               Database name [default:]
-  --batch_size=BATCH_SiZE                      Batch size [default: 100000]
+  --batch_size=BATCH_SiZE             Batch size [default: 100000]
+  --model_name                        Decided which trained model to use
 """
 import sys
 import os
@@ -36,6 +37,11 @@ def main():
     engine = create_engine(
         f"postgresql://postgres:{postgres_passwd}@{db_qtrees}:5432/qtrees"
     )
+    if args["--model_name"] is not None:
+        prefix = args["--model_name"]
+    else:
+        prefix = MODEL_PREFIX
+
     last_date = pd.read_sql("SELECT MAX(date) FROM private.weather_tile_measurement", con=engine.connect()).astype('datetime64[ns, UTC]').iloc[0, 0]
     num_trees = pd.read_sql("SELECT COUNT(*) FROM public.trees WHERE street_tree = true", con=engine.connect()).iloc[0, 0]
     # TODO something smarter here?
@@ -59,8 +65,8 @@ def main():
         base_X = base_X[[x for x in base_X.columns if x in FORECAST_FEATURES]]
         base_X = base_X.dropna()
         for type_id in [1, 2, 3]:
-            aux_model = pickle.load(open(aux_path + MODEL_PREFIX + f"model_{type_id}.m", 'rb'))
-            model = pickle.load(open(model_path + MODEL_PREFIX + f"model_{type_id}.m", 'rb'))
+            aux_model = pickle.load(open(aux_path + prefix + f"model_{type_id}.m", 'rb'))
+            model = pickle.load(open(model_path + prefix + f"model_{type_id}.m", 'rb'))
             # generate autoregressive features for the last 3 days
             if base_X.shape[0] == 0:
                 continue
