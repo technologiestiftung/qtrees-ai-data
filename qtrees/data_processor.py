@@ -297,32 +297,7 @@ class DataLoader:
             self.logger.error("Failed to get weather data from DB: %s", e)
             exit(121)
 
-class PreprocessorNowcast:
-    """
-    Preprocesses data for nowcast training and inference.
-
-    Class which prepares training or inference data for being used in an sklearn.model. This class handles renaming columns, ordinal encoding of categorical features and filling gaps in less important features
-
-    Attributes
-    ----------
-    weather_features : list of strings
-        All weather features which we want to keep from the data. Not every feature mentioned here needs to be present in the dataframe
-    cat_features : list of strings
-        All categorical features. For these the preprocessor will do ordinal encoding. Not every feature mentioned here needs to be present in the dataframe
-    num_features : list of strings
-        All numerical features that we want to keep from the data.
-    ordinal_encoder:
-        Sklearn.preprocessing.OrdinalEncoder object for ordinal encoding of the categorical features
-
-    Methods
-    -------
-    fit(X, y=None):
-        Fits the Preprocessor to some training data. This depends on columns and sets the numerical values for each category.
-    transform_train(X, y=None):
-        Fills NAs of less important columns so we dont lose this data. Then transforms categorical features and drops columns where we have no sensor data.
-    transform_inference(X, y=None):
-        Fills NAs of less important columns so we dont lose this data. Then transforms categorical features. Does not drop NAs
-    """
+class Preprocessor():
     def __init__(self,
                  weather_features=["wind_max_ms", "wind_avg_ms", "rainfall_mm", "temp_max_c", "temp_avg_c", "ghi_sum_whm2", "upm"]):
         self.weather_features = weather_features
@@ -330,7 +305,7 @@ class PreprocessorNowcast:
         self.num_features = ['value', 'water_gdk', 'water_sga', 'shading_index', 'mean_yesterday', 'site_id']
         self.ordinal_encoder = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
 
-    def fit(self, X, y=None):
+    def fit(self, X):
         '''Creates the mean_yesterday column, which is a grouped mean by day and sensor_depth, used for inference. Fits the ordinal encoder so it can encode
         categorical features during transformation.'''
         self.cat_columns = list(X.columns[X.columns.isin(self.cat_features)])
@@ -339,7 +314,7 @@ class PreprocessorNowcast:
         self.index_cols = ["type_id", "tree_id", "timestamp"]
         self.ordinal_encoder = self.ordinal_encoder.fit(X[self.cat_columns])
 
-    def transform_train(self, X, y=None):
+    def transform_train(self, X):
         '''Transforms some columns from numeric to categorical features by binning. Then transforms categorical features ordinally.
         Drops columns without sensors, renames columns and matches the index for further use.'''
         all_cols = self.index_cols + self.cat_columns + self.num_columns
@@ -352,15 +327,17 @@ class PreprocessorNowcast:
         X = X.rename(columns={"value": "target"})
         return X
 
-    def transform_inference(self, X):
+    def transform_inference(self, X, nc):
         '''Transforms some columns from numeric to categorical features by binning. Then transforms categorical features ordinally.
         Matches the index for further use.'''
         all_cols = self.index_cols + self.cat_columns + self.num_columns
-        all_cols = [x for x in all_cols if x not in ["site_id", "value", "type_id"]]
+        if nc:
+            all_cols = [x for x in all_cols if x not in ["site_id", "value", "type_id"]]
+        else:
+            all_cols = [x for x in all_cols if x not in self.weather_features + ["site_id", "value", "type_id"]]
         X = X[all_cols]
         X = self._transform_features(X)
         X.loc[:, self.cat_columns] = self.ordinal_encoder.transform(X[self.cat_columns])
-        # X = X.merge(self.mean_yesterday, left_on=["timestamp", "type_id"], right_index=True)
         return X.set_index(["tree_id", "timestamp"])
     
     def _fill_gaps(self, X):
@@ -392,7 +369,43 @@ class PreprocessorNowcast:
         return X
 
 
-class PreprocessorForecast:
+class PreprocessorNowcast(Preprocessor):
+    """
+    Preprocesses data for nowcast training and inference.
+
+    Class which prepares training or inference data for being used in an sklearn.model. This class handles renaming columns, ordinal encoding of categorical features and filling gaps in less important features
+
+    Attributes
+    ----------
+    weather_features : list of strings
+        All weather features which we want to keep from the data. Not every feature mentioned here needs to be present in the dataframe
+    cat_features : list of strings
+        All categorical features. For these the preprocessor will do ordinal encoding. Not every feature mentioned here needs to be present in the dataframe
+    num_features : list of strings
+        All numerical features that we want to keep from the data.
+    ordinal_encoder:
+        Sklearn.preprocessing.OrdinalEncoder object for ordinal encoding of the categorical features
+
+    Methods
+    -------
+    fit(X, y=None):
+        Fits the Preprocessor to some training data. This depends on columns and sets the numerical values for each category.
+    transform_train(X, y=None):
+        Fills NAs of less important columns so we dont lose this data. Then transforms categorical features and drops columns where we have no sensor data.
+    transform_inference(X, y=None):
+        Fills NAs of less important columns so we dont lose this data. Then transforms categorical features. Does not drop NAs
+    """
+    def __init__(self,
+                 weather_features=["wind_max_ms", "wind_avg_ms", "rainfall_mm", "temp_max_c", "temp_avg_c", "ghi_sum_whm2", "upm"]):
+        super().__init__(weather_features)
+
+    def transform_inference(self, X):
+        '''Transforms some columns from numeric to categorical features by binning. Then transforms categorical features ordinally.
+        Matches the index for further use.'''
+        return super().transform_inference(X, nc=True)
+
+
+class PreprocessorForecast(Preprocessor):
     """
     Preprocesses data for forecast training and inference.
 
@@ -419,45 +432,13 @@ class PreprocessorForecast:
         Fills NAs of less important columns so we dont lose this data. Then transforms categorical features. Does not drop NAs. Autoregressive features are generated iteratively during inference.
     """
     def __init__(self,
-                 weather_features=["wind_max_ms", "wind_avg_ms", "rainfall_mm", "temp_max_c", "temp_avg_c", "ghi_sum_whm2", "upm"]):
-        self.weather_features = weather_features
-        self.cat_features = ['month', 'gattung', 'standalter', 'baumscheibe_m2', 'baumscheibe_surface']
-        self.num_features = ['value', 'shading_index', 'mean_yesterday', 'site_id']
-        self.ordinal_encoder = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
-
-    def fit(self, X, y=None):
-        '''Creates the mean_yesterday column, which is a grouped mean by day and sensor_depth, used for inference. Fits the ordinal encoder so it can encode
-        categorical features during transformation.'''
-        self.cat_columns = list(X.columns[X.columns.isin(self.cat_features)])
-        self.num_columns = list(X.columns[X.columns.isin(self.num_features+self.weather_features)])
-        self.mean_yesterday = X.groupby(["timestamp", "type_id"])["value"].mean().shift(1).rename("mean_yesterday")
-        self.index_cols = ["type_id", "tree_id", "timestamp"]
-        self.ordinal_encoder = self.ordinal_encoder.fit(X[self.cat_columns])
-
-    def transform_train(self, X, y=None):
-        '''Transforms some columns from numeric to categorical features by binning. Adds autoregressive features to the data.
-        Then transforms categorical features ordinally. Drops columns without sensors, renames columns and matches the index for further use.'''
-        all_cols = self.index_cols + self.cat_columns + self.num_columns
-        X = X[all_cols]
-        X = self._transform_features(X)
-        X = self._fill_gaps(X)
-        X = self._add_autoregressive_features(X)
-        X[self.cat_columns] = self.ordinal_encoder.transform(X[self.cat_columns])
-        X = X[X["value"].notna()]
-        X.set_index(["tree_id", "timestamp"], inplace=True)
-        X = X.rename(columns={"value": "target"})
-        return X
+                 weather_features=["wind_max_ms", "wind_avg_ms", "rainfall_mm", "temp_max_c", "temp_avg_c", "ghi_sum_whm2"]):
+        super().__init__(weather_features)
 
     def transform_inference(self, X):
         '''Transforms some columns from numeric to categorical features by binning. Then transforms categorical features ordinally.
         Matches the index for further use.'''
-        all_cols = self.index_cols + self.cat_columns + self.num_columns
-        all_cols = [x for x in all_cols if x not in self.weather_features + ["site_id", "value", "type_id"]]
-        X = X[all_cols]
-        X = self._transform_features(X)
-        X[self.cat_columns] = self.ordinal_encoder.transform(X[self.cat_columns])
-        #X = X.merge(self.mean_yesterday, left_on=["timestamp", "type_id"], right_index=True)
-        return X.set_index(["tree_id", "timestamp"])
+        return super().transform_inference(X, nc=False)
 
     def _add_autoregressive_features(self, X):
         X.set_index(["tree_id", "type_id", "timestamp"], inplace=True)
@@ -472,31 +453,6 @@ class PreprocessorForecast:
                         continue
         X.reset_index(inplace=True)
         return X
+    
 
-    def _fill_gaps(self, X):
-        resampled_data = None
-        X.set_index(["type_id", "tree_id", "timestamp"], inplace=True)
-        for depth in [1, 2, 3]:
-            for idx in X.index.get_level_values(1).unique():
-                try:
-                    temp = X.loc[depth, idx, :].resample("D").ffill(limit=7)
-                    temp = temp[temp.index.month.isin(range(4, 11))]
-                    temp["type_id"] = depth
-                    temp["tree_id"] = idx
-                except AttributeError:
-                    temp = None
-                if resampled_data is None:
-                    resampled_data = temp
-                else:
-                    resampled_data = pd.concat([resampled_data, temp])
-        X_filled = resampled_data.reset_index()
-        return X_filled
 
-    def _transform_features(self, X):
-        for col in ["baumscheibe_m2", "baumscheibe_surface", "water_sga", "water_gdk"]:
-            if col in X:
-                X.loc[:, col] = X[col].fillna(X[col].mode()[0])
-        if "value" in X.columns:
-            temp = X.groupby(["timestamp", "type_id"])["value"].mean().groupby("type_id").shift(1).rename("mean_yesterday")
-            X = X.merge(temp, left_on=["timestamp", "type_id"], right_index=True)
-        return X
