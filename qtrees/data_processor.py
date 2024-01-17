@@ -7,7 +7,7 @@ from qtrees.constants import PREPROCESSING_HYPERPARAMS
 from qtrees.helper import get_logger
 
 DATA_START_DATE = "2021-06-01"
-WEATHER_COLUMNS = ["wind_max_ms", "wind_avg_ms", "rainfall_mm", "temp_max_c", "temp_avg_c"]
+WEATHER_COLUMNS = ["wind_max_ms", "wind_avg_ms", "rainfall_mm", "temp_max_c", "temp_avg_c", "upm"]
 
 class DataLoader:
     """
@@ -271,11 +271,12 @@ class DataLoader:
                 weather_station = pd.read_sql_table("weather", schema="public", index_col="date",
                                                     con=self.engine.connect(), columns=WEATHER_COLUMNS)
             else:  # For private runs we take the solar irradiance in addition to other weather data
-                if self.forecast: # For forecast we use solar anywhere data as this is the only one with available weather predictions
+                if self.forecast:  # For forecast we use solar anywhere data as this is the only one with available weather predictions
+                    cols = ['tile_id'] + [x for x in WEATHER_COLUMNS if x != "upm"] + ["ghi_sum_whm2"]
                     weather_station = pd.read_sql_table("weather_tile_measurement", schema="private", con=self.engine.connect(),
-                                                        index_col="date", columns=['tile_id']+WEATHER_COLUMNS+["ghi_sum_whm2"])
+                                                        index_col="date", columns=cols)
                     weather_station = weather_station.groupby(level=0).mean().drop(columns="tile_id")
-                else:  # For nowcast we use 
+                else:  # For nowcast we use
                     weather_station = pd.read_sql_table("weather", schema="public", con=self.engine.connect(),
                                                         index_col="date", columns=WEATHER_COLUMNS)
                     weather_solar = pd.read_sql_table("weather_tile_measurement", con=self.engine.connect(), schema="private",
