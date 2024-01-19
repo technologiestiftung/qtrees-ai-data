@@ -1,4 +1,3 @@
-CREATE extension tablefunc;
 
 -- views
 CREATE MATERIALIZED VIEW public.weather_14d_agg AS
@@ -242,4 +241,3 @@ grant select on public.expert_dashboard to qtrees_user;
 grant select on public.watering to authenticator;
 grant select on public.watering to web_anon;
 grant select on public.watering to qtrees_user;
-

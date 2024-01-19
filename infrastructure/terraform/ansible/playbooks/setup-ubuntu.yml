@@ -14,7 +14,10 @@
       state: latest
   - name: install necessary libs
     shell: |
-      apt install postgresql awscli moreutils -y
+      apt install postgresql-14 awscli moreutils -y
+      curl -s https://packagecloud.io/install/repositories/golang-migrate/migrate/script.deb.sh | sudo bash
+      sudo apt-get update
+      sudo apt-get install migrate
   - name: check if qtrees-ai-data already cloned
     # besser löschen und neu clonen?
     stat:
@@ -73,8 +76,13 @@
     shell: |
       . /home/ubuntu/setup_environment.sh
       cd qtrees-ai-data/infrastructure/database
-      . /home/ubuntu/qtrees-ai-data/infrastructure/database/create_sql_files.sh
-      . /home/ubuntu/qtrees-ai-data/infrastructure/database/setup_database.sh
+      . /home/ubuntu/qtrees-ai-data/infrastructure/database/init_db.sh
+  - name: migrate database
+    become_user: ubuntu
+    shell: |
+      . /home/ubuntu/setup_environment.sh
+      cd qtrees-ai-data/infrastructure/database
+      migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees -path migrations up
   - name: s3 setup
     become_user: ubuntu
     shell: |

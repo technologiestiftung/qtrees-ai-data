@@ -106,8 +106,9 @@ def main():
                 autoreg_features = temp
                 try:
                     y_hat.to_sql("forecast", engine, if_exists="append", schema="public", index=False, method=None)
-                except:
-                    logger.error("Forecast failed for chunk. Trying to continue for next chunk.")
+                except Exception as e:
+                    logger.error(f"Forecast failed for chunk. Trying to continue for next chunk. Error: %s", e)
+
 
     logger.info("Made all predictions all models.")
 
@@ -119,7 +120,6 @@ def main():
 
     with engine.connect() as con:
         con.execute('REFRESH MATERIALIZED VIEW public.expert_dashboard')
-        con.execute('REFRESH MATERIALIZED VIEW public.expert_dashboard_large')
         con.execute("REFRESH MATERIALIZED VIEW public.vector_tiles;")
 
     logger.info("Updated materialized view public.expert_dashboard.")

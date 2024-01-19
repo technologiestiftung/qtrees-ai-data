@@ -1,6 +1,0 @@
-DROP SCHEMA public CASCADE;
-DROP SCHEMA basic_auth CASCADE;
-DROP SCHEMA private CASCADE;
-
-CREATE SCHEMA public;
-GRANT ALL ON SCHEMA public TO postgres;

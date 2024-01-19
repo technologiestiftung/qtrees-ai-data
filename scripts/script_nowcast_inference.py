@@ -72,8 +72,8 @@ def main():
             # TODO id from file?
             try:
                 y_hat.to_sql("nowcast", engine, if_exists="append", schema="public", index=False, method=None)
-            except:
-                logger.error(f"Nowcast failed for chunk. Trying to continue for next chunk.")
+            except Exception as e:
+                logger.error(f"Nowcast failed for chunk. Trying to continue for next chunk. Error: %s", e)
 
     logger.info("Made all predictions all models.")
 

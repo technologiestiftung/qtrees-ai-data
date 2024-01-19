@@ -277,6 +277,8 @@ Install requirements:
   - follow instructions [here](https://docs.docker.com/desktop/mac/install/)
 - install `docker-compose`
   - `brew install docker-compose`
+- install `Golang-Migrate` 
+  - `brew install golang-migrate` 
   
 Check config files:
 - Adjust `set_environment.local.sh` or place shared file (from 1password).
@@ -301,8 +303,8 @@ Note:
 Run:
 ```
 source set_environment.local.sh
-source create_sql_files.sh
-source setup_database.sh
+source init_db.sh
+migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable -path migrations up
 docker-compose -f docker-compose.local.yml restart
 ```
 
@@ -353,8 +355,41 @@ Note:
 w.r.t filling the database with content.**
 - **You might also consider the step `s3 sync` in the playbook as a first step to get shared data.**
 
+#### 3.6 Golang Migrate - Database change management
+
+Info: https://github.com/golang-migrate/migrate
+
+Golang migrate is used to take care and track of database changes. The current migrations steps can be found in folder `infrastructure/database/migrations`. In the database, there is a table called `schema_migrations`, which tells which database version we currently have.
 
 
+This version corresponds to the first number of the migration .sql files. For example, `000002_230301_setup_users.up` is would be database version 2, created 1st of March. 
+
+To add a change to the database structure, go to the `infrastructure/database` folder and run: 
+- `source set_environment.local.sh`
+- `migrate create -ext sql -dir migrations -seq XXXXXX_informative_name_of_migration`
+
+where XXXXXX is the current date on the form YYMMDD. This will create two files in the `infrastructure/database/migrations` folder, one "up.sql" file, and one "down.sql" file. Implement the change in the "up" file and reverse it in the "down" file. 
+
+To implement the change, run: (If you work on AWS, you have to remove the `?sslmode=disable` to connect to the database)
+- `migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable -path migrations up 1`
+
+
+To reverse the step run: 
+- `migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable -path migrations down 1`
+
+**In case of Dirty Database**
+
+
+Dirty database means that something went wrong with either the 'up' or 'down' migration calls, and this needs to be fixed manually. When fixed, you can let migrate know from which db version to start anew from, with the command: 
+
+`migrate -path migrate -database postgresql://postgres:${POSTGRES_PASSWD}@${DB_QTREES}:5432/qtrees?sslmode=disable force 4` (starting anew from version 4)
+
+When your new up and down migration files work without bugs on the local machine, you can push them to Github as usual. The changes will be implemented with the `playbooks/update-ubuntu.yml` call, which implemented all the migrations starting from the current db version.
+
+For more information on how to use Golang Migrate see: 
+
+
+https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md
 
 
 ## 4. Everyday use
@@ -570,5 +605,3 @@ Run `conda update --all --yes` to update packages.
 
 Therefore, create environment `conda create -n qtrees python==3.10.6`.
 Install packages from `requirements.yaml` individually.
-
-

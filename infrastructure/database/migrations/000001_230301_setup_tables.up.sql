@@ -1,8 +1,7 @@
-CREATE EXTENSION postgis;
-CREATE EXTENSION fuzzystrmatch;
-CREATE EXTENSION postgis_tiger_geocoder;
-CREATE EXTENSION postgis_topology;
-CREATE EXTENSION tablefunc;
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+CREATE EXTENSION IF NOT EXISTS postgis_tiger_geocoder;
+CREATE EXTENSION IF NOT EXISTS postgis_topology;
 
 --
 CREATE TABLE public.trees (
@@ -29,7 +28,8 @@ CREATE TABLE public.trees (
     lng FLOAT(53),
     created_at timestamptz,
     updated_at timestamptz,
-    street_tree BOOLEAN
+    street_tree BOOLEAN, 
+    baumscheibe REAL
 );
 
 CREATE TABLE public.soil (
@@ -107,6 +107,7 @@ CREATE TABLE public.issues (
 	PRIMARY KEY (id)
 );
 
+
 CREATE TABLE public.weather_stations (
     id   BIGINT PRIMARY KEY,
     von_datum     DATE,
@@ -163,23 +164,6 @@ CREATE TABLE public.shading (
     PRIMARY KEY(tree_id)
 );
 
-CREATE TABLE public.shading_monthly (
-    tree_id TEXT REFERENCES public.trees(id),
-    january REAL,
-    february REAL,
-    march REAL,
-    april REAL,
-    may REAL,
-    june REAL,
-    july REAL,
-    august REAL,
-    september REAL,
-    october REAL,
-    november REAL,
-    december REAL,
-    PRIMARY KEY(tree_id)
-);
-
 CREATE TABLE public.sensor_types (
 	id SERIAL PRIMARY KEY,
 	name text NOT NULL
@@ -205,36 +189,6 @@ CREATE TABLE public.nowcast (
 	model_id text
 );
 
-CREATE OR REPLACE VIEW public.latest_nowcast AS
-SELECT DISTINCT ON (tree_id, type_id)
-    id,
-    tree_id,
-    type_id,
-    timestamp,
-    value,
-    created_at,
-    model_id
-FROM public.nowcast
-ORDER BY tree_id, type_id, timestamp DESC;
-
-CREATE OR REPLACE VIEW public.latest_forecast AS
-SELECT *
-FROM crosstab(
-    $$
-    SELECT
-        tree_id,
-        type_id,
-        row_number() OVER (PARTITION BY tree_id, type_id ORDER BY timestamp) AS day,
-        value
-    FROM public.nowcast
-    ORDER BY 1, 2, 3
-    $$,
-    $$
-    SELECT generate_series(1, 14)
-    $$
-) AS ct (tree_id TEXT, type_id INTEGER, day1_timestamp timestamptz, day1 REAL, day2 REAL, day3 REAL, day4 REAL, day5 REAL, day6 REAL, day7 REAL, day8 REAL, day9 REAL, day10 REAL, day11 REAL, day12 REAL, day13 REAL, day14 REAL);
-
-
 CREATE INDEX idx_nowcast_tree_id
 ON nowcast(tree_id);
 CREATE INDEX idx_forecast_tree_id
@@ -243,8 +197,7 @@ ON forecast(tree_id);
 insert into public.sensor_types(id, name) values (1, 'saugspannung_30cm');
 insert into public.sensor_types(id, name) values (2, 'saugspannung_60cm');
 insert into public.sensor_types(id, name) values (3, 'saugspannung_90cm');
-insert into public.sensor_types(id, name) values (4, 'saugspannung_mittelwert');
-insert into public.sensor_types(id, name) values (5, 'saugspannung_stamm');
+insert into public.sensor_types(id, name) values (4, 'saugspannung_stamm');
 
 INSERT INTO "public"."issue_types" ( "title", "description", "image_url") VALUES
 ( 'Missnutzung der Baumscheibe', 'Die Baumscheibe (nicht versiegelte Fläche) am Standort eines Baums wir oft durch falsch parkende Autos, illegalen Müll-Entsorgungen, wie bspw.: alte Waschmaschinen oder Bauschutt, missbraucht. Melde uns bitte, wenn die Baumscheibe seit längerem zugestellt ist.', '/images/issues/missnutzung-baumscheibe.jpg'),
