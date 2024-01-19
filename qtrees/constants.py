@@ -1,7 +1,15 @@
-FORECAST_FEATURES = ["shading_winter", "shading_spring", "shading_summer", "shading_fall", "tree_standalter",
-                "weather_rainfall_mm_14d_sum", "weather_temp_avg_c_14d_avg", "sensor_group_median",
-                "temp_max_c", "rainfall_mm"]
-    
-NOWCAST_FEATURES  = ["shading_winter", "shading_spring", "shading_summer", "shading_fall", "tree_standalter",
-                "weather_rainfall_mm_14d_sum", "weather_temp_avg_c_14d_avg", "sensor_group_median"]
-    
+FORECAST_FEATURES = ['month', 'gattung', 'standalter', 'shading_index',
+                     "wind_max_ms", "temp_avg_c", "rainfall_mm", "ghi_sum_whm2", 'mean_yesterday']
+
+NOWCAST_FEATURES = ['month', 'gattung', 'standalter', 'water_sga', 'water_gdk', 'shading_index', 'wind_max_ms',
+                    'rainfall_mm', 'temp_avg_c', 'ghi_sum_whm2', 'mean_yesterday']
+
+HYPER_PARAMETERS_NC = dict(max_features="sqrt", n_estimators=1000, max_depth=5, bootstrap=True)
+
+HYPER_PARAMETERS_FC = dict(max_features="sqrt", n_estimators=1000, max_depth=10, bootstrap=True)
+
+PREPROCESSING_HYPERPARAMS = dict(rolling_window=7, fc_horizon=14, autoreg_lag=3, tile_id=2)
+
+PATH_TO_MODELS = "./models"
+MODEL_TYPE = dict(nowcast="nowcast", forecast="forecast", auxiliary="auxiliary", preprocessor="preprocessor")
+MODEL_PREFIX = ""
