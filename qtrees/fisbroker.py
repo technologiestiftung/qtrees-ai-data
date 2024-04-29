@@ -1,11 +1,12 @@
+import os
 import requests
 import geopandas as gpd
 import pandas as pd
 from requests import Request
 from owslib.wfs import WebFeatureService
-import os
 from datetime import datetime
-from helper import get_logger
+import pytz
+from qtrees.helper import get_logger
 
 logger = get_logger(__name__)
 
@@ -14,20 +15,18 @@ def _prepare_tree_data(gdf, street_tree):
     gdf = gdf.to_crs(4326)
 
     gdf['street_tree'] = street_tree
-    gdf['baumscheibe'] = ""
 
     gdf['lat'] = gdf.geometry.y
     gdf['lng'] = gdf.geometry.x
     # geopandas.to_file has problems with datetime
-    date = pd.to_datetime(datetime.now().date().strftime('%Y-%m-%d'))
+    date = pd.to_datetime(datetime.now(tz=pytz.timezone("UTC")).date().strftime('%Y-%m-%d'))
     gdf['created_at'] = date
     gdf['updated_at'] = date
     gdf = gdf.rename(columns={"baumid": "id"})
     gdf = gdf.drop('gml_id', axis=1)
-    gdf.drop_duplicates(subset=['id'], keep='first')
-
-    return gdf
-
+    duplicates_in_batch = set(gdf[gdf.id.duplicated()].id)
+    gdf.drop_duplicates(subset=['id'], keep='first', inplace=True)
+    return gdf, duplicates_in_batch
 
 def store_trees_batchwise_to_db(trees_file, street_tree, engine, lu_ids=None, n_batch_size=100000):
     """
@@ -52,17 +51,22 @@ def store_trees_batchwise_to_db(trees_file, street_tree, engine, lu_ids=None, n_
     n_start = 0
     n_round = 0
     lu_ids = lu_ids or set()
+
     while True:
         n_end = n_start + n_batch_size
         gdf = gpd.read_file(trees_file, rows=slice(n_start, n_end))
         n_rows = len(gdf)
         # prepare data and remove patch-internal duplicates
-        gdf = _prepare_tree_data(gdf, street_tree=street_tree)
-        duplicates = lu_ids.intersection(gdf["id"])
-        n_duplicates = len(duplicates) + n_rows - len(gdf)
+        gdf, duplicates_in_batch = _prepare_tree_data(gdf, street_tree=street_tree)
+        duplicates_between_batches = lu_ids.intersection(gdf["id"])
+        duplicates = duplicates_between_batches | duplicates_in_batch
+
+        gdf = gdf[~gdf["id"].isin(duplicates_between_batches)]
+        n_duplicates = n_rows - len(gdf)
+
         if n_duplicates > 0:
-            logger.warning("Found duplicates: %s", list(duplicates))
-        gdf = gdf[~gdf["id"].isin(duplicates)]
+            logger.warning(f"Found {n_duplicates} duplicates: {list(duplicates)}")
+
         lu_ids.update(gdf["id"])
 
         n_round += 1
@@ -146,9 +150,9 @@ def get_trees(trees_file):
         trees_gdf['lat'] = trees_gdf.geometry.y
         trees_gdf['lng'] = trees_gdf.geometry.x
         # geopandas.to_file has problems with datetime
-        date = datetime.now().date().strftime('%Y-%m-%d')
-        trees_gdf['created_at'] = date
-        trees_gdf['updated_at'] = date
+        now = datetime.now(pytz.timezone("UTC"))
+        trees_gdf['created_at'] = now
+        trees_gdf['updated_at'] = now
         trees_gdf = trees_gdf.rename(columns={"baumid": "id"})
         trees_gdf = trees_gdf.drop('gml_id', axis=1)
 

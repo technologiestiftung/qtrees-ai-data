@@ -17,6 +17,7 @@ from docopt import docopt, DocoptExit
 from qtrees.helper import get_logger, init_db_args
 from qtrees.fisbroker import store_trees_batchwise_to_db, download_tree_file
 import os.path
+import pytz
 
 logger = get_logger(__name__, log_level="INFO")
 
@@ -46,8 +47,8 @@ def main():
             return
 
     logger.debug("Do update")
-    if not os.path.exists(os.path.dirname(data_directory)):
-        os.makedirs(os.path.dirname(data_directory))
+    if not os.path.exists(data_directory):
+        os.makedirs(data_directory)
 
     # download tree files in case of need
     filename_street_trees = download_tree_file(

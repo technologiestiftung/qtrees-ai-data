@@ -53,14 +53,23 @@ resource "aws_db_subnet_group" "qtrees" {
 }
 
 resource "aws_db_instance" "qtrees" {
-  identifier        = "${var.project_name}-iac-rds"
-  instance_class    = "db.t3.micro"
-  allocated_storage = 10
-  engine            = "postgres"
-  name              = var.project_name
-  username          = "postgres"
-  password            = var.POSTGRES_PASSWD
-  skip_final_snapshot = true
+  identifier                      = "${var.project_name}-iac-rds"
+  instance_class                  = "db.t3.medium"
+  allocated_storage               = 20
+  max_allocated_storage           = 100
+  storage_type                    = "gp3"
+  engine                          = "postgres"
+  engine_version                  = "14.7"
+  name                            = var.project_name
+
+  # Added because of error InvalidParameterCombination:
+  # You can't specify IOPS or storage throughput for engine postgres and a storage size less than 400.
+  #iops                            = 3000
+  username                        = "postgres"
+  password                        = var.POSTGRES_PASSWD
+  skip_final_snapshot             = true
+  performance_insights_enabled    = true
+  performance_insights_kms_key_id = null # use default key for region
 
   # is this needed?
   publicly_accessible = true
@@ -157,7 +166,7 @@ resource "aws_instance" "qtrees" {
   instance_type = "t2.medium"
 
   root_block_device {
-    volume_size = 20
+    volume_size = 40
   }
 
   # public ip needed to ssh into this instance
