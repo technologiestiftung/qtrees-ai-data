@@ -1,14 +1,26 @@
+#!/usr/bin/env python3
+"""
+Create shading index.
+Usage:
+  script_shading_index.py [--data_path=DATA_PATH]
+  script_shading_index.py (-h | --help)
+Options:
+  --data_path=DATA_PATH                    Data path [default:./data]
+"""
+
 from astral import LocationInfo
 from astral.sun import sun
 import datetime
 import rioxarray
 import os
+import pandas as pd
 import json
 from pyproj import CRS, Transformer
-import pandas as pd
+import sys
+from docopt import docopt, DocoptExit
 
-from qtrees.fisbroker import get_trees
 from qtrees.helper import get_logger
+from qtrees.fisbroker import get_trees
 
 logger = get_logger(__name__)
 
@@ -46,9 +58,9 @@ def calculate_sun_index(seasons_theoretical_daylight,
                                        crs_to=out_proj,
                                        always_xy=True)
     actual_sun_hours = {}
-    """ goes through the trees & calculates the sun&shadow index per tree for 
-        every season based on the ratio of actual sun hours obtained from sun 
-        map divided by theoretical daylight calculated based on sunrise and 
+    """ goes through the trees & calculates the sun&shadow index per tree for
+        every season based on the ratio of actual sun hours obtained from sun
+        map divided by theoretical daylight calculated based on sunrise and
         sunset hours of the selected representative dates for seasons
     """
     for season, theoretical_daylight in seasons_theoretical_daylight.items():
@@ -92,3 +104,19 @@ def get_sunindex_df(shadow_index_file, trees_file=None, qgis_sun_hours_folder="d
         logger.warning("Using %s", shadow_index_file)
         shadow_index_df = pd.read_csv(shadow_index_file, index_col=0)
         return shadow_index_df
+
+
+if __name__ == "__main__":
+    logger.info("Args: %s", sys.argv[1:])
+    # Parse arguments
+    args = docopt(__doc__)
+    data_root_path = args["--data_path"]
+    qgis_sun_hours_folder = os.path.join(data_root_path, "berlin_maps_filtered")
+    data_directory = os.path.join(data_root_path, "shadow_index")
+    os.makedirs(data_directory, exist_ok=True)
+    trees_file = os.path.join(data_directory, "all_trees_gdf.geojson")
+    shadow_index_file = os.path.join(data_directory, "berlin_shadow_box_22_03.csv")
+    # todo: what happends with output of get_sunindex_df?
+    get_sunindex_df(
+        shadow_index_file=shadow_index_file, trees_file=trees_file, qgis_sun_hours_folder=qgis_sun_hours_folder
+    )
