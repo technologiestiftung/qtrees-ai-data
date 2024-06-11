@@ -12,7 +12,7 @@ Options:
 import os
 import numpy as np
 import rioxarray
-import cv2 # todo: add pip install opencv-python to requirement?
+import cv2  # todo: add pip install opencv-python to requirement?
 import sys
 from docopt import docopt, DocoptExit
 
@@ -23,29 +23,47 @@ logger = get_logger(__name__)
 
 
 def create_box_filter_maps(maps_directory, kernel_size):
-    os.makedirs(target_filepath, exist_ok=True)
-    print('created target directory')
+    if not os.path.exists(target_filepath):
+        logger.info("creating target directory")
+        os.makedirs(target_filepath, exist_ok=True)
 
     for filename in os.listdir(maps_directory):
-        if not filename.startswith('.') and filename.endswith('merged.tiff'):
+        logger.info(f"processing map: {filename}")
+
+        if os.path.isfile(os.path.join(maps_directory, filename)) and filename.endswith(
+            "merged.tiff"
+        ):
             f_path = os.path.join(sun_hour_map_folder, filename)
-            apply_box_filter(kernel_size, filename, f_path)
+            apply_box_filter(
+                kernel_size=kernel_size,
+                map_name=filename,
+                filepath=f_path,
+                target_filepath=target_filepath,
+            )
 
 
 def create_gaussian_filter_maps(maps_directory, kernel_size):
+    logger.info(target_filepath)
     if not os.path.exists(target_filepath):
-        print('created target directory')
-        os.mkdir(target_filepath)
+        logger.info("creating target directory")
+        os.makedirs(target_filepath, exist_ok=True)
 
     for filename in os.listdir(maps_directory):
-        if not filename.startswith('.'):
+        if os.path.isfile(os.path.join(maps_directory, filename)) and filename.endswith(
+            "merged.tiff"
+        ):
             f_path = os.path.join(sun_hour_map_folder, filename)
-            apply_gaussian_filter(kernel_size, filename, f_path)
+            apply_gaussian_filter(
+                kernel_size=kernel_size,
+                map_name=filename,
+                filepath=f_path,
+                target_filepath=target_filepath,
+            )
 
 
 def apply_box_filter(kernel_size, map_name, filepath, target_filepath):
     map = rioxarray.open_rasterio(filepath)
-    print(f'processing map: {map_name}')
+    logger.info(f"processing map: {map_name}")
     kernel_div = kernel_size * kernel_size
     kernel = np.ones((kernel_size, kernel_size), np.float32) / kernel_div
     map_np = map[0].to_numpy()
@@ -54,19 +72,19 @@ def apply_box_filter(kernel_size, map_name, filepath, target_filepath):
     dst = cv2.filter2D(map_np, -1, kernel)
 
     map[0] = dst
-    map_name = 'box_k' + str(kernel_size) + '_' + map_name
+    map_name = "box_k" + str(kernel_size) + "_" + map_name
     map.rio.to_raster(os.path.join(target_filepath, map_name))
 
 
-def apply_gaussian_filter(kernel_sz, map_name, filepath, target_filepath):
+def apply_gaussian_filter(kernel_size, map_name, filepath, target_filepath):
     map = rioxarray.open_rasterio(filepath)
-    print(f'processing map: {map_name}')
+    print(f"processing map: {map_name}")
     map_np = map[0].to_numpy()
 
-    dst = cv2.GaussianBlur(map_np, (kernel_sz, kernel_sz), 0)
+    dst = cv2.GaussianBlur(map_np, (kernel_size, kernel_size), 0)
 
     map[0] = dst
-    map_name = 'gaussian_k' + str(kernel_size) + '_' + map_name
+    map_name = "gaussian_k" + str(kernel_size) + "_" + map_name
     map.rio.to_raster(os.path.join(target_filepath, map_name))
 
 
@@ -79,10 +97,10 @@ if __name__ == "__main__":
     target_filepath = os.path.join(data_path, "berlin_maps_filtered")
     kernel_size = int(args["--kernel_size"])
 
-    if args["--filter_method"] == 'box':
+    if args["--filter_method"] == "box":
         create_box_filter_maps(sun_hour_map_folder, kernel_size)
-    elif args["--filter_method"] == 'gaussian':
+    elif args["--filter_method"] == "gaussian":
         create_gaussian_filter_maps(sun_hour_map_folder, kernel_size)
     else:
-        logger.error('Invalid filter method. Please use either box or gaussian.')
+        logger.error("Invalid filter method. Please use either box or gaussian.")
         sys.exit(1)
