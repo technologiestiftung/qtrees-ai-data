@@ -5,7 +5,7 @@ Usage:
   script_shading_index.py [--data_path=DATA_PATH]
   script_shading_index.py (-h | --help)
 Options:
-  --data_path=DATA_PATH                    Data path [default:./data]
+  --data_path=DATA_PATH                    Data path [default: ../data]
 """
 
 from astral import LocationInfo

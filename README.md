@@ -557,10 +557,9 @@ Currently, we have 2 roles: `ai_user` and `ui_user`.
 ## 5. Open issues and additional resources
 
 ### Shading Calculation
-1) Compute solar exposure maps with using `scripts/script_qgis_solar_exposure_maps.py`. This script needs to be run in the Python Console of QGIS. The necessary elevation map tiles could be downloaded from Berlin Open Data Portal. 
+1) Compute solar exposure maps with using `scripts/script_qgis_solar_exposure_maps.py`. This script needs to be run in the Python Console of QGIS. The necessary elevation map tiles could be downloaded from Berlin Open Data Portal. The script should be used in the code editor of QGIS. A guide on the subject can be found [here](https://docs.qgis.org/2.18/en/docs/user_manual/plugins/python_console.html) 
 2) Smoothen the calculated solar exposure maps with `scripts/script_map_filtering.py`. This script applies a box filter to the given files. The default kernel size is 5.
 3) Calculate shading indices with the script `scripts/script_shading_index.py`. This script takes as input the solar exposure maps and tree dataset and calculates 4 seasonal shading indices for each tree in the dataset.
-4) Comparison as well as calculation of different interpolation methods between seasonal values could be done with `notebooks/shadow_index.ipynb` in order to obtain 12 monthly values for each tree.
 
 
 ### jwt_secret in db config
