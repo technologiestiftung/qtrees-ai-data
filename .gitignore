@@ -76,6 +76,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+qtrees/map_creation_exploration.ipynb
 
 # IPython
 profile_default/
@@ -150,3 +151,6 @@ infrastructure/terraform/tf_output/*
 infrastructure/database/pgdata
 hosts
 infrastructure/database/*.sql
+
+# qgis
+*.qgz
