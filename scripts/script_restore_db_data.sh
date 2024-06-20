@@ -16,11 +16,12 @@ if [ -n "$QTREES_VERSION" ]; then
     filename=$(ls -t $data_dir/*.dump | head -1)
     # dump data before truncating
     filename_safe="$data_dir/safe.dump"
+    echo "safe dump"
     PGPASSWORD=${POSTGRES_PASSWD} pg_dump --host $DB_QTREES --port 5432 --username postgres --format custom --file filename_safe -n public -n private --exclude-table public.spatial_ref_sys --data-only qtrees
     echo "Truncating data in DB"
     PGPASSWORD=${POSTGRES_PASSWD} psql --host $DB_QTREES -U postgres -d qtrees -c "SELECT * from private.truncate_tables()"
     echo "Loading data into DB from \"$filename\""
-    PGPASSWORD=${POSTGRES_PASSWD} pg_restore --host $DB_QTREES --port 5432 --username postgres $filename --data-only --dbname=qtrees
+    PGPASSWORD=${POSTGRES_PASSWD} pg_restore --host $DB_QTREES --port 5432 --username postgres --dbname=qtrees --clean < $filename
   fi
 else
   echo "Error: Variable QTREES_VERSION is not set"
