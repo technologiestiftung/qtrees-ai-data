@@ -5,7 +5,7 @@ Usage:
   script_map_filtering.py [--data_path=DATA_PATH] [--kernel_size=KERNEL_SIZE] [--filter_method=FILTER_METHOD]
   script_map_filtering.py (-h | --help)
 Options:
-  --data_path=DATA_PATH                    Data path [default: ./data]
+  --data_path=DATA_PATH                    Data path [default: ../data]
   --kernel_size=KERNEL_SIZE                Kernel size of filter [default: 5]
   --filter_method=FILTER_METHOD            Method for filtering [default: box]
 """

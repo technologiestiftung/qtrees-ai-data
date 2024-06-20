@@ -89,7 +89,6 @@ def insoltime_calc(elevation_map, slope_path, aspect_path, sunhours_file_path, d
     )
 
 
-# TODO: Make sure the naming conventions is compatible with the rest of the project
 def merge_sunhour_maps(sunhours_folder, target_file):
     for subdir in os.listdir(sunhours_folder):
         sunhour_maps_subdir = os.path.join(sunhours_folder, subdir)
